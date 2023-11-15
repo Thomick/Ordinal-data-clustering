@@ -64,7 +64,7 @@ def generate_data(n, p, n_cat, k, alpha, mu, pi, seed):
     :param mu: position parameters of the BOS models
     :param pi: precision parameters of the BOS models
     :param seed: random seed
-    :return: synthetic data
+    :return: synthetic data of size (n, p) and group indicator of size (n,)
     """
     np.random.seed(seed)
     # generate group indicator with probability alphas
