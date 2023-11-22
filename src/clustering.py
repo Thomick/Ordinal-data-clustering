@@ -171,33 +171,34 @@ class OrdinalClustering:
 
     def fit(self, data, m):
         d = data.shape[1]
-        mu = np.ones((self.n_clusters, d))
-        pi = np.ones((self.n_clusters, d)) * 0.5
+        mu = np.random.randint(np.ones(m.shape[0]), m + 1, (self.n_clusters, d))
+        pi = np.random.random((self.n_clusters, d))
         alpha = np.ones((self.n_clusters)) / self.n_clusters
 
         def expectation(data, mu, pi, m, alpha):
-            p_list = [
-                [
-                    [
-                        compute_p_list(
-                            x[i],
-                            mu[k, i],
-                            pi[k, i],
-                            m[i],
+            p_list = []
+            for x in data:
+                p_list.append([])
+                for k in range(self.n_clusters):
+                    p_list[-1].append([])
+                    for j in range(d):
+                        dimension_p_list = compute_p_list(
+                            x[j],
+                            mu[k, j],
+                            pi[k, j],
+                            m[j],
                         )
-                        for i in range(d)
-                    ]
-                    for k in range(self.n_clusters)
-                ]
-                for x in data
-            ]
-            p_list_sum = [
-                [
-                    [sum([p for c, p in p_list[i][k][j]]) for j in range(d)]
-                    for k in range(self.n_clusters)
-                ]
-                for i in range(len(data))
-            ]
+                        p_list[-1][-1].append(dimension_p_list)
+
+            p_list_sum = []
+            for i in range(len(data)):
+                p_list_sum.append([])
+                for k in range(self.n_clusters):
+                    p_list_sum[-1].append([])
+                    for j in range(d):
+                        dimension_p_tot = sum([p for c, p in p_list[i][k][j]])
+                        p_list_sum[-1][-1].append(dimension_p_tot)
+
             p_list_x = np.prod(np.array(p_list_sum), axis=2)
             pw1_x = (alpha * p_list_x) / np.sum(alpha * p_list_x, axis=1).reshape(-1, 1)
             return pw1_x, p_list_x
@@ -207,6 +208,7 @@ class OrdinalClustering:
         for _ in range(self.n_iter):
             # E step
             pw1_x, p_list_x = expectation(data, mu, pi, m, alpha)
+            log_likelihood = np.sum(pw1_x * np.log(alpha * p_list_x))
 
             # M step
             # Update alpha
@@ -225,11 +227,15 @@ class OrdinalClustering:
                         )
                         pis_local.append(pis[-1])
                         lls_local.append(lls_run[-1])
+                    # pi is updated according to the previous mu
+                    mu_, pi_update, lls_run = univariate_EM(
+                        data[:, j], m[j], mu[k, j], 1, pi=pi[k, j], weights=weights
+                    )
+                    pi[k, j] = pi_update[-1]
+                    # # pi is updated according to the new mu
+                    # pi[k, j] = pis_local[np.argmax(lls_local)]
                     mu[k, j] = mus[np.argmax(lls_local)]
-                    pi[k, j] = pis_local[np.argmax(lls_local)]
 
-            _, p_list_x = expectation(data, mu, pi, m, alpha)
-            log_likelihood = np.sum(pw1_x * np.log(alpha * p_list_x))
             if np.abs(log_likelihood - log_likelihood_old) < self.eps:
                 break
             log_likelihood_old = log_likelihood
@@ -258,6 +264,8 @@ if __name__ == "__main__":
     parser.add_argument("--n_cat", type=int, default=5)
     parser.add_argument("--k", type=int, default=2)
     parser.add_argument("--type", type=str, default="multivariate")
+    parser.add_argument("--n_iter", type=int, default=20)
+    parser.add_argument("--eps", type=float, default=1e-3)
     args = parser.parse_args()
 
     if args.type == "univariate":
@@ -274,7 +282,7 @@ if __name__ == "__main__":
         pi_list = []
         mu_list = list(range(1, m + 1))
         for mu in tqdm(mu_list):
-            mu, pl, lls = univariate_EM(data, m, mu, 100)
+            mu, pl, lls = univariate_EM(data, m, mu, args.n_iter, args.eps)
             pi_list.append(pl[-1])
             ll_list.append(compute_loglikelihood(data, m, mu, pl[-1]))
 
@@ -310,7 +318,7 @@ if __name__ == "__main__":
             )
         )
 
-        clustering = OrdinalClustering(n_clusters)
+        clustering = OrdinalClustering(n_clusters, n_iter=args.n_iter, eps=args.eps)
 
         alpha_hat, mu_hat, pi_hat, ll_list = clustering.fit(data[0], m)
 
