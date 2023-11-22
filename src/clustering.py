@@ -1,7 +1,6 @@
 import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-
 from data_generator import generate_data
 
 
@@ -171,6 +170,8 @@ class OrdinalClustering:
 
     def fit(self, data, m):
         d = data.shape[1]
+        m = np.array(m).astype(int)
+
         mu = np.random.randint(np.ones(m.shape[0]), m + 1, (self.n_clusters, d))
         pi = np.random.random((self.n_clusters, d))
         alpha = np.ones((self.n_clusters)) / self.n_clusters
@@ -235,6 +236,7 @@ class OrdinalClustering:
                     # # pi is updated according to the new mu
                     # pi[k, j] = pis_local[np.argmax(lls_local)]
                     mu[k, j] = mus[np.argmax(lls_local)]
+                    breakpoint()
 
             if np.abs(log_likelihood - log_likelihood_old) < self.eps:
                 break
@@ -261,7 +263,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--n", type=int, default=100)
     parser.add_argument("--p", type=int, default=2)
-    parser.add_argument("--n_cat", type=int, default=5)
+    parser.add_argument("--n_cat", type=int, default=3)
     parser.add_argument("--k", type=int, default=2)
     parser.add_argument("--type", type=str, default="multivariate")
     parser.add_argument("--n_iter", type=int, default=20)
@@ -306,8 +308,8 @@ if __name__ == "__main__":
         n = args.n
         d = args.p
         n_clusters = args.k
-        m = np.ones(d).astype(int) * 5
-        true_mu = np.ones((n_clusters, d)).astype(int) * 3
+        m = np.ones(d).astype(int) * args.n_cat
+        true_mu = np.ones((n_clusters, d)).astype(int) * args.n_cat
         true_pi = np.ones((n_clusters, d)) * 0.5
         true_alpha = np.ones(n_clusters) / n_clusters
         data = generate_data(n, d, m, n_clusters, true_alpha, true_mu, true_pi, 0)
