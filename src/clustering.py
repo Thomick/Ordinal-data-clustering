@@ -152,13 +152,14 @@ def compute_loglikelihood(data, m, mu, pi, p_lists=None):
             p_list = p_lists[i]
         else:
             p_list = compute_p_list(data[i], mu, pi, m)
-        for c, p in p_list:
-            # print(c, p)
-            pass
+        # for c, p in p_list:
+        # print(c, p)
+        # pass
         p_tot = sum([p for c, p in p_list])
-        loglikelihood += (
-            np.sum([p * np.log(p) if p > 0 else 0 for c, p in p_list]) / p_tot
-        )
+        # loglikelihood += (
+        #     np.sum([p * np.log(p) if p > 0 else 0 for c, p in p_list]) / p_tot
+        # )
+        loglikelihood += np.log(p_tot)
     return loglikelihood
 
 
@@ -308,8 +309,8 @@ if __name__ == "__main__":
         d = args.p
         n_clusters = args.k
         m = np.ones(d).astype(int) * args.n_cat
-        true_mu = np.ones((n_clusters, d)).astype(int) * args.n_cat
-        true_pi = np.ones((n_clusters, d)) * 0.5
+        true_mu = np.random.randint(1, m + 1, (n_clusters, d))
+        true_pi = np.random.random((n_clusters, d))
         true_alpha = np.ones(n_clusters) / n_clusters
         data = generate_data(n, d, m, n_clusters, true_alpha, true_mu, true_pi, 0)
 
