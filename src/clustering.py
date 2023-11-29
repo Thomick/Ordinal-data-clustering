@@ -121,8 +121,8 @@ def univariate_EM(data, m, mu, n_iter=100, eps=1e-3, pi=None, weights=None):
             si = 0.0
             for c, p in p_lists[i]:
                 l = len(c)
-                for j in range(m - 2):
-                    if j < l:
+                for j in range(m - 1):  # changing this to -1 fixed for n_cat=3
+                    if j < l:  # why?
                         if c[j][1] == 1:
                             si += p
                     else:
@@ -236,7 +236,6 @@ class OrdinalClustering:
                     # # pi is updated according to the new mu
                     # pi[k, j] = pis_local[np.argmax(lls_local)]
                     mu[k, j] = mus[np.argmax(lls_local)]
-                    breakpoint()
 
             if np.abs(log_likelihood - log_likelihood_old) < self.eps:
                 break
@@ -273,8 +272,8 @@ if __name__ == "__main__":
     if args.type == "univariate":
         n = args.n
         m = args.n_cat
-        true_mu = 3
-        true_pi = 0.3
+        true_mu = np.random.randint(1, m + 1)
+        true_pi = np.random.random()
         data = generate_data(n, 1, [m], 1, [1], [[true_mu]], [[true_pi]], 0)[
             0
         ].flatten()
