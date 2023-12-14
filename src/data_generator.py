@@ -53,6 +53,32 @@ def bos_model(n_cat, mu, pi):
     return cur_e[0]
 
 
+def god_model(n_cat, mu, pi):
+    """
+    Generate a single feature from Rudkiewicz model
+    :param n_cat: number of categories
+    :param mu: position parameter
+    :param pi: precision parameter
+    :return: a single feature
+    """
+    # Perform stochastic binary search algorithm
+    comp_res = [False] * n_cat
+    for i in range(n_cat):
+        if np.random.binomial(1, pi) == 1:
+            comp_res[i] = mu <= i
+        else:
+            comp_res[i] = not (mu <= i)
+    x = 0
+    ex = n_cat + 1
+    for i in np.random.permutation(n_cat):
+        e_cur = comp_res[: i + 1].count(True) + comp_res[i + 1 :].count(False)
+        if e_cur <= ex:
+            x = i
+            ex = e_cur
+
+    return x + 1
+
+
 def generate_data(n, p, n_cat, k, alpha, mu, pi, seed):
     """
     Generate synthetic multivariate ordinal dataset
@@ -78,10 +104,18 @@ def generate_data(n, p, n_cat, k, alpha, mu, pi, seed):
     return x, w
 
 
-def plot_hist_bos_model(n_cat, mu, pi, n_sample=10000):
+def plot_hist_bos_model(n_cat, mu, pi, n_sample=10000, show=True):
     x = [bos_model(n_cat, mu, pi) for _ in range(n_sample)]
-    sns.histplot(x, stat="density", discrete=True)
-    plt.show()
+    sns.histplot(x, stat="density", discrete=True, label="bos model")
+    if show:
+        plt.show()
+
+
+def plot_hist_god_model(n_cat, mu, pi, n_sample=10000, show=True):
+    x = [god_model(n_cat, mu, pi) for _ in range(n_sample)]
+    sns.histplot(x, stat="density", discrete=True, label="god model")
+    if show:
+        plt.show()
 
 
 if __name__ == "__main__":
@@ -89,29 +123,33 @@ if __name__ == "__main__":
     # plot_hist_bos_model(5, 3, 0.5)
 
     seed = 0
-
-    n = 10000
-    p = 2
-    n_cat = [5, 5]
-    k = 2
-    alpha = [0.5, 0.5]
-    mu = [[2, 4], [4, 2]]
-    pi = [[0.4, 0.4], [0.4, 0.4]]
-
-    output_file = "../data/synthetic.csv"
-
-    x, w = generate_data(n, p, n_cat, k, alpha, mu, pi, seed)
-    # save data
-    df = pd.DataFrame(x)
-    df["w"] = w
-    df.to_csv(os.path.join(os.path.dirname(__file__), output_file), index=False)
-
-    # plot data
-    sns.pairplot(
-        df,
-        hue="w",
-        kind="hist",
-        plot_kws={"alpha": 0.6, "bins": n_cat},
-        diag_kws={"bins": n_cat[0]},
-    )
+    plot_hist_bos_model(5, 3, 0.3, show=False)
+    plot_hist_god_model(5, 3, 0.3, show=False)
+    plt.legend()
     plt.show()
+    """
+        n = 10000
+        p = 2
+        n_cat = [5, 5]
+        k = 2
+        alpha = [0.5, 0.5]
+        mu = [[2, 4], [4, 2]]
+        pi = [[0.4, 0.4], [0.4, 0.4]]
+
+        output_file = "../data/synthetic.csv"
+
+        x, w = generate_data(n, p, n_cat, k, alpha, mu, pi, seed)
+        # save data
+        df = pd.DataFrame(x)
+        df["w"] = w
+        df.to_csv(os.path.join(os.path.dirname(__file__), output_file), index=False)
+
+        # plot data
+        sns.pairplot(
+            df,
+            hue="w",
+            kind="hist",
+            plot_kws={"alpha": 0.6, "bins": n_cat},
+            diag_kws={"bins": n_cat[0]},
+        )
+        plt.show()"""
