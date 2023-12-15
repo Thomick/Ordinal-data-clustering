@@ -108,13 +108,7 @@ def univariate_EM(data, m, mu, n_iter=100, eps=1e-3, pi=None, weights=None):
     old_ll = -np.inf
     for _ in range(n_iter):
         # E step
-        if weights is not None:
-            p_lists = [
-                compute_p_list(data[j], mu, pi, m, cur_prob=weights[j])
-                for j in range(len(data))
-            ]
-        else:
-            p_lists = [compute_p_list(data[j], mu, pi, m) for j in range(len(data))]
+        p_lists = [compute_p_list(data[j], mu, pi, m) for j in range(len(data))]
         # M step
         p_tots = [sum([p for c, p in p_lists[j]]) for j in range(len(data))]
         s = 0.0
@@ -123,12 +117,17 @@ def univariate_EM(data, m, mu, n_iter=100, eps=1e-3, pi=None, weights=None):
             for c, p in p_lists[i]:
                 l = len(c)
                 for j in range(m - 1):  # changing this to -1 fixed for n_cat=3
-                    if j < l:  # why?
+                    if j < l:
                         if c[j][1] == 1:
                             si += p
                     else:
                         si += p
-            s += si / p_tots[i]
+            if weights is not None:
+                s += (si / p_tots[i]) * weights[i]
+            else:
+                s += si / p_tots[i]
+        if weights is not None:
+            s = s / np.mean(weights)
         pi = s / (m - 1) / len(data)
         pi_list.append(pi)
         lls_list.append(compute_loglikelihood(data, m, mu, pi, p_lists=p_lists))
@@ -166,7 +165,7 @@ def compute_loglikelihood(data, m, mu, pi, p_lists=None):
 
 
 class OrdinalClustering:
-    def __init__(self, n_clusters, n_iter=100, eps=1e-3, silent=True):
+    def __init__(self, n_clusters, n_iter=100, eps=1e-1, silent=True):
         self.n_clusters = n_clusters
         self.n_iter = n_iter
         self.eps = eps
@@ -209,10 +208,13 @@ class OrdinalClustering:
             if not self.silent:
                 print("Iteration {}".format(_))
                 print("-" * 20)
+                print(f"Current mu: {mu}")
+                print(f"Current pi: {pi}")
             # E step
             pw1_x, p_list_x = expectation(data, mu, pi, m, alpha)
 
-            log_likelihood = np.sum(pw1_x * np.log(alpha * p_list_x))
+            # log_likelihood = np.sum(pw1_x * np.log(alpha * p_list_x))
+            log_likelihood = np.sum(np.log(np.sum(alpha * p_list_x, axis=1)))
             if not self.silent:
                 print("Log-likelihood: {}".format(log_likelihood))
                 print()
@@ -226,6 +228,7 @@ class OrdinalClustering:
             alpha = np.mean(pw1_x, axis=0)
 
             # Internal EM (with threshold): Update pi and mu
+            old_pi = pi.copy()
             for k in range(self.n_clusters):
                 weights = pw1_x[:, k]
                 for j in range(d):
@@ -237,10 +240,10 @@ class OrdinalClustering:
                             data[:, j],
                             m[j],
                             mu_test,
-                            100,
+                            20,
                             pi=pi[k, j],
                             weights=weights,
-                            eps=1e-3,
+                            eps=1e-1,
                         )
                         pis_local.append(pis[-1])
                         lls_local.append(lls_run[-1])
@@ -249,17 +252,20 @@ class OrdinalClustering:
                         data[:, j],
                         m[j],
                         mu[k, j],
-                        100,
+                        20,
                         pi=pi[k, j],
                         weights=weights,
-                        eps=1e-3,
+                        eps=1e-1,
                     )
                     pi[k, j] = pi_update[-1]
-                    # # pi is updated according to the new mu
-                    pi[k, j] = pis_local[np.argmax(lls_local)]
                     mu[k, j] = mus[np.argmax(lls_local)]
             log_likelihood_old = log_likelihood
             ll_list.append(log_likelihood)
+
+            if np.linalg.norm(pi - old_pi) < self.eps:
+                if not self.silent:
+                    print("Converged, stopping...")
+                break
 
         self.alpha = alpha
         self.mu = mu
@@ -285,7 +291,7 @@ if __name__ == "__main__":
     parser.add_argument("--k", type=int, default=2)
     parser.add_argument("--type", type=str, default="multivariate")
     parser.add_argument("--n_iter", type=int, default=20)
-    parser.add_argument("--eps", type=float, default=1e-3)
+    parser.add_argument("--eps", type=float, default=1e-1)
     args = parser.parse_args()
 
     if args.type == "univariate":
