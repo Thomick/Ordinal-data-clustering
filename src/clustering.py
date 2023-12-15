@@ -1,7 +1,7 @@
 import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from data_generator import generate_data
+from src.data_generator import generate_data
 
 
 # Recusively compute the probabilities
@@ -105,6 +105,7 @@ def univariate_EM(data, m, mu, n_iter=100, eps=1e-3, pi=None, weights=None):
         pi = 0.5
     pi_list = [pi]
     lls_list = []
+    old_ll = -np.inf
     for _ in range(n_iter):
         # E step
         if weights is not None:
@@ -131,8 +132,9 @@ def univariate_EM(data, m, mu, n_iter=100, eps=1e-3, pi=None, weights=None):
         pi = s / (m - 1) / len(data)
         pi_list.append(pi)
         lls_list.append(compute_loglikelihood(data, m, mu, pi, p_lists=p_lists))
-        if abs(pi - pi_list[-2]) < eps:
+        if abs(lls_list[-1] - old_ll) < eps:  # threshold on log-likelihood
             break
+        old_ll = lls_list[-1]
 
     return mu, pi_list, lls_list
 
@@ -164,10 +166,11 @@ def compute_loglikelihood(data, m, mu, pi, p_lists=None):
 
 
 class OrdinalClustering:
-    def __init__(self, n_clusters, n_iter=100, eps=1e-3):
+    def __init__(self, n_clusters, n_iter=100, eps=1e-3, silent=True):
         self.n_clusters = n_clusters
         self.n_iter = n_iter
         self.eps = eps
+        self.silent = silent
 
     def fit(self, data, m):
         d = data.shape[1]
@@ -179,10 +182,13 @@ class OrdinalClustering:
 
         def expectation(data, mu, pi, m, alpha):
             p_list = []
-            for x in data:
+            p_list_sum = []
+            for i, x in enumerate(data):
                 p_list.append([])
+                p_list_sum.append([])
                 for k in range(self.n_clusters):
                     p_list[-1].append([])
+                    p_list_sum[-1].append([])
                     for j in range(d):
                         dimension_p_list = compute_p_list(
                             x[j],
@@ -191,15 +197,7 @@ class OrdinalClustering:
                             m[j],
                         )
                         p_list[-1][-1].append(dimension_p_list)
-
-            p_list_sum = []
-            for i in range(len(data)):
-                p_list_sum.append([])
-                for k in range(self.n_clusters):
-                    p_list_sum[-1].append([])
-                    for j in range(d):
-                        dimension_p_tot = sum([p for c, p in p_list[i][k][j]])
-                        p_list_sum[-1][-1].append(dimension_p_tot)
+                        p_list_sum[-1][-1].append(sum([p for c, p in dimension_p_list]))
 
             p_list_x = np.prod(np.array(p_list_sum), axis=2)
             pw1_x = (alpha * p_list_x) / np.sum(alpha * p_list_x, axis=1).reshape(-1, 1)
@@ -208,15 +206,26 @@ class OrdinalClustering:
         log_likelihood_old = -np.inf
         ll_list = []
         for _ in range(self.n_iter):
+            if not self.silent:
+                print("Iteration {}".format(_))
+                print("-" * 20)
             # E step
             pw1_x, p_list_x = expectation(data, mu, pi, m, alpha)
+
             log_likelihood = np.sum(pw1_x * np.log(alpha * p_list_x))
+            if not self.silent:
+                print("Log-likelihood: {}".format(log_likelihood))
+                print()
+            if np.abs(log_likelihood - log_likelihood_old) < self.eps:
+                if not self.silent:
+                    print("Converged, stopping...")
+                break
 
             # M step
             # Update alpha
             alpha = np.mean(pw1_x, axis=0)
 
-            # Internal EM step: Update pi and mu
+            # Internal EM (with threshold): Update pi and mu
             for k in range(self.n_clusters):
                 weights = pw1_x[:, k]
                 for j in range(d):
@@ -225,21 +234,30 @@ class OrdinalClustering:
                     mus = np.arange(1, m[j] + 1)
                     for mu_test in mus:
                         mu_r, pis, lls_run = univariate_EM(
-                            data[:, j], m[j], mu_test, 1, pi=pi[k, j], weights=weights
+                            data[:, j],
+                            m[j],
+                            mu_test,
+                            100,
+                            pi=pi[k, j],
+                            weights=weights,
+                            eps=1e-3,
                         )
                         pis_local.append(pis[-1])
                         lls_local.append(lls_run[-1])
                     # pi is updated according to the previous mu
                     mu_, pi_update, lls_run = univariate_EM(
-                        data[:, j], m[j], mu[k, j], 1, pi=pi[k, j], weights=weights
+                        data[:, j],
+                        m[j],
+                        mu[k, j],
+                        100,
+                        pi=pi[k, j],
+                        weights=weights,
+                        eps=1e-3,
                     )
                     pi[k, j] = pi_update[-1]
                     # # pi is updated according to the new mu
-                    # pi[k, j] = pis_local[np.argmax(lls_local)]
+                    pi[k, j] = pis_local[np.argmax(lls_local)]
                     mu[k, j] = mus[np.argmax(lls_local)]
-
-            if np.abs(log_likelihood - log_likelihood_old) < self.eps:
-                break
             log_likelihood_old = log_likelihood
             ll_list.append(log_likelihood)
 
