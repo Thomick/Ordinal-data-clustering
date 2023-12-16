@@ -116,10 +116,12 @@ def univariate_EM(data, m, mu, n_iter=100, eps=1e-3, pi=None, weights=None):
             si = 0.0
             for c, p in p_lists[i]:
                 l = len(c)
-                if m == 2:
+                if m <= 2:
                     stop = m - 1
                 else:
                     stop = m - 2
+                if m == 3:
+                    l = len(c) - 1
                 for j in range(stop):  # changing this to -1 fixed for n_cat=3
                     if j < l:
                         if c[j][1] == 1:
