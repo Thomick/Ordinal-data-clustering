@@ -116,7 +116,11 @@ def univariate_EM(data, m, mu, n_iter=100, eps=1e-3, pi=None, weights=None):
             si = 0.0
             for c, p in p_lists[i]:
                 l = len(c)
-                for j in range(m - 1):  # changing this to -1 fixed for n_cat=3
+                if m == 2:
+                    stop = m - 1
+                else:
+                    stop = m - 2
+                for j in range(stop):  # changing this to -1 fixed for n_cat=3
                     if j < l:
                         if c[j][1] == 1:
                             si += p
@@ -130,7 +134,9 @@ def univariate_EM(data, m, mu, n_iter=100, eps=1e-3, pi=None, weights=None):
             s = s / np.mean(weights)
         pi = s / (m - 1) / len(data)
         pi_list.append(pi)
-        lls_list.append(compute_loglikelihood(data, m, mu, pi, p_lists=p_lists))
+        lls_list.append(
+            compute_loglikelihood(data, m, mu, pi, p_lists=p_lists, weights=weights)
+        )
         if abs(lls_list[-1] - old_ll) < eps:  # threshold on log-likelihood
             break
         old_ll = lls_list[-1]
@@ -138,7 +144,7 @@ def univariate_EM(data, m, mu, n_iter=100, eps=1e-3, pi=None, weights=None):
     return mu, pi_list, lls_list
 
 
-def compute_loglikelihood(data, m, mu, pi, p_lists=None):
+def compute_loglikelihood(data, m, mu, pi, p_lists=None, weights=None):
     """
     Compute the loglikelihood of the data
     :param data: a single feature
@@ -160,7 +166,8 @@ def compute_loglikelihood(data, m, mu, pi, p_lists=None):
         # loglikelihood += (
         #     np.sum([p * np.log(p) if p > 0 else 0 for c, p in p_list]) / p_tot
         # )
-        loglikelihood += np.log(p_tot)
+        weight = 1 if weights is None else weights[i]
+        loglikelihood += np.log(p_tot) * weight
     return loglikelihood
 
 
@@ -240,7 +247,7 @@ class OrdinalClustering:
                             data[:, j],
                             m[j],
                             mu_test,
-                            20,
+                            10,
                             pi=pi[k, j],
                             weights=weights,
                             eps=1e-1,
@@ -252,12 +259,14 @@ class OrdinalClustering:
                         data[:, j],
                         m[j],
                         mu[k, j],
-                        20,
+                        10,
                         pi=pi[k, j],
                         weights=weights,
                         eps=1e-1,
                     )
                     pi[k, j] = pi_update[-1]
+                    # pi is updated according to the best mu
+                    # pi[k, j] = pis_local[np.argmax(lls_local)]
                     mu[k, j] = mus[np.argmax(lls_local)]
             log_likelihood_old = log_likelihood
             ll_list.append(log_likelihood)
