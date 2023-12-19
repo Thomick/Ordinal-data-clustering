@@ -1,49 +1,66 @@
+from typing import Optional
 import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from src.data_generator import generate_data
 
 
-# Recusively compute the probabilities
-def compute_p_list(x, mu, pi, m, cur_values=[], cur_prob=1.0, it=0):
+type_trajectory = list[tuple[int, int, list[int]]]
+
+
+# Recursively compute the probabilities
+def compute_p_list(x: int,
+                   mu: int,
+                   pi: float,
+                   m: int,
+                   cur_values: Optional[type_trajectory] = None,
+                   cur_prob=1.0,
+                   it=0
+                   ) -> list[tuple[type_trajectory, float]]:
     """
     Compute the probabilities of the (C_is, x) over all possible trajectories.
     Starting with the entire set of categories (probability 1), check every
     possible trajectory and update the probabilities accordingly.
-    :param data: a single feature
+    :param x: a single feature
     :param mu: position parameter
     :param pi: precision parameter
+    :param m: number of categories
+    :param cur_values: current trajectories (optional)
+    :param cur_prob: current probability (optional)
+    :param it: current iteration (optional)
     :return: a list of probabilities :
         Every element is a trajectory and its probability (assuming x is attained)
           (list of objects [(y, z, e), p])
     """
 
-    if len(cur_values) == 0:
-        cur_e = list(np.arange(1, m + 1))
+    if cur_values is None:
+        cur_e: list[int] = list(range(1, m + 1))
+        cur_values: type_trajectory = []
     else:
         cur_e = cur_values[-1][2]
     if len(cur_e) == 0:
-        return [[cur_values, 0.0]]
+        return [(cur_values, 0.0)]
     if len(cur_e) == 1:
         # We have reached the end of the trajectory because only one element remains
         # If the element is x, then the probability is 1 (normalized with the trajectory probability)
         # Otherwise, the probability is 0
         # print("    " * it, cur_values, cur_prob)
-        return [[cur_values, (cur_e[0] == x).astype(float) * cur_prob]]
+        return [(cur_values, (cur_e[0] == x) * cur_prob)]
 
     p_list = []
     for y in cur_e:
+        y: int
         e_minus = [e for e in cur_e if e < y]
         e_plus = [e for e in cur_e if e > y]
-        e_equal = [e for e in cur_e if e == y]
-        for z in [0, 1]:
+        e_equal = [e for e in cur_e if e == y]  # e_equal = [y]
+        for z in (0, 1):
             if z == 0:
                 p_list += compute_p_list(
                     x,
                     mu,
                     pi,
                     m,
-                    cur_values + [[y, z, e_minus]],
+                    cur_values + [(y, z, e_minus)],
                     cur_prob * len(e_minus) / (len(cur_e) ** 2) * (1 - pi),
                     # probability to pick y then to pick z and finally to pick ejp1
                     it=it + 1,
@@ -53,7 +70,7 @@ def compute_p_list(x, mu, pi, m, cur_values=[], cur_prob=1.0, it=0):
                     mu,
                     pi,
                     m,
-                    cur_values + [[y, z, e_plus]],
+                    cur_values + [(y, z, e_plus)],
                     cur_prob * len(e_plus) / (len(cur_e) ** 2) * (1 - pi),
                     it=it + 1,
                 )
@@ -62,13 +79,13 @@ def compute_p_list(x, mu, pi, m, cur_values=[], cur_prob=1.0, it=0):
                     mu,
                     pi,
                     m,
-                    cur_values + [[y, z, e_equal]],
+                    cur_values + [(y, z, e_equal)],
                     cur_prob * len(e_equal) / (len(cur_e) ** 2) * (1 - pi),
                     it=it + 1,
                 )
             else:
-                min_e = e_equal
-                min_dist = abs(mu - e_equal[0])
+                min_e = e_equal  # e_equal = [y]
+                min_dist = abs(mu - e_equal[0])  # min_dist = abs(mu - y)
                 if len(e_minus) != 0:
                     d_e_minus = min([abs(mu - e_minus[0]), abs(mu - e_minus[-1])])
                     if d_e_minus < min_dist:
@@ -84,7 +101,7 @@ def compute_p_list(x, mu, pi, m, cur_values=[], cur_prob=1.0, it=0):
                     mu,
                     pi,
                     m,
-                    cur_values + [[y, z, min_e]],
+                    cur_values + [(y, z, min_e)],
                     cur_prob * pi / len(cur_e),
                     it=it + 1,
                 )
@@ -295,7 +312,7 @@ class OrdinalClustering:
         return self.labels_
 
 
-if __name__ == "__main__":
+def main():
     import argparse
 
     parser = argparse.ArgumentParser()
@@ -375,3 +392,7 @@ if __name__ == "__main__":
         plt.xlabel("iteration")
         plt.title("Log-likelihood of the AECM algorithm")
         plt.show()
+
+
+if __name__ == "__main__":
+    main()
