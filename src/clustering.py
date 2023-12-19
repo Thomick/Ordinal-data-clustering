@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 from src.data_generator import generate_data
 
 
+compact_type_trajectory = list[tuple[int, int, int, int]]
+# y, z, e_min, e_max such that e = [e_min ... e_max[
 type_trajectory = list[tuple[int, int, list[int]]]
 
 
@@ -13,9 +15,6 @@ def compute_p_list(x: int,
                    mu: int,
                    pi: float,
                    m: int,
-                   cur_values: Optional[type_trajectory] = None,
-                   cur_prob=1.0,
-                   it=0
                    ) -> list[tuple[type_trajectory, float]]:
     """
     Compute the probabilities of the (C_is, x) over all possible trajectories.
@@ -25,87 +24,111 @@ def compute_p_list(x: int,
     :param mu: position parameter
     :param pi: precision parameter
     :param m: number of categories
-    :param cur_values: current trajectories (optional)
-    :param cur_prob: current probability (optional)
-    :param it: current iteration (optional)
     :return: a list of probabilities :
         Every element is a trajectory and its probability (assuming x is attained)
           (list of objects [(y, z, e), p])
     """
 
-    if cur_values is None:
-        cur_e: list[int] = list(range(1, m + 1))
-        cur_values: type_trajectory = []
-    else:
-        cur_e = cur_values[-1][2]
-    if len(cur_e) == 0:
-        return [(cur_values, 0.0)]
-    if len(cur_e) == 1:
-        # We have reached the end of the trajectory because only one element remains
-        # If the element is x, then the probability is 1 (normalized with the trajectory probability)
-        # Otherwise, the probability is 0
-        # print("    " * it, cur_values, cur_prob)
-        return [(cur_values, (cur_e[0] == x) * cur_prob)]
+    def recussive_compute_p_list(cur_e_min: int,
+                                 cur_e_max: int,
+                                 cur_values: compact_type_trajectory,
+                                 cur_prob: float=1.0,
+                                 it: int=0
+                                ) -> list[tuple[type_trajectory, float]]:
+        """
+        Auxiliary function to compute_p_list
 
-    p_list = []
-    for y in cur_e:
-        y: int
-        e_minus = [e for e in cur_e if e < y]
-        e_plus = [e for e in cur_e if e > y]
-        e_equal = [e for e in cur_e if e == y]  # e_equal = [y]
-        for z in (0, 1):
-            if z == 0:
-                p_list += compute_p_list(
-                    x,
-                    mu,
-                    pi,
-                    m,
-                    cur_values + [(y, z, e_minus)],
-                    cur_prob * len(e_minus) / (len(cur_e) ** 2) * (1 - pi),
-                    # probability to pick y then to pick z and finally to pick ejp1
-                    it=it + 1,
-                )
-                p_list += compute_p_list(
-                    x,
-                    mu,
-                    pi,
-                    m,
-                    cur_values + [(y, z, e_plus)],
-                    cur_prob * len(e_plus) / (len(cur_e) ** 2) * (1 - pi),
-                    it=it + 1,
-                )
-                p_list += compute_p_list(
-                    x,
-                    mu,
-                    pi,
-                    m,
-                    cur_values + [(y, z, e_equal)],
-                    cur_prob * len(e_equal) / (len(cur_e) ** 2) * (1 - pi),
-                    it=it + 1,
-                )
-            else:
-                min_e = e_equal  # e_equal = [y]
-                min_dist = abs(mu - e_equal[0])  # min_dist = abs(mu - y)
-                if len(e_minus) != 0:
-                    d_e_minus = min([abs(mu - e_minus[0]), abs(mu - e_minus[-1])])
-                    if d_e_minus < min_dist:
-                        min_e = e_minus
-                        min_dist = d_e_minus
-                if len(e_plus) != 0:
-                    d_e_plus = min([abs(mu - e_plus[0]), abs(mu - e_plus[-1])])
-                    if d_e_plus < min_dist:
-                        min_e = e_plus
-                        min_dist = d_e_plus
-                p_list += compute_p_list(
-                    x,
-                    mu,
-                    pi,
-                    m,
-                    cur_values + [(y, z, min_e)],
-                    cur_prob * pi / len(cur_e),
-                    it=it + 1,
-                )
-    return p_list
+        Parameters
+        ----------
+        cur_e_min : int
+            Minimum value of the current interval
+        cur_e_max : int
+            Maximum value of the current interval (excluded)
+        cur_values : compact_type_trajectory
+            Current trajectories
+        cur_prob : float
+            Current probability
+        it : int
+            Current iteration
+        
+        Returns
+        -------
+        list[tuple[type_trajectory, float]]
+            List of trajectories and their probabilities
+        """
+        if cur_e_max == cur_e_min:
+            new_cur_values = []
+            for y, z, e_min, e_max in cur_values:
+                new_cur_values.append((y, z, list(range(e_min, e_max))))
+            return [(new_cur_values, 0.0)]
+        if cur_e_min + 1 == cur_e_max:
+            # We have reached the end of the trajectory because only one element remains
+            # If the element is x, then the probability is 1 (normalized with the trajectory probability)
+            # Otherwise, the probability is 0
+            # print("    " * it, cur_values, cur_prob)
+
+            # reconstruct the list of e
+            new_cur_values = []
+            for y, z, e_min, e_max in cur_values:
+                new_cur_values.append((y, z, list(range(e_min, e_max))))
+            return [(new_cur_values, (cur_e_min == x) * cur_prob)]
+
+        p_list = []
+        for y in range(cur_e_min, cur_e_max):
+            y: int
+            len_cur_e = cur_e_max - cur_e_min
+
+            len_e_minus = y - cur_e_min
+            len_e_plus = cur_e_max - (y + 1)
+
+            # z = 0
+            p_list.extend(recussive_compute_p_list(
+                cur_e_min,
+                y,
+                cur_values + [(y, 0, cur_e_min, y)],
+                cur_prob * len_e_minus / len_cur_e ** 2 * (1 - pi),
+                # probability to pick y then to pick z and finally to pick ejp1
+                it=it + 1,
+            ))
+            
+            p_list.extend(recussive_compute_p_list(
+                y + 1,
+                cur_e_max,
+                cur_values + [(y, 0, y + 1, cur_e_max)],
+                cur_prob * len_e_plus / len_cur_e ** 2 * (1 - pi),
+                it=it + 1,
+            ))
+            p_list.extend(recussive_compute_p_list(
+                y,
+                y + 1,
+                cur_values + [(y, 0, y, y + 1)],
+                cur_prob * 1 / len_cur_e ** 2 * (1 - pi),
+                it=it + 1,
+            ))
+
+            # z = 1
+            min_e = (y, y + 1)
+            min_dist = abs(mu - y)
+            if cur_e_min != y:
+                d_e_minus = min(abs(mu - cur_e_min), abs(mu - (y - 1)))
+                if d_e_minus < min_dist:
+                    min_e = (cur_e_min, y)
+                    min_dist = d_e_minus
+            if y + 1 != cur_e_max:
+                d_e_plus = min(abs(mu - (y + 1)), abs(mu - (cur_e_max - 1)))
+                if d_e_plus < min_dist:
+                    min_e = (y + 1, cur_e_max)
+                    min_dist = d_e_plus
+            p_list.extend(recussive_compute_p_list(
+                min_e[0],
+                min_e[1],
+                cur_values + [(y, 1, min_e[0], min_e[1])],
+                cur_prob * pi / len_cur_e,
+                it=it + 1,
+            ))
+        return p_list
+    
+    return recussive_compute_p_list(1, m + 1, [], 1, 0)
 
 
 # Use EM algorithm to find the parameters of BOS model of a single feature
@@ -127,7 +150,7 @@ def univariate_EM(data, m, mu, n_iter=100, eps=1e-3, pi=None, weights=None):
         # E step
         p_lists = [compute_p_list(data[j], mu, pi, m) for j in range(len(data))]
         # M step
-        p_tots = [sum([p for c, p in p_lists[j]]) for j in range(len(data))]
+        p_tots = [sum([p for _, p in p_lists[j]]) for j in range(len(data))]
         s = 0.0
         for i in range(len(data)):
             si = 0.0
