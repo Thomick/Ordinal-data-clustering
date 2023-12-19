@@ -129,9 +129,9 @@ def univariate_EM(data, m, mu, n_iter=100, eps=1e-3, pi=None, weights=None):
                     else:
                         si += p
             if weights is not None:
-                s += (si / p_tots[i]) * weights[i]
+                s += (si / (p_tots[i] + 1e-10)) * weights[i]
             else:
-                s += si / p_tots[i]
+                s += si / (p_tots[i] + 1e-10)
         if weights is not None:
             s = s / np.mean(weights)
         pi = s / (m - 1) / len(data)
@@ -169,7 +169,7 @@ def compute_loglikelihood(data, m, mu, pi, p_lists=None, weights=None):
         #     np.sum([p * np.log(p) if p > 0 else 0 for c, p in p_list]) / p_tot
         # )
         weight = 1 if weights is None else weights[i]
-        loglikelihood += np.log(p_tot) * weight
+        loglikelihood += np.log(p_tot + 1e-10) * weight
     return loglikelihood
 
 
@@ -282,6 +282,9 @@ class OrdinalClustering:
         self.mu = mu
         self.pi = pi
         self.ll_list = ll_list
+        self.bic = log_likelihood + 0.5 * np.log(data.shape[0]) * (
+            self.n_clusters + d * self.n_clusters
+        )
 
         self.labels_ = np.argmax(pw1_x, axis=1)
 
