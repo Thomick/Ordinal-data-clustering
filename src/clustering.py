@@ -267,8 +267,7 @@ def univariate_em(
                         * (1 - pi) ** (missing_length - l)
                     )
 
-                # m >= 2 by assertion thus m - 2 >= 0
-                for j in range(len_c):  # changing this to -1 fixed for n_cat=3
+                for j in range(len_c):
                     if c[j][1] == 1:  # if z = 1
                         si += p
             if weights is not None:
