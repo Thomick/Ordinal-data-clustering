@@ -257,21 +257,18 @@ def univariate_em(
                 c: type_trajectory
                 p: float  # p(x_i, ci | mu, pi)
                 len_c = len(c)
-                missing_length = m - len_c - 1
-
-                # Add the missing probabilities when c is not complete
-                for l in range(missing_length):
-                    si += (
-                        p
-                        * comb(missing_length, l)
-                        * pi**l
-                        * (1 - pi) ** (missing_length - l)
-                    )
-
-                for j in range(len_c):  # changing this to -1 fixed for n_cat=3
-                    if c[j][1] == 1:  # if z = 1
+                stop = m - 2
+                if m == 2:
+                    stop = 1
+                if m == 3:
+                    len_c = len(c) - 1
+                # m >= 2 by assertion thus m - 2 >= 0
+                for j in range(stop):  # changing this to -1 fixed for n_cat=3
+                    if j < len_c:
+                        if c[j][1] == 1:  # if z = 1
+                            si += p
+                    else:
                         si += p
-
             if weights is not None:
                 s += (si / (p_tots[i] + 1e-10)) * weights[i]
             else:
