@@ -133,11 +133,10 @@ def compute_p_list(x: int,
 
 
 def compute_loglikelihood(data: list[int],
-                          m : int,
+                          m: int,
                           mu: int,
-                          pi : float,
-                          p_lists: Optional[list[list[tuple[type_trajectory, float]]]] = None,
-                          p_tots: Optional[list[float]] = None,
+                          pi: float,
+                          p_tots: list[float],
                           weights: Optional[list[float]] = None
                           ) -> float:
     """
@@ -153,16 +152,13 @@ def compute_loglikelihood(data: list[int],
         Position parameter
     pi : float
         Precision parameter
-    p_lists : list[list[tuple[type_trajectory, float]]], optional
-        List of p_lists, should be given if already computed to
-        avoid recomputing costly computations, by default None
-        p_lists[i][j] = p(x_i, c_j | mu_{q + 1}, pi_{q + 1})
-    p_tots : list[float], optional
-        List of p_tots, p_tots[i] = p(x_i | mu_{q + 1}, pi_{q + 1}), by default None
+    p_tots : list[float]
+        List of p_tots, p_tots[i] = p(x_i | parameters)
     weights : list[float], optional
         Weights of the observations, by default None
-        In the case of univariate data, weights[i] = p(c_i | x_i, mu_q, pi_q)
-        In the case of multivariate data, weights[i] is the weight of the ith observation (?)
+        In the case of univariate data, weights[i] = 1
+        In the case of multivariate data, weights[i] is the weight of the ith observation
+        probability that the ith observation is in the cluster k is proportional to weights[i]
 
     Returns
     -------
@@ -171,21 +167,8 @@ def compute_loglikelihood(data: list[int],
     """
     loglikelihood = 0.0
     for i in range(len(data)):
-        if p_lists is not None:
-            p_list = p_lists[i]
-        else:
-            p_list = compute_p_list(data[i], mu, pi, m)
-        
-        if p_tots is not None:
-            p_tot = p_tots[i]
-        else:
-            p_tot = sum(p for _, p in p_list)
-
-        # loglikelihood += (
-        #     np.sum([p * np.log(p) if p > 0 else 0 for c, p in p_list]) / p_tot
-        # )
         weight = 1 if weights is None else weights[i]
-        loglikelihood += np.log(p_tot + 1e-10) * weight
+        loglikelihood += np.log(p_tots[i] + 1e-10) * weight
     return loglikelihood
 
 
@@ -264,10 +247,13 @@ def univariate_em(data: list[int],
                 c: type_trajectory
                 p: float  # p(x_i, ci | mu, pi)
                 len_c = len(c)
+                stop = m - 2
+                if m == 2:
+                    stop = 1
                 if m == 3:
                     len_c = len(c) - 1
                 # m >= 2 by assertion thus m - 2 >= 0
-                for j in range(m - 2):  # changing this to -1 fixed for n_cat=3
+                for j in range(stop):  # changing this to -1 fixed for n_cat=3
                     if j < len_c:
                         if c[j][1] == 1:  # if z = 1
                             si += p
@@ -283,7 +269,6 @@ def univariate_em(data: list[int],
         pi_list.append(pi)
         lls_list.append(
             compute_loglikelihood(data, m, mu, pi,
-                                  p_lists=p_lists,
                                   p_tots=p_tots,
                                   weights=weights)
         )
