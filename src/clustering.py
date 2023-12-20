@@ -76,7 +76,7 @@ def compute_p_list(x: int,
 
         p_list = []
         for y in range(cur_e_min, cur_e_max):
-            y: int
+            y: int  # pivot
             len_cur_e = cur_e_max - cur_e_min
 
             len_e_minus = y - cur_e_min
@@ -132,12 +132,14 @@ def compute_p_list(x: int,
     return recursive_compute_p_list(1, m + 1, [], 1, 0)
 
 
-def compute_loglikelihood(data,
-                          m,
-                          mu,
-                          pi,
-                          p_lists=None,
-                          weights=None):
+def compute_loglikelihood(data: list[int],
+                          m : int,
+                          mu: int,
+                          pi : float,
+                          p_lists: Optional[list[list[tuple[type_trajectory, float]]]] = None,
+                          p_tots: Optional[list[float]] = None,
+                          weights: Optional[list[float]] = None
+                          ) -> float:
     """
     Compute the loglikelihood of the data
 
@@ -154,8 +156,13 @@ def compute_loglikelihood(data,
     p_lists : list[list[tuple[type_trajectory, float]]], optional
         List of p_lists, should be given if already computed to
         avoid recomputing costly computations, by default None
+        p_lists[i][j] = p(x_i, c_j | mu_{q + 1}, pi_{q + 1})
+    p_tots : list[float], optional
+        List of p_tots, p_tots[i] = p(x_i | mu_{q + 1}, pi_{q + 1}), by default None
     weights : list[float], optional
         Weights of the observations, by default None
+        In the case of univariate data, weights[i] = p(c_i | x_i, mu_q, pi_q)
+        In the case of multivariate data, weights[i] is the weight of the ith observation (?)
 
     Returns
     -------
@@ -168,10 +175,12 @@ def compute_loglikelihood(data,
             p_list = p_lists[i]
         else:
             p_list = compute_p_list(data[i], mu, pi, m)
-        # for c, p in p_list:
-        # print(c, p)
-        # pass
-        p_tot = sum(p for _, p in p_list)
+        
+        if p_tots is not None:
+            p_tot = p_tots[i]
+        else:
+            p_tot = sum(p for _, p in p_list)
+
         # loglikelihood += (
         #     np.sum([p * np.log(p) if p > 0 else 0 for c, p in p_list]) / p_tot
         # )
@@ -188,9 +197,10 @@ def univariate_em(data: list[int],
                   eps: float = 1e-3,
                   pi: float = 0.5,
                   weights=None
-                  ) -> tuple[int, list[float], list[float]]:
+                  ) -> tuple[list[float], list[float]]:
     """
-    Use EM algorithm to find the parameters of BOS model
+    Use EM algorithm to find the parameter pi of BOS model
+    for a fixed mu
 
     Parameters
     ----------
@@ -199,7 +209,7 @@ def univariate_em(data: list[int],
     m : int
         Number of categories
     mu : int
-        Position parameter to initialize the EM algorithm
+        Position parameter
     n_iter : int, optional
         Number of iterations, by default 100
     eps : float, optional
@@ -212,8 +222,6 @@ def univariate_em(data: list[int],
 
     Returns
     -------
-    int
-        Estimated position parameter
     list[float]
         List of estimated precision parameters
     list[float]
@@ -221,7 +229,7 @@ def univariate_em(data: list[int],
     """
     assert m >= 1, "m must be >= 1"
     if m == 1:
-        return mu, [1], [0]
+        return [1], [0]
     # Initialization
     pi_list: list[float] = [pi]
     lls_list = []
@@ -230,16 +238,31 @@ def univariate_em(data: list[int],
     for _ in range(n_iter):
         # E step
         p_lists = [compute_p_list(x, mu, pi, m) for x in data]
-        # p_lists[i][j] = p(x_i, c_j | mu, pi) 
+        # p_lists[i][j] = p(x_i, c_j | mu, pi)
         # M step
         p_tots: list[float] = [sum(p for _, p in p_lists[j]) for j in range(len(data))]
         # p_tots[i] = p(x_i | mu, pi) = sum_j p(x_i, c_j | mu, pi)
         s = 0.0
+        # s = sum_i^n sum_j^{m-1} p(z_ij = 1 | x_i, mu, pi_q)
+        # we compute s = sum_i^n s'_i where
+        # s'_i = sum_j^{m-1} p(z_ij = 1 | x_i, mu, pi_q)
+        # warning: s'_i != si
         for i in range(len(data)):
             si = 0.0
+            # to compute p(z_ij = 1 | x_i, mu, pi_q), we use Bayes' rule:
+            # p(z_ij = 1 | x_i, mu, pi_q) = sum_{c} p(z_ij = 1 | c_j, x_i, mu, pi_q) p(c_j | x_i, mu, pi_q)
+            # where p(c_j | x_i, mu, pi_q) = p(x_i, c_j | mu, pi_q) / p(x_i | mu, pi_q)
+            # hence we can factorize 1 / p(x_i | mu, pi_q) and get:
+            # p(z_ij = 1 | x_i, mu, pi_q)
+            # = 1 / p(x_i | mu, pi_q) sum_c p(z_ij = 1 | c_j, x_i, mu, pi_q) p(x_i, c_j | mu, pi_q)
+            # we can also sum over j = 1 to m - 1 to get si:
+            # with si = [sum_j^{m-1} p(z_ij = 1 | x_i, mu, pi_q)] * p(x_i | mu, pi_q)
+            # si is computable because p_lists[i][j] = p(x_i, c_j | mu, pi_q) and
+            # p(z_ij = 1 | c, x_i, mu, pi_q) = 1 if z_ij = 1 in c_j, 0 otherwise
+
             for c, p in p_lists[i]:
                 c: type_trajectory
-                p: float  # p(x_i | mu, pi, c)
+                p: float  # p(x_i, ci | mu, pi)
                 len_c = len(c)
                 if m == 3:
                     len_c = len(c) - 1
@@ -259,13 +282,16 @@ def univariate_em(data: list[int],
         pi = s / (m - 1) / len(data)
         pi_list.append(pi)
         lls_list.append(
-            compute_loglikelihood(data, m, mu, pi, p_lists=p_lists, weights=weights)
+            compute_loglikelihood(data, m, mu, pi,
+                                  p_lists=p_lists,
+                                  p_tots=p_tots,
+                                  weights=weights)
         )
         if abs(lls_list[-1] - old_ll) < eps:  # threshold on log-likelihood
             break
         old_ll = lls_list[-1]
 
-    return mu, pi_list, lls_list
+    return pi_list, lls_list
 
 
 class OrdinalClustering:
@@ -340,7 +366,7 @@ class OrdinalClustering:
                     pis_local = []
                     mus = np.arange(1, m[j] + 1)
                     for mu_test in mus:
-                        mu_r, pis, lls_run = univariate_em(
+                        pis, lls_run = univariate_em(
                             data[:, j],
                             m[j],
                             mu_test,
@@ -352,7 +378,7 @@ class OrdinalClustering:
                         pis_local.append(pis[-1])
                         lls_local.append(lls_run[-1])
                     # pi is updated according to the previous mu
-                    mu_, pi_update, lls_run = univariate_em(
+                    pi_update, lls_run = univariate_em(
                         data[:, j],
                         m[j],
                         mu[k, j],
@@ -417,7 +443,7 @@ def main():
         pi_list = []
         mu_list = list(range(1, m + 1))
         for mu in tqdm(mu_list):
-            mu, pl, lls = univariate_em(data, m, mu, args.n_iter, args.eps)
+            pl, lls = univariate_em(data, m, mu, args.n_iter, args.eps)
             pi_list.append(pl[-1])
             ll_list.append(compute_loglikelihood(data, m, mu, pl[-1]))
 
