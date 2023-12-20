@@ -11,11 +11,12 @@ type_trajectory = list[tuple[int, int, list[int]]]
 
 
 # Recursively compute the probabilities
-def compute_p_list(x: int,
-                   mu: int,
-                   pi: float,
-                   m: int,
-                   ) -> list[tuple[type_trajectory, float]]:
+def compute_p_list(
+    x: int,
+    mu: int,
+    pi: float,
+    m: int,
+) -> list[tuple[type_trajectory, float]]:
     """
     Compute the probabilities of the (C_is, x) over all possible trajectories.
     Starting with the entire set of categories (probability 1), check every
@@ -30,12 +31,13 @@ def compute_p_list(x: int,
         [(c, P(c, x | mu, pi)) for all possible trajectories c]
     """
 
-    def recursive_compute_p_list(cur_e_min: int,
-                                 cur_e_max: int,
-                                 cur_values: compact_type_trajectory,
-                                 cur_prob: float = 1.0,
-                                 it: int = 0
-                                 ) -> list[tuple[type_trajectory, float]]:
+    def recursive_compute_p_list(
+        cur_e_min: int,
+        cur_e_max: int,
+        cur_values: compact_type_trajectory,
+        cur_prob: float = 1.0,
+        it: int = 0,
+    ) -> list[tuple[type_trajectory, float]]:
         """
         Auxiliary function to compute_p_list
 
@@ -51,7 +53,7 @@ def compute_p_list(x: int,
             Current probability
         it : int
             Current iteration
-        
+
         Returns
         -------
         list[tuple[type_trajectory, float]]
@@ -83,29 +85,35 @@ def compute_p_list(x: int,
             len_e_plus = cur_e_max - (y + 1)
 
             # z = 0
-            p_list.extend(recursive_compute_p_list(
-                cur_e_min,
-                y,
-                cur_values + [(y, 0, cur_e_min, y)],
-                cur_prob * len_e_minus / len_cur_e ** 2 * (1 - pi),
-                # probability to pick y then to pick z and finally to pick ejp1
-                it=it + 1,
-            ))
-            
-            p_list.extend(recursive_compute_p_list(
-                y + 1,
-                cur_e_max,
-                cur_values + [(y, 0, y + 1, cur_e_max)],
-                cur_prob * len_e_plus / len_cur_e ** 2 * (1 - pi),
-                it=it + 1,
-            ))
-            p_list.extend(recursive_compute_p_list(
-                y,
-                y + 1,
-                cur_values + [(y, 0, y, y + 1)],
-                cur_prob * 1 / len_cur_e ** 2 * (1 - pi),
-                it=it + 1,
-            ))
+            p_list.extend(
+                recursive_compute_p_list(
+                    cur_e_min,
+                    y,
+                    cur_values + [(y, 0, cur_e_min, y)],
+                    cur_prob * len_e_minus / len_cur_e**2 * (1 - pi),
+                    # probability to pick y then to pick z and finally to pick ejp1
+                    it=it + 1,
+                )
+            )
+
+            p_list.extend(
+                recursive_compute_p_list(
+                    y + 1,
+                    cur_e_max,
+                    cur_values + [(y, 0, y + 1, cur_e_max)],
+                    cur_prob * len_e_plus / len_cur_e**2 * (1 - pi),
+                    it=it + 1,
+                )
+            )
+            p_list.extend(
+                recursive_compute_p_list(
+                    y,
+                    y + 1,
+                    cur_values + [(y, 0, y, y + 1)],
+                    cur_prob * 1 / len_cur_e**2 * (1 - pi),
+                    it=it + 1,
+                )
+            )
 
             # z = 1
             min_e = (y, y + 1)
@@ -120,25 +128,28 @@ def compute_p_list(x: int,
                 if d_e_plus < min_dist:
                     min_e = (y + 1, cur_e_max)
                     min_dist = d_e_plus
-            p_list.extend(recursive_compute_p_list(
-                min_e[0],
-                min_e[1],
-                cur_values + [(y, 1, min_e[0], min_e[1])],
-                cur_prob * pi / len_cur_e,
-                it=it + 1,
-            ))
+            p_list.extend(
+                recursive_compute_p_list(
+                    min_e[0],
+                    min_e[1],
+                    cur_values + [(y, 1, min_e[0], min_e[1])],
+                    cur_prob * pi / len_cur_e,
+                    it=it + 1,
+                )
+            )
         return p_list
-    
+
     return recursive_compute_p_list(1, m + 1, [], 1, 0)
 
 
-def compute_loglikelihood(data: list[int],
-                          m: int,
-                          mu: int,
-                          pi: float,
-                          p_tots: list[float],
-                          weights: Optional[list[float]] = None
-                          ) -> float:
+def compute_loglikelihood(
+    data: list[int],
+    m: int,
+    mu: int,
+    pi: float,
+    p_tots: list[float],
+    weights: Optional[list[float]] = None,
+) -> float:
     """
     Compute the loglikelihood of the data
 
@@ -173,14 +184,15 @@ def compute_loglikelihood(data: list[int],
 
 
 # Use EM algorithm to find the parameters of BOS model of a single feature
-def univariate_em(data: list[int],
-                  m: int,
-                  mu: int,
-                  n_iter: int = 100,
-                  eps: float = 1e-3,
-                  pi: float = 0.5,
-                  weights=None
-                  ) -> tuple[list[float], list[float]]:
+def univariate_em(
+    data: list[int],
+    m: int,
+    mu: int,
+    n_iter: int = 100,
+    eps: float = 1e-3,
+    pi: float = 0.5,
+    weights=None,
+) -> tuple[list[float], list[float]]:
     """
     Use EM algorithm to find the parameter pi of BOS model
     for a fixed mu
@@ -268,9 +280,7 @@ def univariate_em(data: list[int],
         pi = s / (m - 1) / len(data)
         pi_list.append(pi)
         lls_list.append(
-            compute_loglikelihood(data, m, mu, pi,
-                                  p_tots=p_tots,
-                                  weights=weights)
+            compute_loglikelihood(data, m, mu, pi, p_tots=p_tots, weights=weights)
         )
         if abs(lls_list[-1] - old_ll) < eps:  # threshold on log-likelihood
             break
@@ -317,6 +327,19 @@ class OrdinalClustering:
             pw1_x = (alpha * p_list_x) / np.sum(alpha * p_list_x, axis=1).reshape(-1, 1)
             return pw1_x, p_list_x
 
+        def maximize_mu(
+            data, pi, m, weights, em_func=univariate_em, n_iter=10, eps=1e-1
+        ):
+            pis_local, lls_local = [], []
+            mus = np.arange(1, m + 1)
+            for mu_test in mus:
+                pis, lls_run = em_func(
+                    data, m, mu_test, n_iter, pi=pi, weights=weights, eps=eps
+                )
+                pis_local.append(pis[-1])
+                lls_local.append(lls_run[-1])
+            return pis_local[np.argmax(lls_local)], mus[np.argmax(lls_local)]
+
         log_likelihood_old = -np.inf
         ll_list = []
         for _ in range(self.n_iter):
@@ -347,23 +370,19 @@ class OrdinalClustering:
             for k in range(self.n_clusters):
                 weights = pw1_x[:, k]
                 for j in range(d):
-                    lls_local = []
-                    pis_local = []
-                    mus = np.arange(1, m[j] + 1)
-                    for mu_test in mus:
-                        pis, lls_run = univariate_em(
-                            data[:, j],
-                            m[j],
-                            mu_test,
-                            10,
-                            pi=pi[k, j],
-                            weights=weights,
-                            eps=1e-1,
-                        )
-                        pis_local.append(pis[-1])
-                        lls_local.append(lls_run[-1])
+                    # Search for the best mu
+                    best_pi_for_mu, best_mu = maximize_mu(
+                        data[:, j],
+                        pi[k, j],
+                        m[j],
+                        weights,
+                        em_func=univariate_em,
+                        n_iter=10,
+                        eps=1e-1,
+                    )
+
                     # pi is updated according to the previous mu
-                    pi_update, lls_run = univariate_em(
+                    pi_update, _ = univariate_em(
                         data[:, j],
                         m[j],
                         mu[k, j],
@@ -373,9 +392,11 @@ class OrdinalClustering:
                         eps=1e-1,
                     )
                     pi[k, j] = pi_update[-1]
-                    # pi is updated according to the best mu
-                    # pi[k, j] = pis_local[np.argmax(lls_local)]
-                    mu[k, j] = mus[np.argmax(lls_local)]
+
+                    # # pi is updated according to the best mu
+                    # pi[k, j] = best_pi_for_mu
+
+                    mu[k, j] = best_mu
             log_likelihood_old = log_likelihood
             ll_list.append(log_likelihood)
 
