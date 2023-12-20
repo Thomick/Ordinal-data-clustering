@@ -27,14 +27,15 @@ def compute_p_list(x: int,
     :return: a list of probabilities :
         Every element is a trajectory and its probability (assuming x is attained)
           (list of objects [(y, z, e), p])
+        [(c, P(c | x, mu, pi)) for all possible trajectories c]
     """
 
-    def recussive_compute_p_list(cur_e_min: int,
+    def recursive_compute_p_list(cur_e_min: int,
                                  cur_e_max: int,
                                  cur_values: compact_type_trajectory,
-                                 cur_prob: float=1.0,
-                                 it: int=0
-                                ) -> list[tuple[type_trajectory, float]]:
+                                 cur_prob: float = 1.0,
+                                 it: int = 0
+                                 ) -> list[tuple[type_trajectory, float]]:
         """
         Auxiliary function to compute_p_list
 
@@ -82,7 +83,7 @@ def compute_p_list(x: int,
             len_e_plus = cur_e_max - (y + 1)
 
             # z = 0
-            p_list.extend(recussive_compute_p_list(
+            p_list.extend(recursive_compute_p_list(
                 cur_e_min,
                 y,
                 cur_values + [(y, 0, cur_e_min, y)],
@@ -91,14 +92,14 @@ def compute_p_list(x: int,
                 it=it + 1,
             ))
             
-            p_list.extend(recussive_compute_p_list(
+            p_list.extend(recursive_compute_p_list(
                 y + 1,
                 cur_e_max,
                 cur_values + [(y, 0, y + 1, cur_e_max)],
                 cur_prob * len_e_plus / len_cur_e ** 2 * (1 - pi),
                 it=it + 1,
             ))
-            p_list.extend(recussive_compute_p_list(
+            p_list.extend(recursive_compute_p_list(
                 y,
                 y + 1,
                 cur_values + [(y, 0, y, y + 1)],
@@ -119,7 +120,7 @@ def compute_p_list(x: int,
                 if d_e_plus < min_dist:
                     min_e = (y + 1, cur_e_max)
                     min_dist = d_e_plus
-            p_list.extend(recussive_compute_p_list(
+            p_list.extend(recursive_compute_p_list(
                 min_e[0],
                 min_e[1],
                 cur_values + [(y, 1, min_e[0], min_e[1])],
@@ -128,43 +129,123 @@ def compute_p_list(x: int,
             ))
         return p_list
     
-    return recussive_compute_p_list(1, m + 1, [], 1, 0)
+    return recursive_compute_p_list(1, m + 1, [], 1, 0)
+
+
+def compute_loglikelihood(data,
+                          m,
+                          mu,
+                          pi,
+                          p_lists=None,
+                          weights=None):
+    """
+    Compute the loglikelihood of the data
+
+    Parameters
+    ----------
+    data : list[int]
+        List of observations from a single feature
+    m : int
+        Number of categories
+    mu : int
+        Position parameter
+    pi : float
+        Precision parameter
+    p_lists : list[list[tuple[type_trajectory, float]]], optional
+        List of p_lists, should be given if already computed to
+        avoid recomputing costly computations, by default None
+    weights : list[float], optional
+        Weights of the observations, by default None
+
+    Returns
+    -------
+    float
+        Loglikelihood of the data
+    """
+    loglikelihood = 0.0
+    for i in range(len(data)):
+        if p_lists is not None:
+            p_list = p_lists[i]
+        else:
+            p_list = compute_p_list(data[i], mu, pi, m)
+        # for c, p in p_list:
+        # print(c, p)
+        # pass
+        p_tot = sum(p for _, p in p_list)
+        # loglikelihood += (
+        #     np.sum([p * np.log(p) if p > 0 else 0 for c, p in p_list]) / p_tot
+        # )
+        weight = 1 if weights is None else weights[i]
+        loglikelihood += np.log(p_tot + 1e-10) * weight
+    return loglikelihood
 
 
 # Use EM algorithm to find the parameters of BOS model of a single feature
-def univariate_EM(data, m, mu, n_iter=100, eps=1e-3, pi=None, weights=None):
+def univariate_em(data: list[int],
+                  m: int,
+                  mu: int,
+                  n_iter: int = 100,
+                  eps: float = 1e-3,
+                  pi: float = 0.5,
+                  weights=None
+                  ) -> tuple[int, list[float], list[float]]:
     """
     Use EM algorithm to find the parameters of BOS model
-    :param data: a single feature
-    :param n_iter: number of iterations
-    :return: mu and pi
+
+    Parameters
+    ----------
+    data : list[int]
+        List of observations from a single feature
+    m : int
+        Number of categories
+    mu : int
+        Position parameter to initialize the EM algorithm
+    n_iter : int, optional
+        Number of iterations, by default 100
+    eps : float, optional
+        Threshold on log-likelihood, by default 1e-3
+    pi : float, optional
+        Precision parameter, by default None
+    weights : list[float], optional
+        Weights of the observations, by default None
+
+
+    Returns
+    -------
+    int
+        Estimated position parameter
+    list[float]
+        List of estimated precision parameters
+    list[float]
+        List of log-likelihoods
     """
+    assert m >= 1, "m must be >= 1"
+    if m == 1:
+        return mu, [1], [0]
     # Initialization
-    mu = mu
-    if pi is None:
-        pi = 0.5
-    pi_list = [pi]
+    pi_list: list[float] = [pi]
     lls_list = []
     old_ll = -np.inf
+
     for _ in range(n_iter):
         # E step
-        p_lists = [compute_p_list(data[j], mu, pi, m) for j in range(len(data))]
+        p_lists = [compute_p_list(x, mu, pi, m) for x in data]
         # M step
-        p_tots = [sum([p for _, p in p_lists[j]]) for j in range(len(data))]
+        p_tots: list[float] = [sum(p for _, p in p_lists[j]) for j in range(len(data))]
+        # p_tots[i] = p(x_i | mu, pi)
         s = 0.0
         for i in range(len(data)):
             si = 0.0
             for c, p in p_lists[i]:
-                l = len(c)
-                if m <= 2:
-                    stop = m - 1
-                else:
-                    stop = m - 2
+                c: type_trajectory
+                p: float  # p(x_i | mu, pi, c)
+                len_c = len(c)
                 if m == 3:
-                    l = len(c) - 1
-                for j in range(stop):  # changing this to -1 fixed for n_cat=3
-                    if j < l:
-                        if c[j][1] == 1:
+                    len_c = len(c) - 1
+                # m >= 2 by assertion thus m - 2 >= 0
+                for j in range(m - 2):  # changing this to -1 fixed for n_cat=3
+                    if j < len_c:
+                        if c[j][1] == 1:  # if z = 1
                             si += p
                     else:
                         si += p
@@ -184,33 +265,6 @@ def univariate_EM(data, m, mu, n_iter=100, eps=1e-3, pi=None, weights=None):
         old_ll = lls_list[-1]
 
     return mu, pi_list, lls_list
-
-
-def compute_loglikelihood(data, m, mu, pi, p_lists=None, weights=None):
-    """
-    Compute the loglikelihood of the data
-    :param data: a single feature
-    :param m: number of categories
-    :param mu: position parameter
-    :param pi: precision parameter
-    :return: loglikelihood
-    """
-    loglikelihood = 0.0
-    for i in range(len(data)):
-        if p_lists is not None:
-            p_list = p_lists[i]
-        else:
-            p_list = compute_p_list(data[i], mu, pi, m)
-        # for c, p in p_list:
-        # print(c, p)
-        # pass
-        p_tot = sum([p for c, p in p_list])
-        # loglikelihood += (
-        #     np.sum([p * np.log(p) if p > 0 else 0 for c, p in p_list]) / p_tot
-        # )
-        weight = 1 if weights is None else weights[i]
-        loglikelihood += np.log(p_tot + 1e-10) * weight
-    return loglikelihood
 
 
 class OrdinalClustering:
@@ -285,7 +339,7 @@ class OrdinalClustering:
                     pis_local = []
                     mus = np.arange(1, m[j] + 1)
                     for mu_test in mus:
-                        mu_r, pis, lls_run = univariate_EM(
+                        mu_r, pis, lls_run = univariate_em(
                             data[:, j],
                             m[j],
                             mu_test,
@@ -297,7 +351,7 @@ class OrdinalClustering:
                         pis_local.append(pis[-1])
                         lls_local.append(lls_run[-1])
                     # pi is updated according to the previous mu
-                    mu_, pi_update, lls_run = univariate_EM(
+                    mu_, pi_update, lls_run = univariate_em(
                         data[:, j],
                         m[j],
                         mu[k, j],
@@ -362,7 +416,7 @@ def main():
         pi_list = []
         mu_list = list(range(1, m + 1))
         for mu in tqdm(mu_list):
-            mu, pl, lls = univariate_EM(data, m, mu, args.n_iter, args.eps)
+            mu, pl, lls = univariate_em(data, m, mu, args.n_iter, args.eps)
             pi_list.append(pl[-1])
             ll_list.append(compute_loglikelihood(data, m, mu, pl[-1]))
 
