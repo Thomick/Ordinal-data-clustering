@@ -144,9 +144,6 @@ def compute_p_list(
 
 def compute_loglikelihood(
     data: list[int],
-    m: int,
-    mu: int,
-    pi: float,
     p_tots: list[float],
     weights: Optional[list[float]] = None,
 ) -> float:
@@ -279,14 +276,12 @@ def univariate_em(
             s = s / np.mean(weights)
         pi = s / (m - 1) / len(data)
         pi_list.append(pi)
-        lls_list.append(
-            compute_loglikelihood(data, m, mu, pi, p_tots=p_tots, weights=weights)
-        )
+        lls_list.append(compute_loglikelihood(data, p_tots=p_tots, weights=weights))
         if abs(lls_list[-1] - old_ll) < eps:  # threshold on log-likelihood
             break
         old_ll = lls_list[-1]
 
-    return pi_list, lls_list
+    return pi_list, lls_list, p_tots
 
 
 class OrdinalClustering:
@@ -333,7 +328,7 @@ class OrdinalClustering:
             pis_local, lls_local = [], []
             mus = np.arange(1, m + 1)
             for mu_test in mus:
-                pis, lls_run = em_func(
+                pis, lls_run, _ = em_func(
                     data, m, mu_test, n_iter, pi=pi, weights=weights, eps=eps
                 )
                 pis_local.append(pis[-1])
@@ -449,9 +444,9 @@ def main():
         pi_list = []
         mu_list = list(range(1, m + 1))
         for mu in tqdm(mu_list):
-            pl, lls = univariate_em(data, m, mu, args.n_iter, args.eps)
+            pl, _, p_tots = univariate_em(data, m, mu, args.n_iter, args.eps)
             pi_list.append(pl[-1])
-            ll_list.append(compute_loglikelihood(data, m, mu, pl[-1]))
+            ll_list.append(compute_loglikelihood(data, p_tots))
 
         print(
             "Estimated mu: {}, Estimated pi: {}".format(
