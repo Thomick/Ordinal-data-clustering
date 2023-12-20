@@ -27,7 +27,7 @@ def compute_p_list(x: int,
     :return: a list of probabilities :
         Every element is a trajectory and its probability (assuming x is attained)
           (list of objects [(y, z, e), p])
-        [(c, P(c | x, mu, pi)) for all possible trajectories c]
+        [(c, P(c, x | mu, pi)) for all possible trajectories c]
     """
 
     def recursive_compute_p_list(cur_e_min: int,
@@ -230,9 +230,10 @@ def univariate_em(data: list[int],
     for _ in range(n_iter):
         # E step
         p_lists = [compute_p_list(x, mu, pi, m) for x in data]
+        # p_lists[i][j] = p(x_i, c_j | mu, pi) 
         # M step
         p_tots: list[float] = [sum(p for _, p in p_lists[j]) for j in range(len(data))]
-        # p_tots[i] = p(x_i | mu, pi)
+        # p_tots[i] = p(x_i | mu, pi) = sum_j p(x_i, c_j | mu, pi)
         s = 0.0
         for i in range(len(data)):
             si = 0.0
