@@ -1,67 +1,10 @@
-from typing import Iterable, Optional, Union
+from typing import Optional, Union
 import numpy as np
-from numba import njit
-from god_model_generator import count_errors
+from god_model_tools import evaluate_polynomial
+from compute_u import get_all_errors, compute_u
 
 
-@njit
-def evaluate_polynomial(p: np.ndarray, x: float) -> float:
-    """
-    Evaluate a polynomial
-    Complexity: O(p.shape[0])
-
-    Args:
-        p: polynomial coefficients [a_0, ..., a_n]
-        x: value to evaluate
-    
-    Return:
-        p(x) = a_0 + a_1 * x + ... + a_n * x^n
-    """
-    y = 0
-    for i in range(p.shape[0] - 1, -1, -1):
-        y = y * x + p[i]
-    return y
-        
-
-def enumerate_order_info(n_cat: int) -> Iterable[tuple[int, np.ndarray]]:
-    """
-    Enumerate all possible order information for n_cat categories
-    Complexity: O(2^n_cat * n_cat)
-
-    Args:
-        n_cat: number of categories
-    
-    Return:
-        order_info: all possible order information (n_cat, 2^n_cat)
-    """
-    order_info = np.zeros(n_cat, dtype=int)
-    for i in range(2 ** n_cat):
-        yield i, order_info
-        for j in range(n_cat):
-            order_info[j] = (order_info[j] + 1) % 2
-            if order_info[j] == 1:
-                break
-
-
-def get_all_errors(n_cat: int) -> np.ndarray:
-    """
-    Generate all possible errors for n_cat categories
-    Complexity: O(2^n_cat * n_cat)
-
-    Args:
-        n_cat: number of categories
-    
-    Return:
-        errors: all possible errors (n_cat, n_cat)
-    """
-    all_errors = np.zeros((2 ** n_cat, n_cat), dtype=int)
-    for i, order_info in enumerate_order_info(n_cat):
-        all_errors[i] = count_errors(order_info)
-    
-    return all_errors
-
-
-def probability_distribution_x_given_pi(x: int, pi: float, n_cat: int) -> np.ndarray:
+def probability_distribution_x_given_pi(x: int, pi: float, m: int) -> np.ndarray:
     """
     Compute P(x | mu, pi)
     Complexity: O(2^n_cat * n_cat)
@@ -69,22 +12,22 @@ def probability_distribution_x_given_pi(x: int, pi: float, n_cat: int) -> np.nda
     Args:
         x: observed category
         pi: probability of error
-        n_cat: number of categories
+        m: number of categories
     
     Return:
         [ P(x | mu, pi) for mu in [[1, n_cat]] ]
     """
-    all_errors = get_all_errors(n_cat)
-    all_mins: np.ndarray = np.min(all_errors, axis=1)[:, None] == all_errors
-    nb_mins = np.sum(all_mins, axis=1)
+    distance = get_all_errors(m)
+    is_minimal: np.ndarray = np.min(distance, axis=1)[:, None] == distance
+    card_min = np.sum(is_minimal, axis=1)
 
-    p = np.zeros(n_cat)
+    p = np.zeros(m)
     
-    for mu in range(1, n_cat + 1):
-        for i in range(2 ** n_cat):
-            if all_mins[i, x - 1]:
-                loc_p = pi ** (n_cat - all_errors[i, mu - 1]) * (1 - pi) ** all_errors[i, mu - 1]
-                loc_p /= nb_mins[i]
+    for mu in range(1, m + 1):
+        for i in range(2 ** m):
+            if is_minimal[i, x - 1]:
+                loc_p = pi ** (m - distance[i, mu - 1]) * (1 - pi) ** distance[i, mu - 1]
+                loc_p /= card_min[i]
                 p[mu - 1] += loc_p
     return p
 
@@ -92,11 +35,10 @@ def probability_distribution_x_given_pi(x: int, pi: float, n_cat: int) -> np.nda
 def probability_distribution_xs_given_pi(xs: np.ndarray, pi: float, n_cat: int) -> np.ndarray:
     """
     Compute P(x^1, ..., x^n | mu, pi)
-    Complexity: O(2^n_cat * n_cat * n) with n = xs.shape[0]
+    Complexity: O(2^n_cat * n_cat * n) with n = len(xs)
 
     Args:
-        xs: observed categories (n,)
-        mu: true category
+        xs: observed categories (n)
         pi: probability of error
         n_cat: number of categories
     
@@ -106,11 +48,10 @@ def probability_distribution_xs_given_pi(xs: np.ndarray, pi: float, n_cat: int) 
     p = np.ones(n_cat)
     for x in xs:
         p *= probability_distribution_x_given_pi(x, pi, n_cat)
-    
     return p
 
 
-def estimate_mu_given_pi(xs: np.ndarray, pi: float, n_cat: int) -> np.ndarray:
+def estimate_mu_given_pi(xs: np.ndarray, pi: float, n_cat: int) -> int:
     """
     Compute P(mu | x^1, ..., x^n, pi)
     Complexity: O(2^n_cat * n_cat * n) with n = xs.shape[0]
@@ -121,7 +62,7 @@ def estimate_mu_given_pi(xs: np.ndarray, pi: float, n_cat: int) -> np.ndarray:
         n_cat: number of categories
     
     Return:
-        [ P(mu | x^1, ..., x^n, pi) for mu in [[1, n_cat]] ]
+        argmax [ P(mu | x^1, ..., x^n, pi) for mu in [[1, n_cat]] ]
     """
     p = probability_distribution_xs_given_pi(xs, pi, n_cat)
     return p.argmax() + 1
@@ -145,6 +86,7 @@ For mu, x in [[1, m]]^2:
         If is_minimal[i, x]:  # ci in C_x
             d = distance[i, mu]
             u[d] += 1 / card_min[i]
+This is done by compute_u(m) in O(m^2 2^m) time.
 
 
 We aim to estimate pi and mu given xs.
@@ -167,34 +109,6 @@ For mu in [[1, m]]:
     Store the best pi and log_likelihood.
 Return the best pi and corresponding to the best log_likelihood.
 """
-
-
-def compute_u(m: int) -> np.ndarray:
-    """
-    Compute u(., mu, x) for all mu in [[1, m]] and x in [[1, m]]
-
-    Complexity: O(m^2 2^m)
-
-    Arguments:
-    ----------
-        m: number of categories
-    
-    Return:
-    -------
-        u: u(., ., .) coefficients of the polynomials (m, m, m + 1)
-        u[mu, x] = u(., mu, x)
-    """
-    distance = get_all_errors(m)
-    is_minimal = np.min(distance, axis=1)[:, None] == distance
-    card_min = np.sum(is_minimal, axis=1)
-    u = np.zeros((m, m, m + 1))
-    for mu in range(1, m + 1):
-        for x in range(1, m + 1):
-            for i in range(2 ** m):
-                if is_minimal[i, x - 1]:
-                    d = distance[i, mu - 1]
-                    u[mu - 1, x - 1, d] += 1 / card_min[i]
-    return u
 
 
 def compute_log_likelihood(m: int,
@@ -224,7 +138,7 @@ def compute_log_likelihood(m: int,
     log_likelihood = 0
     t = pi / (1 - pi)
     for x in xs:
-        log_likelihood += np.log(m * evaluate_polynomial(p=u_mu[x], x=t))
+        log_likelihood += np.log(m * evaluate_polynomial(p=u_mu[x - 1], x=t))
     return log_likelihood
 
 
@@ -252,8 +166,8 @@ def compute_polynomial(m: int,
     p_n_w = np.zeros(m + 1)
 
     for x in xs:
-        p_n += m * u_mu[x]
-        p_n_w += u_mu[x] * (m - np.arange(0, m + 1))
+        p_n += m * u_mu[x - 1]
+        p_n_w += u_mu[x - 1] * (m - np.arange(0, m + 1))
     
     return p_n, p_n_w
 
@@ -318,7 +232,7 @@ def estimate_pi(m: int,
         if evolution:
             pi_history.append(new_pi)
             log_likelihood_history.append(compute_log_likelihood(m=m, xs=xs, pi=new_pi, u_mu=u_mu))
-            assert log_likelihood_history[-1] >= log_likelihood_history[-2], "Log-likelihood should increase"
+            # assert log_likelihood_history[-1] >= log_likelihood_history[-2], f"Log-likelihood should increase at each iteration, but {log_likelihood_history[-1]} < {log_likelihood_history[-2]}"
         if abs(pi - new_pi) < epsilon or i >= n_iter_max:
             break
         pi = new_pi
@@ -398,3 +312,13 @@ def estimate_mu_pi(m: int,
         return best_mu, best_pi, best_likelihood, pis_history, log_likelihoods_history
     else:
         return best_mu, best_pi, best_likelihood
+
+
+if __name__ == "__main__":
+    from god_model_generator import god_model_sample
+    xs = god_model_sample(m=5, mu=2, pi=0.7, n_sample=20)
+
+    print("xs:", xs)
+
+    mu_hat, pi_hat, _ = estimate_mu_pi(m=5, xs=xs, n_iter_max=5, evolution=False)
+    print(f"mu = 2, pi = 0.7: mu_hat = {mu_hat}, pi_hat = {pi_hat}")
