@@ -45,6 +45,9 @@ def god_model_sample(m: int,
     Return:
         x: generated categories (n_sample)
     """
+    assert 1 <= mu <= m, f"mu must be in [[1, m]] but got {mu}"
+    assert 0.5 < pi <= 1, f"pi must be in ]0.5, 1] but got {pi}"
+    assert n_sample > 0, f"n_sample must be > 0 but got {n_sample}"
     if seed is not None:
         np.random.seed(seed)
     x = np.empty(n_sample, dtype=int)

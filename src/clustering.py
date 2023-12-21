@@ -61,12 +61,7 @@ def compute_p_list(
         list[tuple[type_trajectory, float]]
             List of trajectories and their probabilities
         """
-        if cur_e_max == cur_e_min:
-            new_cur_values = []
-            for y, z, e_min, e_max in cur_values:
-                new_cur_values.append((y, z, list(range(e_min, e_max))))
-            return [(new_cur_values, 0.0)]
-        if cur_e_min + 1 == cur_e_max:
+        if it == m - 1:
             # We have reached the end of the trajectory because only one element remains
             # If the element is x, then the probability is 1 (normalized with the trajectory probability)
             # Otherwise, the probability is 0
@@ -87,26 +82,29 @@ def compute_p_list(
             len_e_plus = cur_e_max - (y + 1)
 
             # z = 0
-            p_list.extend(
-                recursive_compute_p_list(
-                    cur_e_min,
-                    y,
-                    cur_values + [(y, 0, cur_e_min, y)],
-                    cur_prob * len_e_minus / len_cur_e**2 * (1 - pi),
-                    # probability to pick y then to pick z and finally to pick ejp1
-                    it=it + 1,
+            if y != cur_e_min:
+                p_list.extend(
+                    recursive_compute_p_list(
+                        cur_e_min,
+                        y,
+                        cur_values + [(y, 0, cur_e_min, y)],
+                        cur_prob * len_e_minus / len_cur_e**2 * (1 - pi),
+                        # probability to pick y then to pick z and finally to pick ejp1
+                        it=it + 1,
+                    )
                 )
-            )
 
-            p_list.extend(
-                recursive_compute_p_list(
-                    y + 1,
-                    cur_e_max,
-                    cur_values + [(y, 0, y + 1, cur_e_max)],
-                    cur_prob * len_e_plus / len_cur_e**2 * (1 - pi),
-                    it=it + 1,
+            if y + 1 != cur_e_max:
+                p_list.extend(
+                    recursive_compute_p_list(
+                        y + 1,
+                        cur_e_max,
+                        cur_values + [(y, 0, y + 1, cur_e_max)],
+                        cur_prob * len_e_plus / len_cur_e**2 * (1 - pi),
+                        it=it + 1,
+                    )
                 )
-            )
+
             p_list.extend(
                 recursive_compute_p_list(
                     y,
@@ -259,26 +257,16 @@ def univariate_em(
                 p: float  # p(x_i, ci | mu, pi)
                 len_c = len(c)
 
-                missing_length = m - len_c - 1
-
-                for l in range(missing_length):
-                    si += (
-                        p
-                        * comb(missing_length, l)
-                        * pi**l
-                        * (1 - pi) ** (missing_length - l)
-                    )
-
                 for j in range(len_c):
                     if c[j][1] == 1:  # if z = 1
                         si += p
             if weights is not None:
-                s += (si / (p_tots[i] + 1e-10)) * weights[i]
+                s += (si / (p_tots[i] + 1e-20)) * weights[i]
             else:
-                s += si / (p_tots[i] + 1e-10)
+                s += si / (m - 1) / (p_tots[i] + 1e-20)
         if weights is not None:
             s = s / np.mean(weights)
-        pi = s / (m - 1) / len(data)
+        pi = s / len(data)
         pi_list.append(pi)
         lls_list.append(compute_loglikelihood(data, p_tots=p_tots, weights=weights))
         if abs(lls_list[-1] - old_ll) < eps:  # threshold on log-likelihood
