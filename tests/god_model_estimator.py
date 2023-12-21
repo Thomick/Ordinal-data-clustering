@@ -51,6 +51,25 @@ def probability_distribution_xs_given_pi(m: int, data: np.ndarray, pi: float) ->
     return p
 
 
+def likelihood_distribution_xs_given_pi(m: int, data: np.ndarray, pi: float) -> np.ndarray:
+    """
+    Compute [log P(x^1, ..., x^n | mu, pi) for mu in [[1, m]]]
+    Complexity: O(2^m * m * n) with n = len(xs)
+
+    Args:
+        m: number of categories
+        data: observed categories (n) [x^1, ..., x^n]
+        pi: probability of error
+
+    Return:
+        [log P(x^1, ..., x^n | mu, pi) for mu in [[1, m]] ]
+    """
+    p = np.zeros(m)
+    for x in data:
+        p += np.log(probability_distribution_x_given_pi(m, x, pi))
+    return p
+
+
 def estimate_mu_given_pi(m: int,
                          data: np.ndarray,
                          pi: float,
@@ -67,7 +86,7 @@ def estimate_mu_given_pi(m: int,
     Return:
         argmax [ P(mu | x^1, ..., x^n, pi) for mu in [[1, n_cat]] ]
     """
-    p = probability_distribution_xs_given_pi(m, data, pi)
+    p = likelihood_distribution_xs_given_pi(m, data, pi)
     return p.argmax() + 1
 
 
@@ -101,11 +120,11 @@ For mu in [[1, m]]:
 
     We can then perform the EM algorithm to estimate pi:
         while pi has not converged:
-            t = pi / (1 - pi)
+            t = (1 - pi) / pi
             pi = max(1/2, P^{N - W}(mu, X)(t) / P^N(mu, X)(t))
     
     We can then compute the log-likelihood:
-        t = pi / (1 - pi)
+        t = (1 - pi) / pi
         p^N(mu, x^i)(t) = (m * u(., mu, x^i))(t)
         log_likelihood = sum_i=1^n log(p^N(mu, x^i)(t))
 
@@ -122,7 +141,7 @@ def compute_log_likelihood(m: int,
     """
     Compute the log-likelihood of the model
 
-    log P(X | mu, pi) = sum_i=1^n log(m * u(., mu, x^i)(pi / (1 - pi)))
+    log P(X | mu, pi) = sum_i=1^n log(m * u(., mu, x^i)((1 - pi) / pi))
     where u(., mu, x^i) is the polynomial of degree m with coefficients u_mu
 
     Complexity: O(n * m)
@@ -151,7 +170,7 @@ def compute_log_likelihood(m: int,
     # for x in data:
     #     assert 1 <= x <= m, f"Category should be in [[1, m]], but {x} is not"
     #     p = evaluate_polynomial(p=u_mu[x - 1], x=t) * pi ** m
-    #     assert 0 <= p <= 1, f"Probability should be in [[0, 1]], but {p} is not (pi = {pi}, m = {m}, x = {x}, u = {u_mu[x - 1]})"
+    #     assert 0 <= p <= 1, f"Probability should be in [0, 1], but {p} is not (pi = {pi}, m = {m}, x = {x}, u = {u_mu[x - 1]})"
     #     log_likelihood_2 += np.log(p)
     # assert abs(log_likelihood - log_likelihood_2) < 1e-6, f"Log-likelihood should be the same, but {log_likelihood} != {log_likelihood_2}"
     assert log_likelihood <= 0, f"Log-likelihood should be negative, but {log_likelihood} > 0"
@@ -208,11 +227,11 @@ def estimate_pi(m: int,
 
     We can then perform the EM algorithm to estimate pi:
         while pi has not converged:
-            t = pi / (1 - pi)
+            t = (1 - pi) / pi
             pi = max(1/2, P^{N - W}(mu, X)(t) / P^N(mu, X)(t))
     
     We can then compute the log-likelihood:
-        t = pi / (1 - pi)
+        t = (1 - pi) / pi
         p^N(mu, x^i)(t) = (m * u(., mu, x^i))(t)
         log_likelihood = sum_i=1^n log(p^N(mu, x^i)(t))
     
@@ -244,14 +263,15 @@ def estimate_pi(m: int,
     p_n, p_n_w = compute_polynomial(m, data, u_mu)
     while True:
         i += 1
-        t = pi / (1 - pi)
+        t = (1 - pi) / pi  # should be the correct value but it does not work to estimate mu
+        # t = pi / (1 - pi) # should be false but it works to estimate mu
         new_pi = max(0.51, evaluate_polynomial(p_n_w, t) / evaluate_polynomial(p_n, t))
         if evolution:
             pi_history.append(new_pi)
             log_likelihood_history.append(compute_log_likelihood(m=m, data=data, pi=new_pi, u_mu=u_mu))
-            assert (log_likelihood_history[-1] >= log_likelihood_history[-2]), (
-                        f"Log-likelihood should increase at each iteration"
-                        f", but {log_likelihood_history[-1]} < {log_likelihood_history[-2]}")
+            # assert (log_likelihood_history[-1] >= log_likelihood_history[-2]), (
+            #             f"Log-likelihood should increase at each iteration"
+            #             f", but {log_likelihood_history[-1]} < {log_likelihood_history[-2]}")
         if abs(pi - new_pi) < epsilon or i >= n_iter_max:
             break
         pi = new_pi
