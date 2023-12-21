@@ -4,7 +4,7 @@ from god_model_tools import evaluate_polynomial
 from compute_u import get_all_errors, compute_u
 
 
-def probability_distribution_x_given_pi(x: int, pi: float, m: int) -> np.ndarray:
+def probability_distribution_x_given_pi(m: int, x: int, pi: float) -> np.ndarray:
     """
     Compute P(x | mu, pi)
     Complexity: O(2^n_cat * n_cat)
@@ -32,39 +32,42 @@ def probability_distribution_x_given_pi(x: int, pi: float, m: int) -> np.ndarray
     return p
 
 
-def probability_distribution_xs_given_pi(xs: np.ndarray, pi: float, n_cat: int) -> np.ndarray:
+def probability_distribution_xs_given_pi(m: int, data: np.ndarray, pi: float) -> np.ndarray:
     """
     Compute P(x^1, ..., x^n | mu, pi)
     Complexity: O(2^n_cat * n_cat * n) with n = len(xs)
 
     Args:
-        xs: observed categories (n)
+        m: number of categories
+        data: observed categories (n) [x^1, ..., x^n]
         pi: probability of error
-        n_cat: number of categories
-    
+
     Return:
         [ P(x^1, ..., x^n | mu, pi) for mu in [[1, n_cat]] ]
     """
-    p = np.ones(n_cat)
-    for x in xs:
-        p *= probability_distribution_x_given_pi(x, pi, n_cat)
+    p = np.ones(m)
+    for x in data:
+        p *= probability_distribution_x_given_pi(m, x, pi)
     return p
 
 
-def estimate_mu_given_pi(xs: np.ndarray, pi: float, n_cat: int) -> int:
+def estimate_mu_given_pi(m: int,
+                         data: np.ndarray,
+                         pi: float,
+                         ) -> int:
     """
     Compute P(mu | x^1, ..., x^n, pi)
     Complexity: O(2^n_cat * n_cat * n) with n = xs.shape[0]
 
     Args:
-        xs: observed categories (n,)
+        m: number of categories
+        data: observed categories (n)
         pi: probability of error
-        n_cat: number of categories
     
     Return:
         argmax [ P(mu | x^1, ..., x^n, pi) for mu in [[1, n_cat]] ]
     """
-    p = probability_distribution_xs_given_pi(xs, pi, n_cat)
+    p = probability_distribution_xs_given_pi(m, data, pi)
     return p.argmax() + 1
 
 
@@ -135,10 +138,11 @@ def compute_log_likelihood(m: int,
     -------
         log_likelihood: log-likelihood of the model
     """
-    log_likelihood = 0
+    log_likelihood = m * len(xs) * np.log(pi)
     t = pi / (1 - pi)
     for x in xs:
-        log_likelihood += np.log(m * evaluate_polynomial(p=u_mu[x - 1], x=t))
+        log_likelihood += np.log(evaluate_polynomial(p=u_mu[x - 1], x=t))
+    assert log_likelihood <= 0, f"Log-likelihood should be negative, but {log_likelihood} > 0"
     return log_likelihood
 
 
@@ -245,7 +249,7 @@ def estimate_pi(m: int,
 def estimate_mu_pi(m: int,
                    xs: list[int],
                    epsilon: float = 1e-6,
-                   pi: float = 0.75,
+                   pi_zero: float = 0.5,
                    n_iter_max: int = 100,
                    evolution: bool = False,
                    u: Optional[np.ndarray] = None
@@ -274,7 +278,7 @@ def estimate_mu_pi(m: int,
         m: number of categories
         xs: observed categories
         epsilon: convergence threshold
-        pi: initial value of pi
+        pi_zero: initial value of pi
         n_iter_max: maximum number of iterations
         evolution: whether to compute the log-likelihood at each iteration
         u: u(., mu, .) coefficients of the polynomials
@@ -297,13 +301,13 @@ def estimate_mu_pi(m: int,
     best_pi = 1
     for mu in range(1, m + 1):
         if evolution:
-            pi_history, log_likelihood_history = estimate_pi(m, xs, mu, u[mu - 1], pi, epsilon, n_iter_max, evolution)
+            pi_history, log_likelihood_history = estimate_pi(m, xs, mu, u[mu - 1], pi_zero, epsilon, n_iter_max, evolution)
             pis_history.append(pi_history)
             log_likelihoods_history.append(log_likelihood_history)
             pi = pi_history[-1]
             log_likelihood = log_likelihood_history[-1]
         else:
-            pi, log_likelihood = estimate_pi(m, xs, mu, u[mu - 1], pi, epsilon, n_iter_max, evolution)
+            pi, log_likelihood = estimate_pi(m, xs, mu, u[mu - 1], pi_zero, epsilon, n_iter_max, evolution)
         if log_likelihood > best_likelihood:
             best_likelihood = log_likelihood
             best_mu = mu
