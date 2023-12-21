@@ -96,6 +96,9 @@ class BaseDataset:
         return self.clusters
 
     def classification_results(self, plot=True):
+        if self.silent:
+            plot = False
+
         if self.clusters is None:
             raise Exception("Clusters not computed yet")
 
@@ -184,17 +187,19 @@ class BaseDataset:
         plt.show()
 
     def plot_tsne(self):
-        if self.clusters is None:
-            raise Exception("Clusters not computed yet")
-
         tsne = TSNE(n_components=2, perplexity=10, n_jobs=-1)
         X_embedded = tsne.fit_transform(self.X)
 
         figtsne, axtsne = plt.subplots(1, 2, figsize=(10, 5))
         axtsne[0].scatter(X_embedded[:, 0], X_embedded[:, 1], c=self.y)
         axtsne[0].set_title("True labels")
-        axtsne[1].scatter(X_embedded[:, 0], X_embedded[:, 1], c=self.clusters)
-        axtsne[1].set_title("Predicted labels")
+        if self.clusters is not(None):
+            axtsne[1].scatter(X_embedded[:, 0], X_embedded[:, 1], c=self.clusters)
+            axtsne[1].set_title("Predicted labels")
+            axtsne[1].set_xlabel("t-SNE 1")
+            axtsne[1].set_ylabel("t-SNE 2")
+        axtsne[0].set_xlabel("t-SNE 1")
+        axtsne[0].set_ylabel("t-SNE 2")
         figtsne.suptitle("TSNE")
         plt.show()
 
@@ -205,10 +210,11 @@ class BaseDataset:
         figmds, axmds = plt.subplots(1, 2, figsize=(10, 5))
         mds = MDS(n_components=2, n_jobs=-1, normalized_stress="auto")
         X_embedded = mds.fit_transform(self.X)
+        if self.clusters is not(None):
+            axmds[1].scatter(X_embedded[:, 0], X_embedded[:, 1], c=self.clusters)
+            axmds[1].set_title("Predicted labels")
         axmds[0].scatter(X_embedded[:, 0], X_embedded[:, 1], c=self.y)
         axmds[0].set_title("True labels")
-        axmds[1].scatter(X_embedded[:, 0], X_embedded[:, 1], c=self.clusters)
-        axmds[1].set_title("Predicted labels")
         figmds.suptitle("MDS")
         plt.show()
 
