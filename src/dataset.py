@@ -16,6 +16,14 @@ from time import time
 
 class BaseDataset:
     def __init__(self, path, n_iter=100, eps=1e-3, silent=False, seed=0):
+        """
+        Base class for datasets
+        :param path: path to the dataset
+        :param n_iter: number of iterations for the EM algorithm
+        :param eps: convergence threshold for the EM algorithm
+        :param silent: if True, no output is printed
+        :param seed: seed for the random number generator
+        """
         self.silent = silent
         self.eps = eps
         self.path = path
@@ -33,15 +41,27 @@ class BaseDataset:
         self.runtime = defaultdict(int)
 
     def compute_n_cat(self):
+        """
+        Compute the number of categories for each feature
+        :return: None
+        """
         if self.m is None:
             self.m = np.array(
                 [len(self.data[col].unique()) for col in self.data.columns]
             )
 
     def compute_Xy(self):
+        """
+        Compute the input matrix X and the target vector y
+        :return: None
+        """
         raise NotImplementedError
 
     def compute_target_decoder(self):
+        """
+        Compute the target decoder and its inverse
+        :return: None
+        """
         if self.target_decoder is None:
             self.target_decoder = {
                 i + 1: val for i, val in enumerate(self.data[self.target].unique())
@@ -51,15 +71,24 @@ class BaseDataset:
                 val: i + 1 for i, val in enumerate(self.data[self.target].unique())
             }
 
-    def compute_pred_labels(self, n_clusters):
+    def compute_pred_labels(self):
+        """
+        Compute the predicted labels
+        :return: None
+        """
         self.pred_labels = optimal_transport_matching_labels(
             self.clusters,
             self.y,
             target_decoder=self.target_decoder,
-            n_clusters=n_clusters,
         )
 
     def cluster_bos(self, n_clusters=None, m=None):
+        """
+        Cluster the data using the BOS algorithm
+        :param n_clusters: number of clusters
+        :param m: number of categories for each feature
+        :return: the clusters
+        """
         start_time = time()
         if n_clusters is None and self.n_clusters is None:
             raise Exception("n_clusters not specified")
@@ -81,10 +110,10 @@ class BaseDataset:
         self.clusters = (
             self.ordinal_clustering.fit_transform(self.X, m) + 1
         )  # 1-indexed
-        self.n_clusters = n_clusters
+        self.n_clusters_compute = n_clusters
 
         self.compute_target_decoder()
-        self.compute_pred_labels(n_clusters)
+        self.compute_pred_labels()
 
         if not self.silent:
             print("Clustered data into {} clusters".format(n_clusters))
@@ -96,6 +125,11 @@ class BaseDataset:
         return self.clusters
 
     def classification_results(self, plot=True):
+        """
+        Compute the classification results
+        :param plot: if True, plot the confusion matrix
+        :return: the confusion matrix and the classification report
+        """
         if self.silent:
             plot = False
 
@@ -120,32 +154,39 @@ class BaseDataset:
         return disp, cr
 
     def plot_assignment_matrix(self, pred_labels=None, target_decoder=None):
+        """
+        Plot the assignment matrix
+        :param pred_labels: predicted labels
+        :param target_decoder: target decoder
+        :return: None
+        """
         if self.clusters is None:
             raise Exception("Clusters not computed yet")
 
+        n_clusters = max(len(np.unique(self.clusters)), len(np.unique(self.y)))
         if self.pred_labels is None and pred_labels is None:
-            pred_labels = {i: i for i in range(1, 1 + self.n_clusters)}
+            pred_labels = {i: i for i in range(1, 1 + n_clusters)}
         else:
             pred_labels = self.pred_labels if pred_labels is None else pred_labels
         if self.target_decoder is None and target_decoder is None:
-            true_labels = {i: i for i in range(1, 1 + self.n_clusters)}
+            true_labels = {i: i for i in range(1, 1 + n_clusters)}
         else:
             true_labels = (
                 self.target_decoder if target_decoder is None else target_decoder
             )
 
-        clusters_histograms = np.zeros((self.n_clusters, self.n_clusters))
+        clusters_histograms = np.zeros((n_clusters, n_clusters))
         for pred, true in zip(self.clusters, self.y):
             clusters_histograms[int(pred) - 1, int(true) - 1] += 1
 
         plt.imshow(clusters_histograms)
         plt.yticks(
-            np.arange(self.n_clusters),
-            [pred_labels[i] for i in range(1, 1 + self.n_clusters)],
+            np.arange(n_clusters),
+            [pred_labels[i] for i in range(1, 1 + n_clusters)],
         )
         plt.xticks(
-            np.arange(self.n_clusters),
-            [true_labels[i] for i in range(1, 1 + self.n_clusters)],
+            np.arange(n_clusters),
+            [true_labels[i] for i in range(1, 1 + n_clusters)],
         )
         plt.xlabel("True class")
         plt.ylabel("Predicted class")
@@ -153,47 +194,63 @@ class BaseDataset:
         plt.show()
 
     def plot_histograms(self):
+        """
+        Plot the histograms of the predicted and true labels
+        after mathching the predicted labels with the true ones
+        either using optimal transport if the matching is already computed
+        or using sorting otherwise
+        :return: None
+        """
         if self.clusters is None:
             raise Exception("Clusters not computed yet")
 
+        n_clusters = max(len(np.unique(self.clusters)), self.n_clusters)
         if self.pred_labels is None:
-            pred_labels = {i: i for i in range(1, 1 + self.n_clusters)}
+            pred_labels = {i: i for i in range(1, 1 + n_clusters)}
         else:
             pred_labels = self.pred_labels
         if self.target_decoder is None:
-            true_labels = {i: i for i in range(1, 1 + self.n_clusters)}
+            true_labels = {i: i for i in range(1, 1 + n_clusters)}
         else:
             true_labels = self.target_decoder
 
-        hist_pred_ordered = np.zeros(self.n_clusters)
+        hist_pred_ordered = np.zeros(n_clusters)
         hist_pred = np.sum(
-            self.clusters == np.arange(1, 1 + self.n_clusters).reshape(-1, 1), axis=1
+            self.clusters == np.arange(1, 1 + n_clusters).reshape(-1, 1), axis=1
         )
         hist_true = np.sum(
-            self.y == np.arange(1, 1 + self.n_clusters).reshape(-1, 1), axis=1
+            self.y == np.arange(1, 1 + n_clusters).reshape(-1, 1), axis=1
         )
         pred_labels_inv = {v: k for k, v in pred_labels.items()}
 
         for k, v in self.target_decoder.items():
             hist_pred_ordered[k - 1] = hist_pred[pred_labels_inv[v] - 1]
 
-        plt.bar(np.arange(self.n_clusters), hist_pred_ordered)
-        plt.bar(np.arange(self.n_clusters), hist_true, alpha=0.5)
+        plt.bar(np.arange(n_clusters), hist_pred_ordered)
+        plt.bar(np.arange(n_clusters), hist_true, alpha=0.5)
         plt.xticks(
-            np.arange(self.n_clusters),
-            [true_labels[i + 1] for i in range(self.n_clusters)],
+            np.arange(n_clusters),
+            [true_labels[i + 1] for i in range(n_clusters)],
         )
         plt.legend(["Predicted", "True"])
+        plt.xlabel("Class")
+        plt.ylabel("Number of samples")
         plt.show()
 
     def plot_tsne(self):
+        """
+        Plot the t-SNE of the data in 2D
+        If the clusters are already computed, plot the t-SNE of the data
+        with the true labels and the predicted labels
+        :return: None
+        """
         tsne = TSNE(n_components=2, perplexity=10, n_jobs=-1)
         X_embedded = tsne.fit_transform(self.X)
 
         figtsne, axtsne = plt.subplots(1, 2, figsize=(10, 5))
         axtsne[0].scatter(X_embedded[:, 0], X_embedded[:, 1], c=self.y)
         axtsne[0].set_title("True labels")
-        if self.clusters is not(None):
+        if self.clusters is not (None):
             axtsne[1].scatter(X_embedded[:, 0], X_embedded[:, 1], c=self.clusters)
             axtsne[1].set_title("Predicted labels")
             axtsne[1].set_xlabel("t-SNE 1")
@@ -204,13 +261,19 @@ class BaseDataset:
         plt.show()
 
     def plot_mds(self):
+        """
+        Plot the MDS of the data in 2D
+        If the clusters are already computed, plot the MDS of the data
+        with the true labels and the predicted labels
+        :return: None
+        """
         if self.clusters is None:
             raise Exception("Clusters not computed yet")
 
         figmds, axmds = plt.subplots(1, 2, figsize=(10, 5))
         mds = MDS(n_components=2, n_jobs=-1, normalized_stress="auto")
         X_embedded = mds.fit_transform(self.X)
-        if self.clusters is not(None):
+        if self.clusters is not (None):
             axmds[1].scatter(X_embedded[:, 0], X_embedded[:, 1], c=self.clusters)
             axmds[1].set_title("Predicted labels")
         axmds[0].scatter(X_embedded[:, 0], X_embedded[:, 1], c=self.y)
@@ -220,7 +283,7 @@ class BaseDataset:
 
 
 class Animals(BaseDataset):
-    def __init__(self, path, target_path, n_iter=100, eps=1e-3, silent=False, seed=0):
+    def __init__(self, path, target_path, n_iter=100, eps=1e-1, silent=False, seed=0):
         super().__init__(path, n_iter=n_iter, eps=eps, silent=silent, seed=seed)
         self.data = pd.read_csv(path)
         self.data_target = pd.read_csv(target_path)
@@ -265,7 +328,7 @@ class Animals(BaseDataset):
 
 
 class CarEvaluation(BaseDataset):
-    def __init__(self, path, n_iter=100, eps=1e-3, silent=False, seed=0):
+    def __init__(self, path, n_iter=100, eps=1e-1, silent=False, seed=0):
         super().__init__(path, n_iter=n_iter, eps=eps, silent=silent, seed=seed)
         columns = [
             "buying_price",
@@ -327,7 +390,7 @@ class CarEvaluation(BaseDataset):
 
 
 class HayesRoth(BaseDataset):
-    def __init__(self, path, n_iter=100, eps=1e-3, silent=False, seed=0):
+    def __init__(self, path, n_iter=100, eps=1e-1, silent=False, seed=0):
         super().__init__(path, n_iter=n_iter, eps=eps, silent=silent, seed=seed)
         self.data = pd.read_csv(path)
         self.data = self.data.drop(columns=["name"])
@@ -337,6 +400,10 @@ class HayesRoth(BaseDataset):
     def compute_Xy(self):
         X = self.data.drop(columns=["class"]).astype(int)
         y = self.data["class"]
+        self.target = "class"
+
+        self.target_decoder = {v: k for k, v in enumerate(y.unique(), 1)}
+        self.target_decoder_inv = {k: v for k, v in enumerate(y.unique(), 1)}
 
         self.m = [len(X[col].unique()) for col in X.columns]
         self.n_clusters = y.nunique()
