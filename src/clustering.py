@@ -259,6 +259,7 @@ def univariate_em(
                 len_c = len(c)
 
                 missing_length = m - len_c - 1
+
                 for l in range(missing_length):
                     si += (
                         p
