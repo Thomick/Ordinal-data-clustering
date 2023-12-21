@@ -288,13 +288,15 @@ def univariate_em(
 
 
 class OrdinalClustering:
-    def __init__(self, n_clusters, n_iter=100, eps=1e-1, silent=True):
+    def __init__(self, n_clusters, n_iter=100, eps=1e-1, silent=True, seed=0):
         self.n_clusters = n_clusters
         self.n_iter = n_iter
         self.eps = eps
         self.silent = silent
+        self.seed = seed
 
     def fit(self, data, m):
+        np.random.seed(self.seed)
         d = data.shape[1]
         m = np.array(m).astype(int)
 
