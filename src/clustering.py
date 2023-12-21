@@ -4,6 +4,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from src.data_generator import generate_data
 from scipy.special import comb
+from sklearn.cluster import KMeans
 
 
 compact_type_trajectory = list[tuple[int, int, int, int]]
@@ -288,21 +289,38 @@ def univariate_em(
 
 
 class OrdinalClustering:
-    def __init__(self, n_clusters, n_iter=100, eps=1e-1, silent=True, seed=0):
+    def __init__(
+        self, n_clusters, init="random", n_iter=100, eps=1e-1, silent=True, seed=0
+    ):
         self.n_clusters = n_clusters
         self.n_iter = n_iter
         self.eps = eps
         self.silent = silent
         self.seed = seed
+        self.init = init
 
     def fit(self, data, m):
         np.random.seed(self.seed)
         d = data.shape[1]
         m = np.array(m).astype(int)
 
-        mu = np.random.randint(np.ones(m.shape[0]), m + 1, (self.n_clusters, d))
-        pi = np.random.random((self.n_clusters, d))
-        alpha = np.ones((self.n_clusters)) / self.n_clusters
+        if self.init == "random":
+            mu = np.random.randint(np.ones(m.shape[0]), m + 1, (self.n_clusters, d))
+            pi = np.random.random((self.n_clusters, d))
+            alpha = np.ones((self.n_clusters)) / self.n_clusters
+
+        if self.init == "kmeans":
+            mu = np.zeros((self.n_clusters, d))
+            pi = np.zeros((self.n_clusters, d))
+            kmeans = KMeans(
+                n_clusters=self.n_clusters, random_state=self.seed, n_init="auto"
+            ).fit(data)
+            labels = kmeans.labels_
+            for k in range(self.n_clusters):
+                for j in range(d):
+                    mu[k, j] = np.mean(data[labels == k, j])
+                    pi[k, j] = np.mean(data[labels == k, j] == mu[k, j])
+            alpha = np.bincount(labels) / len(labels)
 
         def expectation(data, mu, pi, m, alpha):
             p_list = []
