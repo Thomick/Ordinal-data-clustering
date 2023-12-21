@@ -257,17 +257,19 @@ def univariate_em(
                 c: type_trajectory
                 p: float  # p(x_i, ci | mu, pi)
                 len_c = len(c)
-                stop = m - 2
-                if m == 2:
-                    stop = 1
-                if m == 3:
-                    len_c = len(c) - 1
-                # m >= 2 by assertion thus m - 2 >= 0
-                for j in range(stop):  # changing this to -1 fixed for n_cat=3
-                    if j < len_c:
-                        if c[j][1] == 1:  # if z = 1
-                            si += p
-                    else:
+
+                missing_length = m - len_c - 1
+
+                for l in range(missing_length):
+                    si += (
+                        p
+                        * comb(missing_length, l)
+                        * pi**l
+                        * (1 - pi) ** (missing_length - l)
+                    )
+
+                for j in range(len_c):
+                    if c[j][1] == 1:  # if z = 1
                         si += p
             if weights is not None:
                 s += (si / (p_tots[i] + 1e-10)) * weights[i]
@@ -286,13 +288,15 @@ def univariate_em(
 
 
 class OrdinalClustering:
-    def __init__(self, n_clusters, n_iter=100, eps=1e-1, silent=True):
+    def __init__(self, n_clusters, n_iter=100, eps=1e-1, silent=True, seed=0):
         self.n_clusters = n_clusters
         self.n_iter = n_iter
         self.eps = eps
         self.silent = silent
+        self.seed = seed
 
     def fit(self, data, m):
+        np.random.seed(self.seed)
         d = data.shape[1]
         m = np.array(m).astype(int)
 
