@@ -1,2 +1,37 @@
 # Ordinal-data-clustering
-Project on multivariate ordinal data clustering for the Probabilistic Graphical Models MVA course.
+
+This repo contains experiments and analysis of ordinal data clustering methods based on the paper by Biernacki et al. (2015). The paper can be found [here](https://inria.hal.science/hal-01052447v2/document).
+
+## Installation
+
+In order to run the code and the notebooks, you need to run the following commands:
+
+```bash
+git clone https://github.com/Thomick/Ordinal-data-clustering
+cd Ordinal-data-clustering
+pip install -r requirements.txt
+```
+
+## Usage
+
+The notebooks can be run using Jupyter Notebook or Jupyter Lab and are located in the `notebooks` folder. The source code is located in the `src` folder.
+
+## Structure
+
+The repo is structured as follows:
+- `notebooks`: Contains the notebooks used for the experiments and analysis that are available in the report.
+- `src`: Contains the source code for the estimation algorithms and the clustering algorithms.
+    - `src/data_generator.py`: Contains the code for generating synthetic datasets.
+    - `src/clustering.py`: Contains the code for the estimation EM and AECM algorithms (in the univariate and the multivariate case) for both the BOS and the GOD distribution models.
+    - `src/dataset.py`: Contains the code for loading the datasets and analyzing the different methods on them for generating the results on the report.
+- `data`: Contains the datasets used for the experiments.
+- `report`: Contains the report for the project.
+
+## Data
+The datasets used in the notebooks are located in the `data` folder. Here the datasets used for the expeeriments (references for the datasets can be found in the report):
+- `data/car_evaluation.csv`: Car Evaluation Database.
+- `data/hayes-roth.csv`: Hayes-Roth Database.
+- `data/zoo.csv`: Zoo Database.
+
+Moreover, the estimation algorithms are tested on synthetic datasets generated specifically for the respective distributions (BOS distribution and GOD distribution).
+
