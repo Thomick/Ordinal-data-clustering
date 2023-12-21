@@ -11,6 +11,8 @@ from sklearn.metrics import (
     classification_report,
     adjusted_rand_score,
 )
+from sklearn.mixture import GaussianMixture
+from sklearn.cluster import KMeans
 from collections import defaultdict
 from time import time
 from scipy.stats import wasserstein_distance
@@ -41,7 +43,7 @@ class BaseDataset:
         self.n_iter = n_iter
         self.true_labels = None
         self.runtime = defaultdict(int)
-        self.scores = defaultdict(list)
+        self.scores = defaultdict(dict)
 
     def compute_n_cat(self):
         """
@@ -84,6 +86,76 @@ class BaseDataset:
             self.y,
             target_decoder=self.target_decoder,
         )
+
+    def cluster_gaussian(self, n_clusters=None):
+        """
+        Cluster the data using the Gaussian model
+        :param n_clusters: number of clusters
+        :return: the clusters
+        """
+        start_time = time()
+        if n_clusters is None and self.n_clusters is None:
+            raise Exception("n_clusters not specified")
+        if n_clusters is None:
+            n_clusters = self.n_clusters
+        if self.X is None or self.y is None:
+            self.compute_Xy()
+
+        self.gaussian_clustering = GaussianMixture(
+            n_clusters,
+            n_init=10,
+            covariance_type="full",
+            random_state=self.seed,
+        )
+        self.clusters = self.gaussian_clustering.fit_predict(self.X) + 1  # 1-indexed
+        self.n_clusters_compute = n_clusters
+
+        self.compute_target_decoder()
+        self.compute_pred_labels()
+
+        self.last_runtype = "Gaussian"
+
+        if not self.silent:
+            print("Clustered data into {} clusters".format(n_clusters))
+            print(f"Estimated means: {self.gaussian_clustering.means_}")
+            print(f"Estimated covariances: {self.gaussian_clustering.covariances_}")
+
+        self.runtime[self.last_runtype] += time() - start_time
+        return self.clusters
+
+    def cluster_kmeans(self, n_clusters=None):
+        """
+        Cluster the data using K-Means
+        :param n_clusters: number of clusters
+        :return: the clusters
+        """
+        start_time = time()
+        if n_clusters is None and self.n_clusters is None:
+            raise Exception("n_clusters not specified")
+        if n_clusters is None:
+            n_clusters = self.n_clusters
+        if self.X is None or self.y is None:
+            self.compute_Xy()
+
+        self.kmeans_clustering = KMeans(
+            n_clusters,
+            n_init=10,
+            random_state=self.seed,
+        )
+        self.clusters = self.kmeans_clustering.fit_predict(self.X) + 1  # 1-indexed
+        self.n_clusters_compute = n_clusters
+
+        self.compute_target_decoder()
+        self.compute_pred_labels()
+
+        self.last_runtype = "K-Means"
+
+        if not self.silent:
+            print("Clustered data into {} clusters".format(n_clusters))
+            print(f"Estimated means: {self.kmeans_clustering.cluster_centers_}")
+
+        self.runtime[self.last_runtype] += time() - start_time
+        return self.clusters
 
     def cluster_bos(self, n_clusters=None, m=None, init="random"):
         """
@@ -215,6 +287,7 @@ class BaseDataset:
         )
         plt.xlabel("True class")
         plt.ylabel("Predicted class")
+        plt.title(f"Assignment matrix ({self.last_runtype})")
         plt.colorbar()
         plt.show()
 
@@ -260,6 +333,7 @@ class BaseDataset:
         plt.legend(["Predicted", "True"])
         plt.xlabel("Class")
         plt.ylabel("Number of samples")
+        plt.title(f"Histograms ({self.last_runtype})")
         plt.show()
 
     def plot_tsne(self):
@@ -282,7 +356,7 @@ class BaseDataset:
             axtsne[1].set_ylabel("t-SNE 2")
         axtsne[0].set_xlabel("t-SNE 1")
         axtsne[0].set_ylabel("t-SNE 2")
-        figtsne.suptitle("TSNE")
+        figtsne.suptitle(f"TSNE ({self.last_runtype})")
         plt.show()
 
     def plot_mds(self):
@@ -303,7 +377,7 @@ class BaseDataset:
             axmds[1].set_title("Predicted labels")
         axmds[0].scatter(X_embedded[:, 0], X_embedded[:, 1], c=self.y)
         axmds[0].set_title("True labels")
-        figmds.suptitle("MDS")
+        figmds.suptitle(f"MDS ({self.last_runtype})")
         plt.show()
 
 
