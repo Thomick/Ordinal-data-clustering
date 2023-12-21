@@ -115,9 +115,9 @@ Return the best pi and corresponding to the best log_likelihood.
 
 
 def compute_log_likelihood(m: int,
-                           xs: list[int],
+                           data: list[int],
                            pi: float,
-                           u_mu: np.ndarray
+                           u_mu: np.ndarray,
                            ) -> float:
     """
     Compute the log-likelihood of the model
@@ -130,7 +130,7 @@ def compute_log_likelihood(m: int,
     Arguments:
     ----------
         m: number of categories
-        xs: observed categories
+        data: observed categories
         pi: probability of error
         u_mu: u(., mu, .) coefficients of the polynomials
     
@@ -138,16 +138,28 @@ def compute_log_likelihood(m: int,
     -------
         log_likelihood: log-likelihood of the model
     """
-    log_likelihood = m * len(xs) * np.log(pi)
-    t = pi / (1 - pi)
-    for x in xs:
+    t =  (1 - pi) / pi
+
+    # version 1
+    log_likelihood = m * len(data) * np.log(pi)
+    for x in data:
+        assert 1 <= x <= m, f"Category should be in [[1, m]], but {x} is not"
         log_likelihood += np.log(evaluate_polynomial(p=u_mu[x - 1], x=t))
+
+    # version 2
+    # log_likelihood_2 = 0
+    # for x in data:
+    #     assert 1 <= x <= m, f"Category should be in [[1, m]], but {x} is not"
+    #     p = evaluate_polynomial(p=u_mu[x - 1], x=t) * pi ** m
+    #     assert 0 <= p <= 1, f"Probability should be in [[0, 1]], but {p} is not (pi = {pi}, m = {m}, x = {x}, u = {u_mu[x - 1]})"
+    #     log_likelihood_2 += np.log(p)
+    # assert abs(log_likelihood - log_likelihood_2) < 1e-6, f"Log-likelihood should be the same, but {log_likelihood} != {log_likelihood_2}"
     assert log_likelihood <= 0, f"Log-likelihood should be negative, but {log_likelihood} > 0"
     return log_likelihood
 
 
 def compute_polynomial(m: int,
-                       xs: list[int],
+                       data: list[int],
                        u_mu: np.ndarray,
                        ) -> tuple[np.ndarray, np.ndarray]:
     """
@@ -159,7 +171,7 @@ def compute_polynomial(m: int,
     ----------
         m: number of categories
         u_mu: u(., mu, .) coefficients of the polynomials
-        xs: observed categories
+        data: observed categories
     
     Return:
     -------
@@ -169,7 +181,8 @@ def compute_polynomial(m: int,
     p_n = np.zeros(m + 1)
     p_n_w = np.zeros(m + 1)
 
-    for x in xs:
+    for x in data:
+        assert 1 <= x <= m, f"Category should be in [[1, m]], but {x} is not"
         p_n += m * u_mu[x - 1]
         p_n_w += u_mu[x - 1] * (m - np.arange(0, m + 1))
     
@@ -177,7 +190,7 @@ def compute_polynomial(m: int,
 
 
 def estimate_pi(m: int,
-                xs: list[int],
+                data: list[int],
                 mu: int,
                 u_mu: np.ndarray,
                 pi: float = 0.75,
@@ -211,7 +224,7 @@ def estimate_pi(m: int,
     Arguments:
     ----------
         m: number of categories
-        xs: observed categories
+        data: observed categories
         mu: supposed category
         u_mu: u(., mu, .) coefficients of the polynomials
         pi: initial value of pi
@@ -226,30 +239,32 @@ def estimate_pi(m: int,
     """
     if evolution:
         pi_history = [pi]
-        log_likelihood_history = [compute_log_likelihood(m=m, xs=xs, pi=pi, u_mu=u_mu)]
+        log_likelihood_history = [compute_log_likelihood(m=m, data=data, pi=pi, u_mu=u_mu)]
     i = 0
-    p_n, p_n_w = compute_polynomial(m, xs, u_mu)
+    p_n, p_n_w = compute_polynomial(m, data, u_mu)
     while True:
         i += 1
         t = pi / (1 - pi)
-        new_pi = max(1/2, evaluate_polynomial(p_n_w, t) / evaluate_polynomial(p_n, t))
+        new_pi = max(0.51, evaluate_polynomial(p_n_w, t) / evaluate_polynomial(p_n, t))
         if evolution:
             pi_history.append(new_pi)
-            log_likelihood_history.append(compute_log_likelihood(m=m, xs=xs, pi=new_pi, u_mu=u_mu))
-            # assert log_likelihood_history[-1] >= log_likelihood_history[-2], f"Log-likelihood should increase at each iteration, but {log_likelihood_history[-1]} < {log_likelihood_history[-2]}"
+            log_likelihood_history.append(compute_log_likelihood(m=m, data=data, pi=new_pi, u_mu=u_mu))
+            assert (log_likelihood_history[-1] >= log_likelihood_history[-2]), (
+                        f"Log-likelihood should increase at each iteration"
+                        f", but {log_likelihood_history[-1]} < {log_likelihood_history[-2]}")
         if abs(pi - new_pi) < epsilon or i >= n_iter_max:
             break
         pi = new_pi
     if evolution:
         return pi_history, log_likelihood_history
     else:
-        return pi, compute_log_likelihood(m=m, xs=xs, pi=pi, u_mu=u_mu)
+        return pi, compute_log_likelihood(m=m, data=data, pi=pi, u_mu=u_mu)
 
 
 def estimate_mu_pi(m: int,
-                   xs: list[int],
+                   data: list[int],
                    epsilon: float = 1e-6,
-                   pi_zero: float = 0.5,
+                   pi_zero: float = 0.51,
                    n_iter_max: int = 100,
                    evolution: bool = False,
                    u: Optional[np.ndarray] = None
@@ -276,7 +291,7 @@ def estimate_mu_pi(m: int,
     Arguments:
     ----------
         m: number of categories
-        xs: observed categories
+        data: observed categories
         epsilon: convergence threshold
         pi_zero: initial value of pi
         n_iter_max: maximum number of iterations
@@ -301,13 +316,15 @@ def estimate_mu_pi(m: int,
     best_pi = 1
     for mu in range(1, m + 1):
         if evolution:
-            pi_history, log_likelihood_history = estimate_pi(m, xs, mu, u[mu - 1], pi_zero, epsilon, n_iter_max, evolution)
+            pi_history, log_likelihood_history = estimate_pi(m, data, mu, u[mu - 1], pi_zero,
+                                                             epsilon, n_iter_max, evolution)
             pis_history.append(pi_history)
             log_likelihoods_history.append(log_likelihood_history)
             pi = pi_history[-1]
             log_likelihood = log_likelihood_history[-1]
         else:
-            pi, log_likelihood = estimate_pi(m, xs, mu, u[mu - 1], pi_zero, epsilon, n_iter_max, evolution)
+            pi, log_likelihood = estimate_pi(m, data, mu, u[mu - 1], pi_zero,
+                                             epsilon, n_iter_max, evolution)
         if log_likelihood > best_likelihood:
             best_likelihood = log_likelihood
             best_mu = mu
@@ -320,9 +337,9 @@ def estimate_mu_pi(m: int,
 
 if __name__ == "__main__":
     from god_model_generator import god_model_sample
-    xs = god_model_sample(m=5, mu=2, pi=0.7, n_sample=20)
+    xs: list[int] = god_model_sample(m=5, mu=2, pi=0.7, n_sample=20)
 
     print("xs:", xs)
 
-    mu_hat, pi_hat, _ = estimate_mu_pi(m=5, xs=xs, n_iter_max=5, evolution=False)
+    mu_hat, pi_hat, _ = estimate_mu_pi(m=5, data=xs, n_iter_max=5, evolution=False)
     print(f"mu = 2, pi = 0.7: mu_hat = {mu_hat}, pi_hat = {pi_hat}")
