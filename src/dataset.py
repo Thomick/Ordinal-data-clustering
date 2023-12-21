@@ -9,9 +9,11 @@ from sklearn.metrics import (
     confusion_matrix,
     ConfusionMatrixDisplay,
     classification_report,
+    adjusted_rand_score,
 )
 from collections import defaultdict
 from time import time
+from scipy.stats import wasserstein_distance
 
 
 class BaseDataset:
@@ -39,6 +41,7 @@ class BaseDataset:
         self.n_iter = n_iter
         self.true_labels = None
         self.runtime = defaultdict(int)
+        self.scores = defaultdict(list)
 
     def compute_n_cat(self):
         """
@@ -82,7 +85,7 @@ class BaseDataset:
             target_decoder=self.target_decoder,
         )
 
-    def cluster_bos(self, n_clusters=None, m=None):
+    def cluster_bos(self, n_clusters=None, m=None, init="random"):
         """
         Cluster the data using the BOS algorithm
         :param n_clusters: number of clusters
@@ -103,6 +106,7 @@ class BaseDataset:
         self.ordinal_clustering = OrdinalClustering(
             n_clusters,
             n_iter=self.n_iter,
+            init=init,
             eps=self.eps,
             silent=self.silent,
             seed=self.seed,
@@ -115,13 +119,19 @@ class BaseDataset:
         self.compute_target_decoder()
         self.compute_pred_labels()
 
+        if init == "random":
+            init_name = "Random"
+        elif init == "kmeans":
+            init_name = "K-Means"
+        self.last_runtype = f"BOS {init_name}"
+
         if not self.silent:
             print("Clustered data into {} clusters".format(n_clusters))
             print(f"Estimated alpha: {self.ordinal_clustering.alpha}")
             print(f"Estimated mu: {self.ordinal_clustering.mu}")
             print(f"Estimated pi: {self.ordinal_clustering.pi}")
 
-        self.runtime["bos"] += time() - start_time
+        self.runtime[self.last_runtype] += time() - start_time
         return self.clusters
 
     def classification_results(self, plot=True):
@@ -130,6 +140,9 @@ class BaseDataset:
         :param plot: if True, plot the confusion matrix
         :return: the confusion matrix and the classification report
         """
+        if "scores" not in dir(self):
+            self.scores = defaultdict(list)
+
         if self.silent:
             plot = False
 
@@ -150,6 +163,18 @@ class BaseDataset:
         cr = classification_report(self.y, y_pred, output_dict=True, zero_division=0)
         if plot:
             print(classification_report(self.y, y_pred, zero_division=0))
+
+        self.scores[self.last_runtype]["accuracy"] = cr["accuracy"]
+        self.scores[self.last_runtype]["precision"] = cr["weighted avg"]["precision"]
+        self.scores[self.last_runtype]["recall"] = cr["weighted avg"]["recall"]
+        self.scores[self.last_runtype]["f1-score"] = cr["weighted avg"]["f1-score"]
+        self.scores[self.last_runtype]["wasserstein-distance"] = wasserstein_distance(
+            self.y, y_pred
+        )
+        self.scores[self.last_runtype]["runtime"] = self.runtime[self.last_runtype]
+        self.scores[self.last_runtype]["adjusted-rand-index"] = adjusted_rand_score(
+            self.y, y_pred
+        )
 
         return disp, cr
 
@@ -401,6 +426,41 @@ class HayesRoth(BaseDataset):
         X = self.data.drop(columns=["class"]).astype(int)
         y = self.data["class"]
         self.target = "class"
+
+        self.target_decoder = {v: k for k, v in enumerate(y.unique(), 1)}
+        self.target_decoder_inv = {k: v for k, v in enumerate(y.unique(), 1)}
+
+        self.m = [len(X[col].unique()) for col in X.columns]
+        self.n_clusters = y.nunique()
+
+        self.X, self.y = X.to_numpy(), y.to_numpy()
+
+
+class Caesarian(BaseDataset):
+    def __init__(self, path, n_iter=100, eps=1e-1, silent=False, seed=0):
+        super().__init__(path, n_iter=n_iter, eps=eps, silent=silent, seed=seed)
+        self.data = pd.read_csv(path)
+        self.compute_Xy()
+
+    def compute_Xy(self):
+        # Quantize age into 4 bins
+        self.data_processed = self.data.copy()
+
+        self.data_processed["Age"] = pd.qcut(
+            self.data_processed["Age"], 4, labels=False
+        )
+        self.data_processed[
+            [
+                "Age",
+                "Delivery time",
+                "Blood of Pressure",
+                "Heart Problem",
+                "Caesarian",
+            ]
+        ] += 1
+        X = self.data_processed.drop(columns=["Caesarian"]).astype(int)
+        y = self.data_processed["Caesarian"]
+        self.target = "Caesarian"
 
         self.target_decoder = {v: k for k, v in enumerate(y.unique(), 1)}
         self.target_decoder_inv = {k: v for k, v in enumerate(y.unique(), 1)}
