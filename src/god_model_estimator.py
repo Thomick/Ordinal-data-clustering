@@ -2,6 +2,7 @@ from typing import Optional, Union
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
+
 try:
     from .god_model_tools import evaluate_polynomial
     from .compute_u import get_all_errors, compute_u
@@ -188,7 +189,10 @@ def compute_log_likelihood(
         if weights is None:
             log_likelihood += np.log(p)
         else:
-            log_likelihood += weights[i] * np.log(p)
+            if weights[i] == 0 and p == 0:
+                log_likelihood += 0
+            else:
+                log_likelihood += weights[i] * np.log(p)
     assert (
         log_likelihood <= 0
     ), f"Log-likelihood should be negative, but {log_likelihood} > 0"
@@ -481,8 +485,17 @@ def estimate_mu_pi_grid(
     return mu, pi, log_likelihood
 
 
-def plot_log_likelihoods(m : int, mu: int, pi: float, u: np.ndarray, nb_pi: int = 1_000, data: np.ndarray = None, nb_sample: int = None, seed: int=0) -> None:
-    """"
+def plot_log_likelihoods(
+    m: int,
+    mu: int,
+    pi: float,
+    u: np.ndarray,
+    nb_pi: int = 1_000,
+    data: np.ndarray = None,
+    nb_sample: int = None,
+    seed: int = 0,
+) -> None:
+    """ "
     Plot the log-likelihoods P(X | pi, mu) over pi in [0, 1] for each mu in [1, m]
 
     Parameters
@@ -506,18 +519,27 @@ def plot_log_likelihoods(m : int, mu: int, pi: float, u: np.ndarray, nb_pi: int 
     """
     assert 1 <= mu <= m, f"mu={mu} not in [1, m]"
     assert 0 <= pi <= 1, f"pi={pi} not in [0, 1]"
-    assert u.shape == (m, m, m+1), f"u.shape={u.shape} != (m, m, m+1)"
-    assert (data is None) ^ (nb_sample is None), f"data={data} and nb_sample={nb_sample} are not consistent"
+    assert u.shape == (m, m, m + 1), f"u.shape={u.shape} != (m, m, m+1)"
+    assert (data is None) ^ (
+        nb_sample is None
+    ), f"data={data} and nb_sample={nb_sample} are not consistent"
     if data is None:
         data = god_model_sample(m=m, mu=mu, pi=pi, n_sample=nb_sample, seed=seed)
-    log_likelihoods, pi_range = grid_log_likelihood(m=m, data=data, nb_pi=nb_pi, u=u, pi_min=0.5, pi_max=1)
+    log_likelihoods, pi_range = grid_log_likelihood(
+        m=m, data=data, nb_pi=nb_pi, u=u, pi_min=0.5, pi_max=1
+    )
     plt.figure(figsize=(10, 5))
-    for i in range(1, m+1):
-        plt.plot(pi_range, log_likelihoods[i - 1], label=f"mu={i}", linewidth=2 if i == mu else 1)
+    for i in range(1, m + 1):
+        plt.plot(
+            pi_range,
+            log_likelihoods[i - 1],
+            label=f"mu={i}",
+            linewidth=2 if i == mu else 1,
+        )
 
-    plt.xlabel('pi')
-    plt.ylabel('log likelihood')
-    plt.axvline(pi, color='r', linestyle='--', label='pi')
+    plt.xlabel("pi")
+    plt.ylabel("log likelihood")
+    plt.axvline(pi, color="r", linestyle="--", label="pi")
     plt.title(f"True parameters mu={mu}, pi={pi}")
     plt.legend()
     plt.show()
