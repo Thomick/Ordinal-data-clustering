@@ -261,7 +261,7 @@ def univariate_em(
                     if c[j][1] == 1:  # if z = 1
                         si += p
             if weights is not None:
-                s += (si / (p_tots[i] + 1e-20)) * weights[i]
+                s += (si / (m - 1) / (p_tots[i] + 1e-20)) * weights[i]
             else:
                 s += si / (m - 1) / (p_tots[i] + 1e-20)
         if weights is not None:

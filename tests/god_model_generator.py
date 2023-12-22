@@ -1,6 +1,6 @@
 from typing import Optional
 import numpy as np
-from god_model_tools import count_errors
+from .god_model_tools import count_errors
 
 
 def god_model_generator(m: int, mu: int, pi: float) -> int:
@@ -11,7 +11,7 @@ def god_model_generator(m: int, mu: int, pi: float) -> int:
         m: number of categories
         mu: true category
         pi: probability of true comparison (pi > 0.5)
-    
+
     Return:
         x: generated category
     """
@@ -26,12 +26,13 @@ def god_model_generator(m: int, mu: int, pi: float) -> int:
     return x
 
 
-def god_model_sample(m: int,
-                     mu: int,
-                     pi: float,
-                     n_sample: int,
-                     seed: Optional[int] = None,
-                     ) -> np.ndarray:
+def god_model_sample(
+    m: int,
+    mu: int,
+    pi: float,
+    n_sample: int,
+    seed: Optional[int] = None,
+) -> np.ndarray:
     """
     Generate n_sample x in [[1, n_cat]] from GOD model with parameters mu and pi
 
@@ -41,7 +42,7 @@ def god_model_sample(m: int,
         pi: probability of error
         n_sample: number of samples
         seed: random seed
-    
+
     Return:
         x: generated categories (n_sample)
     """
