@@ -1,3 +1,4 @@
+from typing import Callable
 import numpy as np
 from numba import njit
 
@@ -44,3 +45,38 @@ def evaluate_polynomial(p: np.ndarray, x: float) -> float:
     for i in range(p.shape[0] - 1, -1, -1):
         y = y * x + p[i]
     return y
+
+
+def trichotomy_maximization(f: Callable[[float], float], 
+                            a: float, 
+                            b: float, 
+                            epsilon: float = 1e-5,
+                            max_iter: int = 1_000
+                            ) -> tuple[float, float]:
+    """
+    Find the maximum of a function f on [a, b] using trichotomy
+
+    Arguments:
+    ----------
+        f: function to maximize
+        a: left bound of the interval
+        b: right bound of the interval
+        epsilon: convergence criterion
+    
+    Return:
+    -------
+        x_max: maximum of f on [a, b]
+        f(x_max)
+    """
+    assert a < b, f"a={a} >= b={b}"
+    i = 0
+    while b - a > epsilon and i < max_iter:
+        h = (b - a) / 3
+        c = a + h
+        d = b - h
+        if f(c) <= f(d):
+            a = c
+        else:
+            b = d
+        i += 1
+    return (a + b) / 2, f((a + b) / 2)
