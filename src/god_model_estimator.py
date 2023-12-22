@@ -179,17 +179,16 @@ def compute_log_likelihood(
     """
 
     # version 1
-    if weights is None:
-        log_likelihood = 0
-        for x in data:
-            p = 0
-            for d in range(m + 1):
-                p += u_mu[x - 1, d] * pi ** (m - d) * (1 - pi) ** d
-            assert p >= 0, f"p should be >= 0: {x=}, {u_mu[x - 1]=}, {pi=}, {p=}"
-            if weights is None:
-                log_likelihood += np.log(p)
-            else:
-                log_likelihood += weights[i] * np.log(p)
+    log_likelihood = 0
+    for x in data:
+        p = 0
+        for d in range(m + 1):
+            p += u_mu[x - 1, d] * pi ** (m - d) * (1 - pi) ** d
+        assert p >= 0, f"p should be > 0: {x=}, {u_mu[x - 1]=}, {pi=}, {p=}"
+        if weights is None:
+            log_likelihood += np.log(p)
+        else:
+            log_likelihood += weights[i] * np.log(p)
     assert (
         log_likelihood <= 0
     ), f"Log-likelihood should be negative, but {log_likelihood} > 0"
