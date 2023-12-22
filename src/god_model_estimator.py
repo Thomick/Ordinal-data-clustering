@@ -1,7 +1,7 @@
 from typing import Optional, Union
 import numpy as np
 import torch
-
+import matplotlib.pyplot as plt
 try:
     from .god_model_tools import evaluate_polynomial
     from .compute_u import get_all_errors, compute_u
@@ -161,6 +161,9 @@ def compute_log_likelihood(
 
     Complexity: O(n * m)
 
+    The p can be computed with evaluate_polynomial(u_mu[x - 1], (1 - pi) / pi)
+    but this cause issues with pi = 0 or pi = 1.
+
     Arguments:
     ----------
         m: number of categories
@@ -174,22 +177,19 @@ def compute_log_likelihood(
     -------
         log_likelihood: log-likelihood of the model
     """
-    t = (1 - pi) / pi
 
     # version 1
     if weights is None:
-        log_likelihood = m * len(data) * np.log(pi)
+        log_likelihood = 0
         for x in data:
-            # assert 1 <= x <= m, f"Category should be in [[1, m]], but {x} is not"
-            log_likelihood += np.log(evaluate_polynomial(p=u_mu[x - 1], x=t))
-    else:
-        log_likelihood = np.sum(weights) * m * np.log(pi)
-        for i, x in enumerate(data):
-            # assert 1 <= x <= m, f"Category should be in [[1, m]], but {x} is not"
-            log_likelihood += weights[i] * np.log(
-                evaluate_polynomial(p=u_mu[x - 1], x=t)
-            )
-
+            p = 0
+            for d in range(m + 1):
+                p += u_mu[x - 1, d] * pi ** (m - d) * (1 - pi) ** d
+            assert p >= 0, f"p should be >= 0: {x=}, {u_mu[x - 1]=}, {pi=}, {p=}"
+            if weights is None:
+                log_likelihood += np.log(p)
+            else:
+                log_likelihood += weights[i] * np.log(p)
     assert (
         log_likelihood <= 0
     ), f"Log-likelihood should be negative, but {log_likelihood} > 0"
@@ -482,6 +482,48 @@ def estimate_mu_pi_grid(
     return mu, pi, log_likelihood
 
 
+def plot_log_likelihoods(m : int, mu: int, pi: float, u: np.ndarray, nb_pi: int = 1_000, data: np.ndarray = None, nb_sample: int = None, seed: int=0) -> None:
+    """"
+    Plot the log-likelihoods P(X | pi, mu) over pi in [0, 1] for each mu in [1, m]
+
+    Parameters
+    ----------
+    m : int
+        Number of categories
+    mu : int
+        True category
+    pi : float
+        Probability of error
+    u : np.ndarray
+        u coefficients computed with compute_u
+    nb_pi : int
+        Number of points to plot
+    data : np.ndarray
+        Data observed if None the data are generated from the god model
+    nb_sample : int
+        Number of samples to generate from the god model if data is None
+    seed : int
+        Seed for the random number generator if data is None
+    """
+    assert 1 <= mu <= m, f"mu={mu} not in [1, m]"
+    assert 0 <= pi <= 1, f"pi={pi} not in [0, 1]"
+    assert u.shape == (m, m, m+1), f"u.shape={u.shape} != (m, m, m+1)"
+    assert (data is None) ^ (nb_sample is None), f"data={data} and nb_sample={nb_sample} are not consistent"
+    if data is None:
+        data = god_model_sample(m=m, mu=mu, pi=pi, n_sample=nb_sample, seed=seed)
+    log_likelihoods, pi_range = grid_log_likelihood(m=m, data=data, nb_pi=nb_pi, u=u, pi_min=0.5, pi_max=1)
+    plt.figure(figsize=(10, 5))
+    for i in range(1, m+1):
+        plt.plot(pi_range, log_likelihoods[i - 1], label=f"mu={i}", linewidth=2 if i == mu else 1)
+
+    plt.xlabel('pi')
+    plt.ylabel('log likelihood')
+    plt.axvline(pi, color='r', linestyle='--', label='pi')
+    plt.title(f"True parameters mu={mu}, pi={pi}")
+    plt.legend()
+    plt.show()
+
+
 def compute_log_likelihood_torch(
     m: int,
     data: list[int],
@@ -619,9 +661,9 @@ if __name__ == "__main__":
     xs: list[int] = god_model_sample(m=5, mu=2, pi=0.7, n_sample=200)
 
     print("xs:", xs)
-    mu_hat_t, pi_hat_t, _ = estimate_mu_pi_torch(m=5, data=xs)
 
     mu_hat_g, pi_hat_g, _ = estimate_mu_pi_grid(m=5, data=xs, nb_pi=100)
     print(f"mu = 2, pi = 0.7")
-    print(f"Torch: mu_hat = {mu_hat_t}, pi_hat = {pi_hat_t}")
     print(f"Grid: mu_hat = {mu_hat_g}, pi_hat = {pi_hat_g}")
+
+    plot_log_likelihoods(m=5, mu=2, pi=0.7, u=compute_u(5), nb_pi=100, data=xs)
