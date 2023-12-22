@@ -24,7 +24,8 @@ def optimal_transport_matching(clusters, y, n_clusters=None):
     return pred_labels
 
 
-def optimal_transport_matching_labels(clusters, y, target_decoder, n_clusters):
+def optimal_transport_matching_labels(clusters, y, target_decoder):
+    n_clusters = max(len(np.unique(clusters)), len(np.unique(y)))
     pred_clusters = clusters
 
     clusters_histograms = np.zeros((n_clusters, n_clusters))
