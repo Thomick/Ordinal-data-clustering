@@ -304,6 +304,8 @@ class OrdinalClustering:
         d = data.shape[1]
         m = np.array(m).astype(int)
 
+        data = data.astype(int)
+
         if self.init == "random":
             mu = np.random.randint(np.ones(m.shape[0]), m + 1, (self.n_clusters, d))
             pi = np.random.random((self.n_clusters, d))
@@ -318,9 +320,10 @@ class OrdinalClustering:
             labels = kmeans.labels_
             for k in range(self.n_clusters):
                 for j in range(d):
-                    mu[k, j] = np.mean(data[labels == k, j])
+                    mu[k, j] = np.floor(np.mean(data[labels == k, j]))
                     pi[k, j] = np.mean(data[labels == k, j] == mu[k, j])
             alpha = np.bincount(labels) / len(labels)
+            mu = mu.astype(int)
 
         if self.model == "bos":
 
