@@ -7,6 +7,7 @@ import seaborn as sns
 import os
 import sys
 import time
+from .god_model_generator import god_model_generator
 
 
 # Naive implementation (can be improved)
@@ -79,7 +80,7 @@ def god_model(n_cat, mu, pi):
     return x + 1
 
 
-def generate_data(n, p, n_cat, k, alpha, mu, pi, seed):
+def generate_data(n, p, n_cat, k, alpha, mu, pi, seed, model="bos"):
     """
     Generate synthetic multivariate ordinal dataset
     :param n: number of samples
@@ -99,7 +100,10 @@ def generate_data(n, p, n_cat, k, alpha, mu, pi, seed):
     x = np.zeros((n, p), dtype=int)
     for i in range(n):
         for j in range(p):
-            x[i, j] = bos_model(n_cat[j], mu[w[i]][j], pi[w[i]][j])
+            if model == "bos":
+                x[i, j] = bos_model(n_cat[j], mu[w[i]][j], pi[w[i]][j])
+            else:
+                x[i, j] = god_model_generator(n_cat[j], mu[w[i]][j], pi[w[i]][j])
 
     return x, w
 

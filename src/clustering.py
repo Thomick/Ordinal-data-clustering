@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from src.data_generator import generate_data
 from scipy.special import comb
 from sklearn.cluster import KMeans
-from tests.god_model_estimator import (
+from src.god_model_estimator import (
     estimate_mu_pi_grid,
     probability_distribution_x_given_pi,
 )
@@ -397,6 +397,7 @@ class OrdinalClustering:
                 print(f"Current mu: {mu}")
                 print(f"Current pi: {pi}")
             # E step
+            breakpoint()
             pw1_x, p_list_x = expectation(data, mu, pi, m, alpha)
 
             # log_likelihood = np.sum(pw1_x * np.log(alpha * p_list_x))
@@ -440,6 +441,7 @@ class OrdinalClustering:
                             eps=1e-1,
                         )
                     elif self.model == "god":
+                        breakpoint()
                         _, pi_update, _ = estimate_mu_pi_grid(
                             m[j], data[:, j], weights=weights
                         )
