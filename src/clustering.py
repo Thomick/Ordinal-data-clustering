@@ -5,6 +5,10 @@ import matplotlib.pyplot as plt
 from src.data_generator import generate_data
 from scipy.special import comb
 from sklearn.cluster import KMeans
+from tests.god_model_estimator import (
+    estimate_mu_pi_grid,
+    probability_distribution_x_given_pi,
+)
 
 
 compact_type_trajectory = list[tuple[int, int, int, int]]
@@ -278,7 +282,14 @@ def univariate_em(
 
 class OrdinalClustering:
     def __init__(
-        self, n_clusters, init="random", n_iter=100, eps=1e-1, silent=True, seed=0
+        self,
+        n_clusters,
+        model="bos",
+        init="random",
+        n_iter=100,
+        eps=1e-1,
+        silent=True,
+        seed=0,
     ):
         self.n_clusters = n_clusters
         self.n_iter = n_iter
@@ -286,6 +297,7 @@ class OrdinalClustering:
         self.silent = silent
         self.seed = seed
         self.init = init
+        self.model = model
 
     def fit(self, data, m):
         np.random.seed(self.seed)
@@ -310,41 +322,71 @@ class OrdinalClustering:
                     pi[k, j] = np.mean(data[labels == k, j] == mu[k, j])
             alpha = np.bincount(labels) / len(labels)
 
-        def expectation(data, mu, pi, m, alpha):
-            p_list = []
-            p_list_sum = []
-            for i, x in enumerate(data):
-                p_list.append([])
-                p_list_sum.append([])
-                for k in range(self.n_clusters):
-                    p_list[-1].append([])
-                    p_list_sum[-1].append([])
-                    for j in range(d):
-                        dimension_p_list = compute_p_list(
-                            x[j],
-                            mu[k, j],
-                            pi[k, j],
-                            m[j],
-                        )
-                        p_list[-1][-1].append(dimension_p_list)
-                        p_list_sum[-1][-1].append(sum([p for c, p in dimension_p_list]))
+        if self.model == "bos":
 
-            p_list_x = np.prod(np.array(p_list_sum), axis=2)
-            pw1_x = (alpha * p_list_x) / np.sum(alpha * p_list_x, axis=1).reshape(-1, 1)
-            return pw1_x, p_list_x
+            def expectation(data, mu, pi, m, alpha):
+                p_list = []
+                p_list_sum = []
+                for i, x in enumerate(data):
+                    p_list.append([])
+                    p_list_sum.append([])
+                    for k in range(self.n_clusters):
+                        p_list[-1].append([])
+                        p_list_sum[-1].append([])
+                        for j in range(d):
+                            dimension_p_list = compute_p_list(
+                                x[j],
+                                mu[k, j],
+                                pi[k, j],
+                                m[j],
+                            )
+                            p_list[-1][-1].append(dimension_p_list)
+                            p_list_sum[-1][-1].append(
+                                sum([p for c, p in dimension_p_list])
+                            )
 
-        def maximize_mu(
-            data, pi, m, weights, em_func=univariate_em, n_iter=10, eps=1e-1
-        ):
-            pis_local, lls_local = [], []
-            mus = np.arange(1, m + 1)
-            for mu_test in mus:
-                pis, lls_run, _ = em_func(
-                    data, m, mu_test, n_iter, pi=pi, weights=weights, eps=eps
+                p_list_x = np.prod(np.array(p_list_sum), axis=2)
+                pw1_x = (alpha * p_list_x) / np.sum(alpha * p_list_x, axis=1).reshape(
+                    -1, 1
                 )
-                pis_local.append(pis[-1])
-                lls_local.append(lls_run[-1])
-            return pis_local[np.argmax(lls_local)], mus[np.argmax(lls_local)]
+                return pw1_x, p_list_x
+
+            def maximize_mu(
+                data, pi, m, weights, em_func=univariate_em, n_iter=10, eps=1e-1
+            ):
+                pis_local, lls_local = [], []
+                mus = np.arange(1, m + 1)
+                for mu_test in mus:
+                    pis, lls_run, _ = em_func(
+                        data, m, mu_test, n_iter, pi=pi, weights=weights, eps=eps
+                    )
+                    pis_local.append(pis[-1])
+                    lls_local.append(lls_run[-1])
+                return pis_local[np.argmax(lls_local)], mus[np.argmax(lls_local)]
+
+        elif self.model == "god":
+
+            def expectation(data, mu, pi, m, alpha):
+                p_list_sum = np.zeros((data.shape[0], self.n_clusters, d))
+                for i, x in enumerate(data):
+                    for k in range(self.n_clusters):
+                        for j in range(d):
+                            dimension_p_list = probability_distribution_x_given_pi(
+                                m[j], data[i, j], pi[k, j]
+                            )  # returns the probability for every mu
+                            p_list_sum[i, k, j] = dimension_p_list[mu[k, j] - 1]
+
+                p_list_x = np.prod(np.array(p_list_sum), axis=2)
+                pw1_x = (alpha * p_list_x) / np.sum(alpha * p_list_x, axis=1).reshape(
+                    -1, 1
+                )
+                return pw1_x, p_list_x
+
+            def maximize_mu(
+                data, pi, m, weights, em_func=estimate_mu_pi_grid, n_iter=10, eps=1e-1
+            ):
+                best_mu, best_pi, best_ll = em_func(m=m, data=data, weights=weights)
+                return best_pi, best_mu
 
         log_likelihood_old = -np.inf
         ll_list = []
@@ -382,21 +424,26 @@ class OrdinalClustering:
                         pi[k, j],
                         m[j],
                         weights,
-                        em_func=univariate_em,
                         n_iter=10,
                         eps=1e-1,
                     )
 
                     # pi is updated according to the previous mu
-                    pi_update, _, _ = univariate_em(
-                        data[:, j],
-                        m[j],
-                        mu[k, j],
-                        10,
-                        pi=pi[k, j],
-                        weights=weights,
-                        eps=1e-1,
-                    )
+                    if self.model == "bos":
+                        pi_update, _, _ = univariate_em(
+                            data[:, j],
+                            m[j],
+                            mu[k, j],
+                            10,
+                            pi=pi[k, j],
+                            weights=weights,
+                            eps=1e-1,
+                        )
+                    elif self.model == "god":
+                        _, pi_update, _ = estimate_mu_pi_grid(
+                            m[j], data[:, j], weights=weights
+                        )
+                        pi_update = [pi_update]
                     pi[k, j] = pi_update[-1]
 
                     # # pi is updated according to the best mu
@@ -439,6 +486,8 @@ def main():
     parser.add_argument("--type", type=str, default="multivariate")
     parser.add_argument("--n_iter", type=int, default=20)
     parser.add_argument("--eps", type=float, default=1e-1)
+    parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--model", type=str, default="bos")
     args = parser.parse_args()
 
     if args.type == "univariate":
@@ -483,7 +532,17 @@ def main():
         true_mu = np.random.randint(1, m + 1, (n_clusters, d))
         true_pi = np.random.random((n_clusters, d))
         true_alpha = np.ones(n_clusters) / n_clusters
-        data = generate_data(n, d, m, n_clusters, true_alpha, true_mu, true_pi, 0)
+        data = generate_data(
+            n,
+            d,
+            m,
+            n_clusters,
+            true_alpha,
+            true_mu,
+            true_pi,
+            seed=args.seed,
+            model=args.model,
+        )
 
         print(
             "True alpha: {}, True mu: {}, True pi: {}".format(
@@ -491,7 +550,13 @@ def main():
             )
         )
 
-        clustering = OrdinalClustering(n_clusters, n_iter=args.n_iter, eps=args.eps)
+        clustering = OrdinalClustering(
+            n_clusters,
+            model=args.model,
+            n_iter=args.n_iter,
+            eps=args.eps,
+            seed=args.seed,
+        )
 
         alpha_hat, mu_hat, pi_hat, ll_list = clustering.fit(data[0], m)
 
