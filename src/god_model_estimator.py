@@ -180,7 +180,7 @@ def compute_log_likelihood(
 
     # version 1
     log_likelihood = 0
-    for x in data:
+    for i, x in enumerate(data):
         p = 0
         for d in range(m + 1):
             p += u_mu[x - 1, d] * pi ** (m - d) * (1 - pi) ** d
