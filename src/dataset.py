@@ -164,6 +164,58 @@ class BaseDataset:
         self.runtime[self.last_runtype] += time() - start_time
         return self.clusters
 
+    def cluster_god(self, n_clusters=None, m=None, init="random"):
+        """
+        Cluster the data using the GOD algorithm
+        :param n_clusters: number of clusters
+        :param m: number of categories for each feature
+        :return: the clusters
+        """
+        start_time = time()
+        if n_clusters is None and self.n_clusters is None:
+            raise Exception("n_clusters not specified")
+        if n_clusters is None:
+            n_clusters = self.n_clusters
+        if m is None:
+            self.compute_n_cat()
+            m = self.m
+        if self.X is None or self.y is None:
+            self.compute_Xy()
+
+        self.ordinal_clustering = OrdinalClustering(
+            n_clusters,
+            n_iter=self.n_iter,
+            init=init,
+            model="god",
+            eps=self.eps,
+            silent=self.silent,
+            seed=self.seed,
+        )
+        self.clusters = (
+            self.ordinal_clustering.fit_transform(self.X, m) + 1
+        )  # 1-indexed
+        self.n_clusters_compute = n_clusters
+
+        self.compute_target_decoder()
+        self.compute_pred_labels()
+
+        if init == "random":
+            init_name = "Random"
+        elif init == "kmeans":
+            init_name = "K-Means"
+        self.last_runtype = f"GOD {init_name}"
+        self.all_clusters[self.last_runtype] = self.clusters
+        self.all_pred_labels[self.last_runtype] = self.pred_labels
+
+        if not self.silent:
+            print("Clustered data into {} clusters".format(n_clusters))
+            print(f"Estimated alpha: {self.ordinal_clustering.alpha}")
+            print(f"Estimated mu: {self.ordinal_clustering.mu}")
+            print(f"Estimated pi: {self.ordinal_clustering.pi}")
+
+        self.runtime[self.last_runtype] += time() - start_time
+        return self.clusters
+
     def cluster_bos(self, n_clusters=None, m=None, init="random"):
         """
         Cluster the data using the BOS algorithm
@@ -185,6 +237,7 @@ class BaseDataset:
         self.ordinal_clustering = OrdinalClustering(
             n_clusters,
             n_iter=self.n_iter,
+            model="bos",
             init=init,
             eps=self.eps,
             silent=self.silent,
@@ -401,7 +454,7 @@ class BaseDataset:
         plt.title(f"Histograms ({runtype})")
         plt.show()
 
-    def plot_tsne(self, runtype=None):
+    def plot_tsne(self, runtype=None, fig=None, ax=None, show=True):
         """
         Plot the t-SNE of the data in 2D
         If the clusters are already computed, plot the t-SNE of the data
@@ -417,21 +470,35 @@ class BaseDataset:
             runtype = self.last_runtype
             clusters = self.clusters
 
-        tsne = TSNE(n_components=2, perplexity=10, n_jobs=-1)
-        X_embedded = tsne.fit_transform(self.X)
+        if "tsne" not in dir(self):
+            self.tsne = TSNE(n_components=2, perplexity=10, n_jobs=-1, random_state=self.seed)
+            X_embedded = self.tsne.fit_transform(self.X)
 
-        figtsne, axtsne = plt.subplots(1, 2, figsize=(10, 5))
-        axtsne[0].scatter(X_embedded[:, 0], X_embedded[:, 1], c=self.y)
-        axtsne[0].set_title("True labels")
+        only_pred = False
+        if ax is not None and type(ax) is not np.ndarray:
+            only_pred = True
+        if fig is None and ax is None:
+            fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+        if not (only_pred):
+            ax[0].scatter(X_embedded[:, 0], X_embedded[:, 1], c=self.y)
+            ax[0].set_title("True labels")
+            ax[0].set_xlabel("t-SNE 1")
+            ax[0].set_ylabel("t-SNE 2")
         if clusters is not (None):
-            axtsne[1].scatter(X_embedded[:, 0], X_embedded[:, 1], c=clusters)
-            axtsne[1].set_title("Predicted labels")
-            axtsne[1].set_xlabel("t-SNE 1")
-            axtsne[1].set_ylabel("t-SNE 2")
-        axtsne[0].set_xlabel("t-SNE 1")
-        axtsne[0].set_ylabel("t-SNE 2")
-        figtsne.suptitle(f"TSNE ({runtype})")
-        plt.show()
+            if only_pred:
+                ax.scatter(X_embedded[:, 0], X_embedded[:, 1], c=clusters)
+                ax.set_title(f"Predicted labels {runtype}")
+                ax.set_xlabel("t-SNE 1")
+                ax.set_ylabel("t-SNE 2")
+            else:
+                ax[1].scatter(X_embedded[:, 0], X_embedded[:, 1], c=clusters)
+                ax[1].set_title(f"Predicted labels {runtype}")
+                ax[1].set_xlabel("t-SNE 1")
+                ax[1].set_ylabel("t-SNE 2")
+        if fig is not None:
+            fig.suptitle(f"TSNE ({runtype})")
+        if show:
+            plt.show()
 
     def plot_mds(self, runtype=None):
         """
