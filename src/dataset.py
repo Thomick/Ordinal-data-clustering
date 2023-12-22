@@ -471,8 +471,11 @@ class BaseDataset:
             clusters = self.clusters
 
         if "tsne" not in dir(self):
-            self.tsne = TSNE(n_components=2, perplexity=10, n_jobs=-1, random_state=self.seed)
-            X_embedded = self.tsne.fit_transform(self.X)
+            self.tsne = TSNE(
+                n_components=2, perplexity=10, n_jobs=-1, random_state=self.seed
+            )
+            self.X_embedded = self.tsne.fit_transform(self.X)
+        X_embedded = self.X_embedded
 
         only_pred = False
         if ax is not None and type(ax) is not np.ndarray:
