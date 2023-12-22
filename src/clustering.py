@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from src.data_generator import generate_data
 from scipy.special import comb
 from sklearn.cluster import KMeans
-from tests.god_model_estimator import (
+from src.god_model_estimator import (
     estimate_mu_pi_grid,
     probability_distribution_x_given_pi,
 )

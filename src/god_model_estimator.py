@@ -1,6 +1,7 @@
 from typing import Optional, Union
 import numpy as np
 import torch
+
 try:
     from .god_model_tools import evaluate_polynomial
     from .compute_u import get_all_errors, compute_u
@@ -185,9 +186,13 @@ def compute_log_likelihood(
         log_likelihood = np.sum(weights) * m * np.log(pi)
         for i, x in enumerate(data):
             # assert 1 <= x <= m, f"Category should be in [[1, m]], but {x} is not"
-            log_likelihood += weights[i] * np.log(evaluate_polynomial(p=u_mu[x - 1], x=t))
-   
-    assert log_likelihood <= 0, f"Log-likelihood should be negative, but {log_likelihood} > 0"
+            log_likelihood += weights[i] * np.log(
+                evaluate_polynomial(p=u_mu[x - 1], x=t)
+            )
+
+    assert (
+        log_likelihood <= 0
+    ), f"Log-likelihood should be negative, but {log_likelihood} > 0"
     return log_likelihood
 
 
@@ -281,12 +286,16 @@ def estimate_pi(
     p_n, p_n_w = compute_polynomial(m, data, u_mu)
     while True:
         i += 1
-        t = (1 - pi) / pi  # should be the correct value but it does not work to estimate mu
+        t = (
+            1 - pi
+        ) / pi  # should be the correct value but it does not work to estimate mu
         # t = pi / (1 - pi) # should be false but it works to estimate mu
         new_pi = max(0.51, evaluate_polynomial(p_n_w, t) / evaluate_polynomial(p_n, t))
         if evolution:
             pi_history.append(new_pi)
-            log_likelihood_history.append(compute_log_likelihood(m=m, data=data, pi=new_pi, u_mu=u_mu))
+            log_likelihood_history.append(
+                compute_log_likelihood(m=m, data=data, pi=new_pi, u_mu=u_mu)
+            )
             # assert (log_likelihood_history[-1] >= log_likelihood_history[-2]), (
             #            f"Log-likelihood should increase at each iteration"
             #            f", but {log_likelihood_history[-1]} < {log_likelihood_history[-2]}")
@@ -377,14 +386,15 @@ def estimate_mu_pi(
         return best_mu, best_pi, best_likelihood
 
 
-def grid_log_likelihood(m: int,
-                        data: list[int],
-                        u: np.ndarray,
-                        pi_min: float = 0.5,
-                        pi_max: float = 0.99,
-                        nb_pi: int = 100,
-                        weights: Optional[np.ndarray] = None
-                        ) -> tuple[np.ndarray, np.ndarray]:
+def grid_log_likelihood(
+    m: int,
+    data: list[int],
+    u: np.ndarray,
+    pi_min: float = 0.5,
+    pi_max: float = 0.99,
+    nb_pi: int = 100,
+    weights: Optional[np.ndarray] = None,
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Compute the log-likelihood of the data given the model for different values of pi and all possible values of mu.
 
@@ -404,7 +414,7 @@ def grid_log_likelihood(m: int,
         Number of values of pi to test
     weights : np.ndarray
         Weights of the observations
-    
+
     Return
     ------
     log_likelihood : np.ndarray
@@ -417,18 +427,21 @@ def grid_log_likelihood(m: int,
     log_likelihood = np.zeros((m, nb_pi))
     for mu in range(1, m + 1):
         for i, pi in enumerate(pi_range):
-            log_likelihood[mu - 1, i] = compute_log_likelihood(m, data, pi, u[mu - 1], weights)
+            log_likelihood[mu - 1, i] = compute_log_likelihood(
+                m, data, pi, u[mu - 1], weights
+            )
     return log_likelihood, pi_range
 
 
-def estimate_mu_pi_grid(m: int,
-                        data: list[int],
-                        pi_min: float = 0.5,
-                        pi_max: float = 1,
-                        nb_pi: int = 100,
-                        u: Optional[np.ndarray] = None,
-                        weights: Optional[np.ndarray] = None
-                        ) -> tuple[int, float, float]:
+def estimate_mu_pi_grid(
+    m: int,
+    data: list[int],
+    pi_min: float = 0.5,
+    pi_max: float = 1,
+    nb_pi: int = 100,
+    u: Optional[np.ndarray] = None,
+    weights: Optional[np.ndarray] = None,
+) -> tuple[int, float, float]:
     """
     Estimate mu and pi given xs for the GOD model using the grid search algorithm
 
@@ -446,7 +459,7 @@ def estimate_mu_pi_grid(m: int,
         Number of values of pi to test
     u : np.ndarray
         u coefficients of the polynomials
-    
+
     Return
     ------
     mu : int
@@ -458,7 +471,9 @@ def estimate_mu_pi_grid(m: int,
     """
     if u is None:
         u = compute_u(m)
-    log_likelihood, pi_range = grid_log_likelihood(m, data, u, pi_min, pi_max, nb_pi, weights)
+    log_likelihood, pi_range = grid_log_likelihood(
+        m, data, u, pi_min, pi_max, nb_pi, weights
+    )
     best_pis = pi_range[np.argmax(log_likelihood, axis=1)]
     best_ll = np.max(log_likelihood, axis=1)
     mu = np.argmax(best_ll) + 1
@@ -468,11 +483,11 @@ def estimate_mu_pi_grid(m: int,
 
 
 def compute_log_likelihood_torch(
-        m: int,
-        data: list[int],
-        pi: torch.Tensor,
-        u_mu: np.ndarray,
-        ) -> float:
+    m: int,
+    data: list[int],
+    pi: torch.Tensor,
+    u_mu: np.ndarray,
+) -> float:
     """
     Compute the log-likelihood of the model
 
@@ -500,17 +515,19 @@ def compute_log_likelihood_torch(
     #     for d in range(M + 1):
     #         p_t += u_mu[x - 1, d] * ((1 - pi) / pi) ** d
     #     log_likelihood += torch.log(p_t)
-    
+
     # version 2
     assert 0 <= pi <= 1, f"pi should be in [0, 1], but {pi} is not"
-    log_likelihood = torch.tensor(0.)
+    log_likelihood = torch.tensor(0.0)
     for x in data:
-        p_t = torch.tensor(0.)
+        p_t = torch.tensor(0.0)
         for d in range(m + 1):
             p_t += u_mu[x - 1, d] * (1 - pi) ** d * pi ** (m - d)
         log_likelihood += torch.log(p_t)
 
-    assert log_likelihood <= 0, f"Log-likelihood should be negative, but {log_likelihood} > 0"
+    assert (
+        log_likelihood <= 0
+    ), f"Log-likelihood should be negative, but {log_likelihood} > 0"
     return log_likelihood
 
 
@@ -521,7 +538,7 @@ def optimize_log_likelihood(
     pi_zero: float = 0.5,
     n_iter_max: int = 100,
     epsilon: float = 1e-3,
-    ) -> tuple[float, float]:
+) -> tuple[float, float]:
     """
     Optimize the log-likelihood of the model over pi
 
@@ -533,7 +550,7 @@ def optimize_log_likelihood(
         pi_zero: initial value of pi
         n_iter_max: maximum number of iterations
         epsilon: convergence criterion
-    
+
     Return:
     -------
         pi_hat: optimal value of pi
@@ -558,12 +575,12 @@ def optimize_log_likelihood(
 
 
 def estimate_mu_pi_torch(
-        m: int,
-        data: list[int],
-        pi_zero: float = 0.5,
-        n_iter_max: int = 100,
-        epsilon: float = 1e-3,
-        ) -> tuple[int, float, float]:
+    m: int,
+    data: list[int],
+    pi_zero: float = 0.5,
+    n_iter_max: int = 100,
+    epsilon: float = 1e-3,
+) -> tuple[int, float, float]:
     """
     Estimate mu and pi given xs for the GOD model using SGD to optimize the log-likelihood
 
@@ -574,7 +591,7 @@ def estimate_mu_pi_torch(
         pi_zero: initial value of pi
         n_iter_max: maximum number of iterations
         epsilon: convergence criterion
-    
+
     Return:
     -------
         mu: estimated mu
@@ -585,7 +602,9 @@ def estimate_mu_pi_torch(
     log_likelihoods = np.zeros(m)
     pi_hats = np.zeros(m)
     for mu in range(1, m + 1):
-        pi_hat, log_likelihood = optimize_log_likelihood(m, data, u[mu - 1], pi_zero, n_iter_max, epsilon)
+        pi_hat, log_likelihood = optimize_log_likelihood(
+            m, data, u[mu - 1], pi_zero, n_iter_max, epsilon
+        )
         pi_hats[mu - 1] = pi_hat
         log_likelihoods[mu - 1] = log_likelihood
     mu = np.argmax(log_likelihoods) + 1
