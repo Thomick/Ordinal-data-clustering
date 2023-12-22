@@ -6,8 +6,10 @@ import matplotlib.pyplot as plt
 try:
     from .god_model_tools import evaluate_polynomial, trichotomy_maximization
     from .compute_u import get_all_errors, compute_u
+    from .god_model_generator import god_model_sample
 except ImportError:
     from god_model_tools import evaluate_polynomial, trichotomy_maximization
+    from god_model_generator import god_model_sample
     from compute_u import get_all_errors, compute_u
 
 
