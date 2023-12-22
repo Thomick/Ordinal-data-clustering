@@ -284,6 +284,7 @@ class BaseDataset:
             assert runtype in self.all_clusters.keys()
             clusters = self.all_clusters[runtype]
             pred_labels = self.all_pred_labels[runtype]
+            runtype = runtype
         elif self.clusters is None:
             raise Exception("Clusters not computed yet")
         else:
@@ -301,6 +302,7 @@ class BaseDataset:
         )
         if plot:
             disp.plot()
+            plt.title(f"Confusion matrix ({runtype})")
 
         cr = classification_report(self.y, y_pred, output_dict=True, zero_division=0)
         if plot:
@@ -323,7 +325,7 @@ class BaseDataset:
         return disp, cr
 
     def plot_assignment_matrix(
-        self, pred_labels=None, target_decoder=None, runtype=None, ax=None
+        self, pred_labels=None, target_decoder=None, runtype=None, ax=None, show=True
     ):
         """
         Plot the assignment matrix
@@ -333,6 +335,7 @@ class BaseDataset:
         """
         if runtype is not None:
             assert runtype in self.all_clusters.keys()
+            runtype = runtype
             clusters = self.all_clusters[runtype]
             pred_labels_default = self.all_pred_labels[runtype]
         elif self.clusters is None:
@@ -370,9 +373,22 @@ class BaseDataset:
             )
             plt.xlabel("True class")
             plt.ylabel("Predicted class")
-            plt.title(f"Assignment matrix ({self.last_runtype})")
+            plt.title(f"Assignment matrix ({runtype})")
             plt.colorbar()
-            plt.show()
+            for i in range(n_clusters):
+                for j in range(n_clusters):
+                    plt.text(
+                        j,
+                        i,
+                        int(clusters_histograms[i, j]),
+                        ha="center",
+                        va="center",
+                        color="w"
+                        if clusters_histograms[i, j] < clusters_histograms.max() / 2.0
+                        else "black",
+                    )
+            if show:
+                plt.show()
         else:
             ax.imshow(clusters_histograms)
             ax.set_yticks(
@@ -386,7 +402,6 @@ class BaseDataset:
             ax.set_xlabel("True class")
             ax.set_ylabel("Predicted class")
             ax.set_title(f"Assignment matrix ({runtype})")
-            # add numbers to the matrix
             for i in range(n_clusters):
                 for j in range(n_clusters):
                     ax.text(
@@ -401,7 +416,7 @@ class BaseDataset:
                     )
             return ax
 
-    def plot_histograms(self, runtype=None):
+    def plot_histograms(self, runtype=None, show=False):
         """
         Plot the histograms of the predicted and true labels
         after mathching the predicted labels with the true ones
@@ -413,6 +428,7 @@ class BaseDataset:
             assert runtype in self.all_clusters.keys()
             clusters = self.all_clusters[runtype]
             pred_labels_default = self.all_pred_labels[runtype]
+            runtype = runtype
         elif self.clusters is None:
             raise Exception("Clusters not computed yet")
         else:
@@ -432,7 +448,7 @@ class BaseDataset:
 
         hist_pred_ordered = np.zeros(n_clusters)
         hist_pred = np.sum(
-            self.clusters == np.arange(1, 1 + n_clusters).reshape(-1, 1), axis=1
+            clusters == np.arange(1, 1 + n_clusters).reshape(-1, 1), axis=1
         )
         hist_true = np.sum(
             self.y == np.arange(1, 1 + n_clusters).reshape(-1, 1), axis=1
@@ -452,7 +468,8 @@ class BaseDataset:
         plt.xlabel("Class")
         plt.ylabel("Number of samples")
         plt.title(f"Histograms ({runtype})")
-        plt.show()
+        if show:
+            plt.show()
 
     def plot_tsne(self, runtype=None, fig=None, ax=None, show=True):
         """
