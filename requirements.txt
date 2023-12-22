@@ -50,7 +50,6 @@ six==1.16.0
 stack-data==0.6.3
 sympy==1.12
 threadpoolctl==3.2.0
-torch==2.1.2
 tornado==6.4
 tqdm==4.66.1
 traitlets==5.14.0

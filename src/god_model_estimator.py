@@ -1,6 +1,5 @@
 from typing import Optional, Union
 import numpy as np
-import torch
 import matplotlib.pyplot as plt
 
 try:
@@ -527,13 +526,17 @@ def estimate_mu_pi(
     """
     if u is None:
         u = compute_u(m)
-    
+
     best_mu = -1
     best_pi = -1
     best_likelihood = -np.inf
     for mu in range(1, m + 1):
-        log_likelihood_function = lambda t: compute_log_likelihood(m=m, data=data, pi=t, u_mu=u[mu - 1], weights=weights)
-        pi, log_likelihood = trichotomy_maximization(log_likelihood_function, pi_min, pi_max, epsilon)
+        log_likelihood_function = lambda t: compute_log_likelihood(
+            m=m, data=data, pi=t, u_mu=u[mu - 1], weights=weights
+        )
+        pi, log_likelihood = trichotomy_maximization(
+            log_likelihood_function, pi_min, pi_max, epsilon
+        )
         if log_likelihood > best_likelihood:
             best_likelihood = log_likelihood
             best_mu = mu
