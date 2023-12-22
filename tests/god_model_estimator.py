@@ -437,7 +437,7 @@ def estimate_mu_pi_grid(m: int,
     pi : float
         Estimated pi
     log_likelihood : float
-        Log-likelihood of the model
+        Log-likelihood of the model : log P(X | mu, pi)
     """
     if u is None:
         u = compute_u(m)
