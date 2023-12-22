@@ -42,6 +42,9 @@ class BaseDataset:
         self.seed = seed
         self.n_iter = n_iter
         self.true_labels = None
+        self.last_runtype = None
+        self.all_pred_labels = defaultdict(any)
+        self.all_clusters = defaultdict(any)
         self.runtime = defaultdict(int)
         self.scores = defaultdict(dict)
 
@@ -114,6 +117,8 @@ class BaseDataset:
         self.compute_pred_labels()
 
         self.last_runtype = "Gaussian"
+        self.all_clusters[self.last_runtype] = self.clusters
+        self.all_pred_labels[self.last_runtype] = self.pred_labels
 
         if not self.silent:
             print("Clustered data into {} clusters".format(n_clusters))
@@ -149,6 +154,8 @@ class BaseDataset:
         self.compute_pred_labels()
 
         self.last_runtype = "K-Means"
+        self.all_clusters[self.last_runtype] = self.clusters
+        self.all_pred_labels[self.last_runtype] = self.pred_labels
 
         if not self.silent:
             print("Clustered data into {} clusters".format(n_clusters))
@@ -196,6 +203,8 @@ class BaseDataset:
         elif init == "kmeans":
             init_name = "K-Means"
         self.last_runtype = f"BOS {init_name}"
+        self.all_clusters[self.last_runtype] = self.clusters
+        self.all_pred_labels[self.last_runtype] = self.pred_labels
 
         if not self.silent:
             print("Clustered data into {} clusters".format(n_clusters))
@@ -206,7 +215,7 @@ class BaseDataset:
         self.runtime[self.last_runtype] += time() - start_time
         return self.clusters
 
-    def classification_results(self, plot=True):
+    def classification_results(self, runtype=None, plot=True):
         """
         Compute the classification results
         :param plot: if True, plot the confusion matrix
@@ -218,12 +227,20 @@ class BaseDataset:
         if self.silent:
             plot = False
 
-        if self.clusters is None:
+        if runtype is not None:
+            assert runtype in self.all_clusters.keys()
+            clusters = self.all_clusters[runtype]
+            pred_labels = self.all_pred_labels[runtype]
+        elif self.clusters is None:
             raise Exception("Clusters not computed yet")
+        else:
+            runtype = self.last_runtype
+            clusters = self.clusters
+            pred_labels = self.pred_labels
 
         y_pred = np.zeros_like(self.y)
         for i in range(len(self.y)):
-            y_pred[i] = self.target_decoder_inv[self.pred_labels[self.clusters[i]]]
+            y_pred[i] = self.target_decoder_inv[pred_labels[clusters[i]]]
 
         cm = confusion_matrix(self.y, y_pred)
         disp = ConfusionMatrixDisplay(
@@ -236,35 +253,47 @@ class BaseDataset:
         if plot:
             print(classification_report(self.y, y_pred, zero_division=0))
 
-        self.scores[self.last_runtype]["accuracy"] = cr["accuracy"]
-        self.scores[self.last_runtype]["precision"] = cr["weighted avg"]["precision"]
-        self.scores[self.last_runtype]["recall"] = cr["weighted avg"]["recall"]
-        self.scores[self.last_runtype]["f1-score"] = cr["weighted avg"]["f1-score"]
-        self.scores[self.last_runtype]["wasserstein-distance"] = wasserstein_distance(
+        self.scores[runtype]["accuracy"] = cr["accuracy"]
+        self.scores[runtype]["precision"] = cr["weighted avg"]["precision"]
+        self.scores[runtype]["recall"] = cr["weighted avg"]["recall"]
+        self.scores[runtype]["f1-score"] = cr["weighted avg"]["f1-score"]
+        # The wasserstein distance is not a metric
+        self.scores[runtype]["wasserstein-distance"] = wasserstein_distance(
             self.y, y_pred
-        )
-        self.scores[self.last_runtype]["runtime"] = self.runtime[self.last_runtype]
-        self.scores[self.last_runtype]["adjusted-rand-index"] = adjusted_rand_score(
+        )  # note that this does not depend on the assignment made above so we get the same
+        # value with self.clusters as well
+        self.scores[runtype]["runtime"] = self.runtime[runtype]
+        self.scores[runtype]["adjusted-rand-index"] = adjusted_rand_score(
             self.y, y_pred
         )
 
         return disp, cr
 
-    def plot_assignment_matrix(self, pred_labels=None, target_decoder=None):
+    def plot_assignment_matrix(
+        self, pred_labels=None, target_decoder=None, runtype=None, ax=None
+    ):
         """
         Plot the assignment matrix
         :param pred_labels: predicted labels
         :param target_decoder: target decoder
         :return: None
         """
-        if self.clusters is None:
+        if runtype is not None:
+            assert runtype in self.all_clusters.keys()
+            clusters = self.all_clusters[runtype]
+            pred_labels_default = self.all_pred_labels[runtype]
+        elif self.clusters is None:
             raise Exception("Clusters not computed yet")
+        else:
+            runtype = self.last_runtype
+            clusters = self.clusters
+            pred_labels_default = self.pred_labels
 
-        n_clusters = max(len(np.unique(self.clusters)), len(np.unique(self.y)))
-        if self.pred_labels is None and pred_labels is None:
+        n_clusters = max(len(np.unique(clusters)), len(np.unique(self.y)))
+        if pred_labels_default is None and pred_labels is None:
             pred_labels = {i: i for i in range(1, 1 + n_clusters)}
         else:
-            pred_labels = self.pred_labels if pred_labels is None else pred_labels
+            pred_labels = pred_labels_default if pred_labels is None else pred_labels
         if self.target_decoder is None and target_decoder is None:
             true_labels = {i: i for i in range(1, 1 + n_clusters)}
         else:
@@ -273,25 +302,53 @@ class BaseDataset:
             )
 
         clusters_histograms = np.zeros((n_clusters, n_clusters))
-        for pred, true in zip(self.clusters, self.y):
+        for pred, true in zip(clusters, self.y):
             clusters_histograms[int(pred) - 1, int(true) - 1] += 1
 
-        plt.imshow(clusters_histograms)
-        plt.yticks(
-            np.arange(n_clusters),
-            [pred_labels[i] for i in range(1, 1 + n_clusters)],
-        )
-        plt.xticks(
-            np.arange(n_clusters),
-            [true_labels[i] for i in range(1, 1 + n_clusters)],
-        )
-        plt.xlabel("True class")
-        plt.ylabel("Predicted class")
-        plt.title(f"Assignment matrix ({self.last_runtype})")
-        plt.colorbar()
-        plt.show()
+        if ax is None:
+            plt.imshow(clusters_histograms)
+            plt.yticks(
+                np.arange(n_clusters),
+                [pred_labels[i] for i in range(1, 1 + n_clusters)],
+            )
+            plt.xticks(
+                np.arange(n_clusters),
+                [true_labels[i] for i in range(1, 1 + n_clusters)],
+            )
+            plt.xlabel("True class")
+            plt.ylabel("Predicted class")
+            plt.title(f"Assignment matrix ({self.last_runtype})")
+            plt.colorbar()
+            plt.show()
+        else:
+            ax.imshow(clusters_histograms)
+            ax.set_yticks(
+                np.arange(n_clusters),
+                [pred_labels[i] for i in range(1, 1 + n_clusters)],
+            )
+            ax.set_xticks(
+                np.arange(n_clusters),
+                [true_labels[i] for i in range(1, 1 + n_clusters)],
+            )
+            ax.set_xlabel("True class")
+            ax.set_ylabel("Predicted class")
+            ax.set_title(f"Assignment matrix ({runtype})")
+            # add numbers to the matrix
+            for i in range(n_clusters):
+                for j in range(n_clusters):
+                    ax.text(
+                        j,
+                        i,
+                        int(clusters_histograms[i, j]),
+                        ha="center",
+                        va="center",
+                        color="w"
+                        if clusters_histograms[i, j] < clusters_histograms.max() / 2.0
+                        else "black",
+                    )
+            return ax
 
-    def plot_histograms(self):
+    def plot_histograms(self, runtype=None):
         """
         Plot the histograms of the predicted and true labels
         after mathching the predicted labels with the true ones
@@ -299,14 +356,22 @@ class BaseDataset:
         or using sorting otherwise
         :return: None
         """
-        if self.clusters is None:
+        if runtype is not None:
+            assert runtype in self.all_clusters.keys()
+            clusters = self.all_clusters[runtype]
+            pred_labels_default = self.all_pred_labels[runtype]
+        elif self.clusters is None:
             raise Exception("Clusters not computed yet")
+        else:
+            runtype = self.last_runtype
+            clusters = self.clusters
+            pred_labels_default = self.pred_labels
 
-        n_clusters = max(len(np.unique(self.clusters)), self.n_clusters)
-        if self.pred_labels is None:
+        n_clusters = max(len(np.unique(clusters)), self.n_clusters)
+        if pred_labels_default is None:
             pred_labels = {i: i for i in range(1, 1 + n_clusters)}
         else:
-            pred_labels = self.pred_labels
+            pred_labels = pred_labels_default
         if self.target_decoder is None:
             true_labels = {i: i for i in range(1, 1 + n_clusters)}
         else:
@@ -333,51 +398,66 @@ class BaseDataset:
         plt.legend(["Predicted", "True"])
         plt.xlabel("Class")
         plt.ylabel("Number of samples")
-        plt.title(f"Histograms ({self.last_runtype})")
+        plt.title(f"Histograms ({runtype})")
         plt.show()
 
-    def plot_tsne(self):
+    def plot_tsne(self, runtype=None):
         """
         Plot the t-SNE of the data in 2D
         If the clusters are already computed, plot the t-SNE of the data
         with the true labels and the predicted labels
         :return: None
         """
+        if runtype is not None:
+            assert runtype in self.all_clusters.keys()
+            clusters = self.all_clusters[runtype]
+        elif self.clusters is None:
+            raise Exception("Clusters not computed yet")
+        else:
+            runtype = self.last_runtype
+            clusters = self.clusters
+
         tsne = TSNE(n_components=2, perplexity=10, n_jobs=-1)
         X_embedded = tsne.fit_transform(self.X)
 
         figtsne, axtsne = plt.subplots(1, 2, figsize=(10, 5))
         axtsne[0].scatter(X_embedded[:, 0], X_embedded[:, 1], c=self.y)
         axtsne[0].set_title("True labels")
-        if self.clusters is not (None):
-            axtsne[1].scatter(X_embedded[:, 0], X_embedded[:, 1], c=self.clusters)
+        if clusters is not (None):
+            axtsne[1].scatter(X_embedded[:, 0], X_embedded[:, 1], c=clusters)
             axtsne[1].set_title("Predicted labels")
             axtsne[1].set_xlabel("t-SNE 1")
             axtsne[1].set_ylabel("t-SNE 2")
         axtsne[0].set_xlabel("t-SNE 1")
         axtsne[0].set_ylabel("t-SNE 2")
-        figtsne.suptitle(f"TSNE ({self.last_runtype})")
+        figtsne.suptitle(f"TSNE ({runtype})")
         plt.show()
 
-    def plot_mds(self):
+    def plot_mds(self, runtype=None):
         """
         Plot the MDS of the data in 2D
         If the clusters are already computed, plot the MDS of the data
         with the true labels and the predicted labels
         :return: None
         """
-        if self.clusters is None:
+        if runtype is not None:
+            assert runtype in self.all_clusters.keys()
+            clusters = self.all_clusters[runtype]
+        elif self.clusters is None:
             raise Exception("Clusters not computed yet")
+        else:
+            runtype = self.last_runtype
+            clusters = self.clusters
 
         figmds, axmds = plt.subplots(1, 2, figsize=(10, 5))
         mds = MDS(n_components=2, n_jobs=-1, normalized_stress="auto")
         X_embedded = mds.fit_transform(self.X)
-        if self.clusters is not (None):
-            axmds[1].scatter(X_embedded[:, 0], X_embedded[:, 1], c=self.clusters)
+        if clusters is not (None):
+            axmds[1].scatter(X_embedded[:, 0], X_embedded[:, 1], c=clusters)
             axmds[1].set_title("Predicted labels")
         axmds[0].scatter(X_embedded[:, 0], X_embedded[:, 1], c=self.y)
         axmds[0].set_title("True labels")
-        figmds.suptitle(f"MDS ({self.last_runtype})")
+        figmds.suptitle(f"MDS ({runtype})")
         plt.show()
 
 
