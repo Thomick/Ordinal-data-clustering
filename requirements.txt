@@ -1,0 +1,9 @@
+numpy
+tqdm
+scipy
+scikit-learn
+seaborn
+panda
+matplotlib
+pot
+numba
