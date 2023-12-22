@@ -467,8 +467,8 @@ class OrdinalClustering:
         self.mu = mu
         self.pi = pi
         self.ll_list = ll_list
-        self.bic = log_likelihood + 0.5 * np.log(data.shape[0]) * (
-            self.n_clusters + d * self.n_clusters
+        self.bic = log_likelihood - 0.5 * np.log(data.shape[0]) * (
+            self.n_clusters - 1 + d * self.n_clusters
         )
 
         self.labels_ = np.argmax(pw1_x, axis=1)
