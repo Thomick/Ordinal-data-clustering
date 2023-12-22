@@ -16,6 +16,38 @@ pip install -r requirements.txt
 
 The notebooks can be run using Jupyter Notebook or Jupyter Lab and are located in the `notebooks` folder. The source code is located in the `src` folder.
 
+In order to use to cluster datasets using the clustering algorithms implemented in this repo (BOS distribution and GOD model), you can use the following code:
+
+```python
+from src.clustering import OrdinalClustering
+import numpy as np
+
+# Load the dataset
+data = ...
+m = [np.unique(data[:, i]).shape[0] for i in range(data.shape[1])]
+
+# Create the clustering object
+oc = OrdinalClustering(n_clusters=3, method='bos', init="random") 
+# or method='god', init="random" or init="kmeans"
+
+# Fit the clustering object to the data
+clusters = oc.fit_transform(data)
+```
+
+It is also possible to extend the BaseDataset class in order to create a custom dataset and plot or analyze it using predefined methods. For example, for the Zoo dataset, we can do the following:
+
+```python
+from src.dataset import Animals
+
+dataset = Animals(data_path="./data/zoo.csv")
+
+dataset.cluster_bos(init="random") # dataset.cluster_god(), dataset.cluster_kmeans(), dataset.cluster_gaussian()
+dataset.plot_tsne()
+dataset.classification_results()
+dataset.plot_assignment_matrix()
+dataset.plot_histograms()
+```
+
 ## Structure
 
 The repo is structured as follows:
