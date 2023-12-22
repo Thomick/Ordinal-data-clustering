@@ -157,22 +157,14 @@ def compute_log_likelihood(m: int,
     -------
         log_likelihood: log-likelihood of the model
     """
-    t =  (1 - pi) / pi
+    t = (1 - pi) / pi
 
     # version 1
     log_likelihood = m * len(data) * np.log(pi)
     for x in data:
-        assert 1 <= x <= m, f"Category should be in [[1, m]], but {x} is not"
+        # assert 1 <= x <= m, f"Category should be in [[1, m]], but {x} is not"
         log_likelihood += np.log(evaluate_polynomial(p=u_mu[x - 1], x=t))
 
-    # version 2
-    # log_likelihood_2 = 0
-    # for x in data:
-    #     assert 1 <= x <= m, f"Category should be in [[1, m]], but {x} is not"
-    #     p = evaluate_polynomial(p=u_mu[x - 1], x=t) * pi ** m
-    #     assert 0 <= p <= 1, f"Probability should be in [0, 1], but {p} is not (pi = {pi}, m = {m}, x = {x}, u = {u_mu[x - 1]})"
-    #     log_likelihood_2 += np.log(p)
-    # assert abs(log_likelihood - log_likelihood_2) < 1e-6, f"Log-likelihood should be the same, but {log_likelihood} != {log_likelihood_2}"
     assert log_likelihood <= 0, f"Log-likelihood should be negative, but {log_likelihood} > 0"
     return log_likelihood
 
@@ -264,14 +256,14 @@ def estimate_pi(m: int,
     while True:
         i += 1
         t = (1 - pi) / pi  # should be the correct value but it does not work to estimate mu
-        # t = pi / (1 - pi) # should be false but it works to estimate mu
+        # t = pi / (1 - pi) # should be false but it works to estimate mu
         new_pi = max(0.51, evaluate_polynomial(p_n_w, t) / evaluate_polynomial(p_n, t))
         if evolution:
             pi_history.append(new_pi)
             log_likelihood_history.append(compute_log_likelihood(m=m, data=data, pi=new_pi, u_mu=u_mu))
-            # assert (log_likelihood_history[-1] >= log_likelihood_history[-2]), (
-            #             f"Log-likelihood should increase at each iteration"
-            #             f", but {log_likelihood_history[-1]} < {log_likelihood_history[-2]}")
+            # assert (log_likelihood_history[-1] >= log_likelihood_history[-2]), (
+            #            f"Log-likelihood should increase at each iteration"
+            #            f", but {log_likelihood_history[-1]} < {log_likelihood_history[-2]}")
         if abs(pi - new_pi) < epsilon or i >= n_iter_max:
             break
         pi = new_pi
@@ -355,11 +347,97 @@ def estimate_mu_pi(m: int,
         return best_mu, best_pi, best_likelihood
 
 
+def grid_log_likelihood(m: int,
+                        data: list[int],
+                        u: np.ndarray,
+                        pi_min: float = 0.5,
+                        pi_max: float = 0.99,
+                        nb_pi: int = 100
+                        ) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Compute the log-likelihood of the data given the model for different values of pi and all possible values of mu.
+
+    Parameters
+    ----------
+    m : int
+        Number of categories
+    data : list[int]
+        Observed categories
+    u : np.ndarray
+        u coefficients of the polynomials
+    pi_min : float
+        Minimum value of pi
+    pi_max : float
+        Maximum value of pi
+    nb_pi : int
+        Number of values of pi to test
+    
+    Return
+    ------
+    log_likelihood : np.ndarray
+        log-likelihood of the model for different values of pi and all possible values of mu
+        log_likelihood[mu - 1, i] is the log-likelihood of the model for mu and pi = pi_min + i * (pi_max - pi_min) / nb_pi
+    pi_range : np.ndarray
+        pi values tested
+    """
+    pi_range = np.linspace(pi_min, pi_max, nb_pi)
+    log_likelihood = np.zeros((m, nb_pi))
+    for mu in range(1, m + 1):
+        for i, pi in enumerate(pi_range):
+            log_likelihood[mu - 1, i] = compute_log_likelihood(m, data, pi, u[mu - 1])
+    return log_likelihood, pi_range
+
+
+def estimate_mu_pi_grid(m: int,
+                        data: list[int],
+                        pi_min: float = 0.5,
+                        pi_max: float = 1,
+                        nb_pi: int = 100,
+                        u: Optional[np.ndarray] = None
+                        ) -> tuple[int, float, float]:
+    """
+    Estimate mu and pi given xs for the GOD model using the grid search algorithm
+
+    Parameters
+    ----------
+    m : int
+        Number of categories
+    data : list[int]
+        Observed categories
+    pi_min : float
+        Minimum value of pi
+    pi_max : float
+        Maximum value of pi
+    nb_pi : int
+        Number of values of pi to test
+    u : np.ndarray
+        u coefficients of the polynomials
+    
+    Return
+    ------
+    mu : int
+        Estimated mu
+    pi : float
+        Estimated pi
+    log_likelihood : float
+        Log-likelihood of the model
+    """
+    if u is None:
+        u = compute_u(m)
+    log_likelihood, pi_range = grid_log_likelihood(m, data, u, pi_min, pi_max, nb_pi)
+    best_pis = pi_range[np.argmax(log_likelihood, axis=1)]
+    best_ll = np.max(log_likelihood, axis=1)
+    mu = np.argmax(best_ll) + 1
+    pi = best_pis[mu - 1]
+    log_likelihood = best_ll[mu - 1]
+    return mu, pi, log_likelihood
+
+
 if __name__ == "__main__":
     from god_model_generator import god_model_sample
     xs: list[int] = god_model_sample(m=5, mu=2, pi=0.7, n_sample=20)
 
     print("xs:", xs)
 
-    mu_hat, pi_hat, _ = estimate_mu_pi(m=5, data=xs, n_iter_max=5, evolution=False)
+    mu_hat, pi_hat, _ = estimate_mu_pi_grid(m=5, data=xs, nb_pi=100)
     print(f"mu = 2, pi = 0.7: mu_hat = {mu_hat}, pi_hat = {pi_hat}")
