@@ -1,8 +1,12 @@
 from typing import Optional, Union
 import numpy as np
 import torch
-from .god_model_tools import evaluate_polynomial
-from .compute_u import get_all_errors, compute_u
+try:
+    from .god_model_tools import evaluate_polynomial
+    from .compute_u import get_all_errors, compute_u
+except ImportError:
+    from god_model_tools import evaluate_polynomial
+    from compute_u import get_all_errors, compute_u
 
 
 def probability_distribution_x_given_pi(m: int, x: int, pi: float) -> np.ndarray:
@@ -146,6 +150,7 @@ def compute_log_likelihood(
     data: list[int],
     pi: float,
     u_mu: np.ndarray,
+    weights: np.ndarray = None,
 ) -> float:
     """
     Compute the log-likelihood of the model
@@ -161,6 +166,8 @@ def compute_log_likelihood(
         data: observed categories
         pi: probability of error
         u_mu: u(., mu, .) coefficients of the polynomials
+        weights: weights of the observations, optional
+        only used for AECM
 
     Return:
     -------
@@ -169,11 +176,17 @@ def compute_log_likelihood(
     t = (1 - pi) / pi
 
     # version 1
-    log_likelihood = m * len(data) * np.log(pi)
-    for x in data:
-        # assert 1 <= x <= m, f"Category should be in [[1, m]], but {x} is not"
-        log_likelihood += np.log(evaluate_polynomial(p=u_mu[x - 1], x=t))
-
+    if weights is None:
+        log_likelihood = m * len(data) * np.log(pi)
+        for x in data:
+            # assert 1 <= x <= m, f"Category should be in [[1, m]], but {x} is not"
+            log_likelihood += np.log(evaluate_polynomial(p=u_mu[x - 1], x=t))
+    else:
+        log_likelihood = np.sum(weights) * m * np.log(pi)
+        for i, x in enumerate(data):
+            # assert 1 <= x <= m, f"Category should be in [[1, m]], but {x} is not"
+            log_likelihood += weights[i] * np.log(evaluate_polynomial(p=u_mu[x - 1], x=t))
+   
     assert log_likelihood <= 0, f"Log-likelihood should be negative, but {log_likelihood} > 0"
     return log_likelihood
 
@@ -369,7 +382,8 @@ def grid_log_likelihood(m: int,
                         u: np.ndarray,
                         pi_min: float = 0.5,
                         pi_max: float = 0.99,
-                        nb_pi: int = 100
+                        nb_pi: int = 100,
+                        weights: Optional[np.ndarray] = None
                         ) -> tuple[np.ndarray, np.ndarray]:
     """
     Compute the log-likelihood of the data given the model for different values of pi and all possible values of mu.
@@ -388,6 +402,8 @@ def grid_log_likelihood(m: int,
         Maximum value of pi
     nb_pi : int
         Number of values of pi to test
+    weights : np.ndarray
+        Weights of the observations
     
     Return
     ------
@@ -401,7 +417,7 @@ def grid_log_likelihood(m: int,
     log_likelihood = np.zeros((m, nb_pi))
     for mu in range(1, m + 1):
         for i, pi in enumerate(pi_range):
-            log_likelihood[mu - 1, i] = compute_log_likelihood(m, data, pi, u[mu - 1])
+            log_likelihood[mu - 1, i] = compute_log_likelihood(m, data, pi, u[mu - 1], weights)
     return log_likelihood, pi_range
 
 
@@ -410,7 +426,8 @@ def estimate_mu_pi_grid(m: int,
                         pi_min: float = 0.5,
                         pi_max: float = 1,
                         nb_pi: int = 100,
-                        u: Optional[np.ndarray] = None
+                        u: Optional[np.ndarray] = None,
+                        weights: Optional[np.ndarray] = None
                         ) -> tuple[int, float, float]:
     """
     Estimate mu and pi given xs for the GOD model using the grid search algorithm
@@ -441,7 +458,7 @@ def estimate_mu_pi_grid(m: int,
     """
     if u is None:
         u = compute_u(m)
-    log_likelihood, pi_range = grid_log_likelihood(m, data, u, pi_min, pi_max, nb_pi)
+    log_likelihood, pi_range = grid_log_likelihood(m, data, u, pi_min, pi_max, nb_pi, weights)
     best_pis = pi_range[np.argmax(log_likelihood, axis=1)]
     best_ll = np.max(log_likelihood, axis=1)
     mu = np.argmax(best_ll) + 1
