@@ -7,17 +7,30 @@ import seaborn as sns
 import os
 import sys
 import time
-from .god_model_generator import god_model_generator
+try:
+    from .god_model_generator import god_model_generator
+except ImportError:
+    from god_model_generator import god_model_generator
 
 
 # Naive implementation (can be improved)
-def bos_model(n_cat, mu, pi):
+def bos_model(n_cat: int, mu: int, pi: float) -> int:
     """
     Generate a single feature from BOS model
-    :param n_cat: number of categories
-    :param mu: position parameter
-    :param pi: precision parameter
-    :return: a single feature
+
+    Parameters
+    ----------
+    n_cat : int
+        number of categories
+    mu : int
+        position parameter
+    pi : float
+        precision parameter
+
+    Returns
+    -------
+    int
+        x ~ BOS(n_cat, mu, pi)
     """
     # Perform stochastic binary search algorithm
     cur_e = list(np.arange(1, n_cat + 1))
@@ -54,48 +67,48 @@ def bos_model(n_cat, mu, pi):
     return cur_e[0]
 
 
-def god_model(n_cat, mu, pi):
-    """
-    Generate a single feature from Rudkiewicz model
-    :param n_cat: number of categories
-    :param mu: position parameter
-    :param pi: precision parameter
-    :return: a single feature
-    """
-    # Perform stochastic binary search algorithm
-    comp_res = [False] * n_cat
-    for i in range(n_cat):
-        if np.random.binomial(1, pi) == 1:
-            comp_res[i] = mu <= i
-        else:
-            comp_res[i] = not (mu <= i)
-    x = 0
-    ex = n_cat + 1
-    for i in np.random.permutation(n_cat):
-        e_cur = comp_res[: i + 1].count(True) + comp_res[i + 1 :].count(False)
-        if e_cur <= ex:
-            x = i
-            ex = e_cur
-
-    return x + 1
-
-
-def generate_data(n, p, n_cat, k, alpha, mu, pi, seed, model="bos"):
+def generate_data(n: int,
+                  p: int,
+                  n_cat: list[int],
+                  k: int,
+                  alpha: list[float],
+                  mu: list[list[int]],
+                  pi: list[list[float]],
+                  seed: int,
+                  model: str = "bos"):
     """
     Generate synthetic multivariate ordinal dataset
-    :param n: number of samples
-    :param p: number of features
-    :param n_cat: number of categories for each feature
-    :param k: number of groups
-    :param alpha: coefficient of the group indicator
-    :param mu: position parameters of the BOS models
-    :param pi: precision parameters of the BOS models
-    :param seed: random seed
-    :return: synthetic data of size (n, p) and group indicator of size (n,)
+
+    Parameters
+    ----------
+    n : int
+        number of samples
+    p : int
+        number of features
+    n_cat : list[int] of length p
+        number of categories for each feature
+    k : int
+        number of groups or clusters
+    alpha : list[float] of length k
+        coefficient of the group indicator
+    mu : list[list[int]] of size (k, p)
+        position parameters of the BOS models, mu[i, j] : mu for group i, feature j
+    pi : list[list[float]] of size (k, p)
+        precision parameters of the BOS models, pi[i, j] : pi for group i, feature j
+    seed : int
+        random seed
+    model : str
+        model type, "bos" or "god"
+
+    Returns
+    -------
+    tuple[np.ndarray, np.ndarray]
+        synthetic data of size (n, p) and group indicator of size (n,)
     """
     np.random.seed(seed)
     # generate group indicator with probability alphas
     w = np.random.choice(k, n, p=alpha, replace=True)
+    # w[i] = j means sample i belongs to group j
     # generate features
     x = np.zeros((n, p), dtype=int)
     for i in range(n):
@@ -104,7 +117,6 @@ def generate_data(n, p, n_cat, k, alpha, mu, pi, seed, model="bos"):
                 x[i, j] = bos_model(n_cat[j], mu[w[i]][j], pi[w[i]][j])
             else:
                 x[i, j] = god_model_generator(n_cat[j], mu[w[i]][j], pi[w[i]][j])
-
     return x, w
 
 
@@ -116,7 +128,7 @@ def plot_hist_bos_model(n_cat, mu, pi, n_sample=10000, show=True):
 
 
 def plot_hist_god_model(n_cat, mu, pi, n_sample=10000, show=True):
-    x = [god_model(n_cat, mu, pi) for _ in range(n_sample)]
+    x = [god_model_generator(n_cat, mu, pi) for _ in range(n_sample)]
     sns.histplot(x, stat="density", discrete=True, label="god model")
     if show:
         plt.show()
@@ -126,9 +138,9 @@ if __name__ == "__main__":
     # Test bos_model
     # plot_hist_bos_model(5, 3, 0.5)
 
-    seed = 0
-    plot_hist_bos_model(5, 3, 0.3, show=False)
-    plot_hist_god_model(5, 3, 0.3, show=False)
+    # seed = 0
+    plot_hist_bos_model(5, 3, 0.7, show=False)
+    plot_hist_god_model(5, 3, 0.5 + 0.7 * 0.5, show=False)
     plt.legend()
     plt.show()
     """
