@@ -8,15 +8,19 @@ except ImportError:
 
 def god_model_generator(m: int, mu: int, pi: float) -> int:
     """
-    Generate x in [[1, n_cat]] from GOD model with parameters mu and pi
+    Generate x in [[1, m]] from GOD model with parameters mu and pi
 
     Args:
-        m: number of categories
-        mu: true category
-        pi: probability of true comparison (pi > 0.5)
+        m: int
+            number of categories
+        mu: int in [[1, m]]
+            true category
+        pi: int
+            probability of true comparison (pi > 0.5)
 
     Return:
-        x: generated category
+        x: int in [[1, m]]
+            generated category
     """
     false_comparisons = np.random.binomial(1, 1 - pi, size=m)
     order = np.arange(1, m + 1) <= mu
