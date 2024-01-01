@@ -60,7 +60,6 @@ def compute_u(m: int) -> np.ndarray:
         u: u(., ., .) coefficients of the polynomials (m, m, m + 1)
         u[mu, x] = u(., mu, x)
     """
-    assert m  > 0, "m must be strictly positive"
     distance = get_all_errors(m)
     is_minimal: np.ndarray = np.min(distance, axis=1)[:, None] == distance
     card_min = np.sum(is_minimal, axis=1)
@@ -72,8 +71,3 @@ def compute_u(m: int) -> np.ndarray:
                     d = distance[i, mu - 1]
                     u[mu - 1, x - 1, d] += 1 / card_min[i]
     return u
-
-
-if __name__ == "__main__":
-    u = compute_u(5)
-    print(u)
