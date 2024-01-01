@@ -10,21 +10,24 @@ def count_errors(order_info: np.ndarray) -> np.ndarray:
     Complexity: O(m)
 
     Args:
-        order_info: array of order information c in {0, 1}^m
+        order_info: array of order information c in {0, 1}^(m - 1)
 
     Return:
-        [|| E_k - c||_1 for k in [[1, m]]] np.ndarray in [[0, m]]^m
-        with E_k = [1] * k + [0] * (m - k)
-    """
-    m = order_info.shape[0]
-    
-    errors = np.zeros(m)
-    current_error = np.sum(order_info)
+        [|| E_k - c||_1 for k in [[1, m]]] np.ndarray in [[0, m - 1]]^m
+        with E_k = [1] * (k - 1) + [0] * (m - k)
 
-    for i in range(m):
-        current_error = current_error + 1 - 2 * order_info[i]
+    Algorithm:
+    || E_1 - c ||_1 = || c ||_1
+    || E_k - c ||_1 = || E_{k - 1} - c ||_1 + 1 - 2 * c[k - 1]
+    """
+    m = order_info.shape[0] + 1
+
+    current_error = np.sum(order_info)
+    errors = np.empty(m, dtype=np.int64)
+    errors[0] = current_error
+    for i in range(1, m):
+        current_error = current_error + 1 - 2 * order_info[i - 1]
         errors[i] = current_error
-    
     return errors
 
 
@@ -55,6 +58,7 @@ def trichotomy_maximization(f: Callable[[float], float],
                             ) -> tuple[float, float]:
     """
     Find the maximum of a function f on [a, b] using trichotomy
+    Complexity: O( (lg(epislon) - lg(b - a)) / (1 - lg(3)) ) 
 
     Arguments:
     ----------

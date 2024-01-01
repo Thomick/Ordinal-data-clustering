@@ -16,20 +16,19 @@ def god_model_generator(m: int, mu: int, pi: float) -> int:
         mu: int in [[1, m]]
             true category
         pi: int
-            probability of true comparison (pi > 0.5)
+            probability of true comparison (pi >= 0.5)
 
     Return:
         x: int in [[1, m]]
             generated category
     """
-    false_comparisons = np.random.binomial(1, 1 - pi, size=m)
-    order = np.arange(1, m + 1) <= mu
-    # observed_order[i] = (i <= mu) if false_comparisons[i] == 0 else ((i <= mu) + 1) % 2
+    false_comparisons = np.random.binomial(1, 1 - pi, size=m - 1)
+    order = np.arange(1, m) < mu
+    # observed_order[i] = (i < mu) if false_comparisons[i] == 0 else ((i < mu) + 1) % 2
     observed_order = (false_comparisons + order) % 2
 
     nb_errors = count_errors(observed_order)
     x = np.random.choice(np.where(nb_errors == nb_errors.min())[0]) + 1
-
     return x
 
 

@@ -32,10 +32,10 @@ def probability_distribution_x_given_pi(m: int, x: int, pi: float) -> np.ndarray
     p = np.zeros(m)
 
     for mu in range(1, m + 1):
-        for i in range(2**m):
+        for i in range(2 ** (m - 1)):
             if is_minimal[i, x - 1]:
                 loc_p = (
-                    pi ** (m - distance[i, mu - 1]) * (1 - pi) ** distance[i, mu - 1]
+                    pi ** (m - 1 - distance[i, mu - 1]) * (1 - pi) ** distance[i, mu - 1]
                 )
                 loc_p /= card_min[i]
                 p[mu - 1] += loc_p
@@ -154,13 +154,13 @@ def probability_xi_given_mu_pi(
     pi: float,
     u: np.ndarray) -> float:
     """
-    Compute P(x | mu, pi) = sum_d=0^m u(mu, x, d) * pi^(m - d) * (1 - pi)^d
+    Compute P(x | mu, pi) = sum_d=0^{m-1} u(mu, x, d) * pi^(m - d) * (1 - pi)^d
 
     Complexity: O(m)
 
     Arguments:
     ----------
-        m: int
+        m: int with m >= 1
             number of categories
         x: int in [[1, m]]
             observed category
@@ -168,7 +168,7 @@ def probability_xi_given_mu_pi(
             supposed category
         pi: float in [1/2, 1]
             probability of error
-        u: np.ndarray of int of shape (m, m, m + 1)
+        u: np.ndarray of int of shape (m, m, m)
             coefficients of the polynomial u(mu, x, d)
 
     Return:
@@ -176,8 +176,8 @@ def probability_xi_given_mu_pi(
         p: probability P(x | mu, pi)
     """
     p = 0
-    for d in range(m + 1):
-        p += u[mu - 1, x - 1, d] * pi ** (m - d) * (1 - pi) ** d
+    for d in range(m):
+        p += u[mu - 1, x - 1, d] * pi ** (m - 1 - d) * (1 - pi) ** d
     return p
 
 
@@ -217,8 +217,8 @@ def compute_log_likelihood(
     log_likelihood = 0
     for i, x in enumerate(data):
         p = 0
-        for d in range(m + 1):
-            p += u_mu[x - 1, d] * pi ** (m - d) * (1 - pi) ** d
+        for d in range(m):
+            p += u_mu[x - 1, d] * pi ** (m - 1 - d) * (1 - pi) ** d
         assert p >= 0, f"p should be > 0: {x=}, {u_mu[x - 1]=}, {pi=}, {p=}"
         if weights is None:
             log_likelihood += np.log(p)
@@ -422,7 +422,7 @@ def plot_log_likelihoods(
     """
     assert 1 <= mu <= m, f"mu={mu} not in [1, m]"
     assert 0 <= pi <= 1, f"pi={pi} not in [0, 1]"
-    assert u.shape == (m, m, m + 1), f"u.shape={u.shape} != (m, m, m+1)"
+    assert u.shape == (m, m, m), f"u.shape={u.shape} != (m, m, m)"
     assert (data is None) ^ (
         nb_sample is None
     ), f"data={data} and nb_sample={nb_sample} are not consistent"
@@ -450,6 +450,9 @@ def plot_log_likelihoods(
 
 if __name__ == "__main__":
     from god_model_generator import god_model_sample
+
+    r = probability_distribution_x_given_pi(1, 1, 0.5)
+    print(r)
 
     xs: list[int] = god_model_sample(m=5, mu=2, pi=0.7, n_sample=200)
 
