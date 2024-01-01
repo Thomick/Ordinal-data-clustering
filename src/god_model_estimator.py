@@ -162,11 +162,11 @@ def probability_xi_given_mu_pi(
     ----------
         m: int
             number of categories
-        x: int
+        x: int in [[1, m]]
             observed category
-        mu: int
+        mu: int in [[1, m]]
             supposed category
-        pi: float
+        pi: float in [1/2, 1]
             probability of error
         u: np.ndarray of int of shape (m, m, m + 1)
             coefficients of the polynomial u(mu, x, d)
@@ -177,7 +177,7 @@ def probability_xi_given_mu_pi(
     """
     p = 0
     for d in range(m + 1):
-        p += u[mu, x, d] * pi ** (m - d) * (1 - pi) ** d
+        p += u[mu - 1, x - 1, d] * pi ** (m - d) * (1 - pi) ** d
     return p
 
 
