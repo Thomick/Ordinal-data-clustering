@@ -3,11 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 try:
-    from .god_model_tools import evaluate_polynomial, trichotomy_maximization
+    from .god_model_tools import evaluate_polynomial, trichotomy_maximization, group_sum
     from .compute_u import get_all_errors, compute_u
     from .god_model_generator import god_model_sample
 except ImportError:
-    from god_model_tools import evaluate_polynomial, trichotomy_maximization
+    from god_model_tools import evaluate_polynomial, trichotomy_maximization, group_sum
     from god_model_generator import god_model_sample
     from compute_u import get_all_errors, compute_u
 
@@ -175,37 +175,37 @@ def probability_xi_given_mu_pi(
     -------
         p: probability P(x | mu, pi)
     """
-    p = 0
-    for d in range(m):
-        p += u[mu - 1, x - 1, d] * pi ** (m - 1 - d) * (1 - pi) ** d
-    return p
+    return  pi ** (m - 1) * evaluate_polynomial(u[mu - 1, x - 1], (1 - pi) / pi)
 
 
 def compute_log_likelihood(
     m: int,
     data: list[int],
+    mu: int,
     pi: float,
-    u_mu: np.ndarray,
+    u: np.ndarray,
     weights: np.ndarray = None,
 ) -> float:
     """
     Compute the log-likelihood of the model
 
-    log P(X | mu, pi) = sum_i=1^n log(m * u(., mu, x^i)((1 - pi) / pi))
-    where u(., mu, x^i) is the polynomial of degree m with coefficients u_mu
+    log P(X | mu, pi) = sum_i=1^n log(m * u(mu, x^i, .)((1 - pi) / pi))
+    where u(mu, x^i, .) is the polynomial of degree m - 1 with coefficients u(mu, x^i, d)_d
 
-    Complexity: O(n * m) (or O(n * m * log(m) in the current implementation)
+    Complexity: O(n * m ) in the current implementation
+    if we can assume n = m it is O(m * m)
 
-    The p can be computed with evaluate_polynomial(u_mu[x - 1], (1 - pi) / pi)
+    The p can be computed with evaluate_polynomial(u[mu, x - 1], (1 - pi) / pi)
     but this cause issues with pi = 0 or pi = 1.
 
     Arguments:
     ----------
         m: number of categories
-        data: observed categories
+        data, list[int] on np.ndarray[int] in [[1, x - 1]]: observed categories
+        mu, int in [[1, m]]: supposed category
         pi: probability of error
-        u_mu: u(., mu, .) coefficients of the polynomials
-        weights: weights of the observations, optional
+        u, np.ndarray[int] of shape (m, m, m): coefficients of the polynomials u(mu, x, d)
+        weights, np.ndarray of shape len(data): weights of the observations, optional
         only used for AECM
 
     Return:
@@ -216,14 +216,12 @@ def compute_log_likelihood(
     # version 1
     log_likelihood = 0
     for i, x in enumerate(data):
-        p = 0
-        for d in range(m):
-            p += u_mu[x - 1, d] * pi ** (m - 1 - d) * (1 - pi) ** d
-        assert p >= 0, f"p should be > 0: {x=}, {u_mu[x - 1]=}, {pi=}, {p=}"
+        p = probability_xi_given_mu_pi(m, x, mu, pi, u)
+        assert p >= 0, f"p should be > 0: {x=}, {u[mu - 1, x - 1]=}, {pi=}, {p=}"
         if weights is None:
             log_likelihood += np.log(p)
         else:
-            if weights[i] == 0 and p == 0:
+            if weights[i] == 0:
                 log_likelihood += 0
             else:
                 log_likelihood += weights[i] * np.log(p)
@@ -275,7 +273,7 @@ def grid_log_likelihood(
     for mu in range(1, m + 1):
         for i, pi in enumerate(pi_range):
             log_likelihood[mu - 1, i] = compute_log_likelihood(
-                m, data, pi, u[mu - 1], weights
+                m, data, mu, pi, u, weights
             )
     return log_likelihood, pi_range
 
@@ -318,6 +316,11 @@ def estimate_mu_pi_grid(
     """
     if u is None:
         u = compute_u(m)
+
+    # sum of each group to reduce the complexity of the algorithm
+    weights = group_sum(m, data, weights)
+    data = np.arange(1, m + 1)
+    
     log_likelihood, pi_range = grid_log_likelihood(
         m, data, u, pi_min, pi_max, nb_pi, weights
     )
@@ -369,13 +372,17 @@ def estimate_mu_pi(
     """
     if u is None:
         u = compute_u(m)
+    
+    # sum of each group to reduce the complexity of the algorithm
+    weights = group_sum(m, data, weights)
+    data = np.arange(1, m + 1)
 
     best_mu = -1
     best_pi = -1
     best_likelihood = -np.inf
     for mu in range(1, m + 1):
         log_likelihood_function = lambda t: compute_log_likelihood(
-            m=m, data=data, pi=t, u_mu=u[mu - 1], weights=weights
+            m=m, data=data, mu=mu, pi=t, u=u, weights=weights
         )
         pi, log_likelihood = trichotomy_maximization(
             log_likelihood_function, pi_min, pi_max, epsilon
@@ -428,8 +435,13 @@ def plot_log_likelihoods(
     ), f"data={data} and nb_sample={nb_sample} are not consistent"
     if data is None:
         data = god_model_sample(m=m, mu=mu, pi=pi, n_sample=nb_sample, seed=seed)
+
+    # sum of each group to reduce the complexity of the algorithm
+    weights = group_sum(m, data)
+    data = np.arange(1, m + 1)
+
     log_likelihoods, pi_range = grid_log_likelihood(
-        m=m, data=data, nb_pi=nb_pi, u=u, pi_min=0.5, pi_max=1
+        m=m, data=data, nb_pi=nb_pi, u=u, pi_min=0.5, pi_max=1, weights=weights
     )
     plt.figure(figsize=(10, 5))
     for i in range(1, m + 1):
