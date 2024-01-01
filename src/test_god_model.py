@@ -1,5 +1,6 @@
 from unittest import TestCase, main
 import numpy as np
+from scipy.special import comb
 from compute_u import compute_u
 from god_model_estimator import estimate_mu_pi, probability_xi_given_mu_pi, probability_distribution_x_given_pi
 
@@ -14,6 +15,9 @@ class TestGodModel(TestCase):
             self.assertEqual(u.shape[0], m)
             self.assertEqual(u.shape[1], m)
             self.assertTrue((u >= 0).all())
+            self.assertTrue(np.array_equal(u[:, :, 0], np.eye(m)))
+            comb_values = np.array([comb(m - 1, j, exact=True) for j in range(m)])
+            self.assertTrue(np.abs(u.sum(axis=1) - comb_values).max() < 1e-10)
     
     def test_probability_xi_given_mu_pi(self):
         for m in range(1, 11):
@@ -28,7 +32,7 @@ class TestGodModel(TestCase):
     
     def test_estimate_mu_pi_1(self):
         xs = np.array([3,4,3,3,3,2,3,2,3,3,4,9,3,3,4,3,1,3,2,3,2,5,1,3,3,1,1,3,2,7,3,5,4,3,5,3,1,10,3,3,2,2,2,1,2,3,3,3,2,3,3,3,3,3,3,10,1,3,1,4,3,3,5,1,2,3,2,3,3,3,3,4,3,9,2,1,3,1,1,3,3,3,3,3,7,3,4,1,5,3,4,3,2,2,1,2,5,3,3,2])
-        mu, pi, ll = estimate_mu_pi(10, xs, u=self.us[10])
+        mu, pi, ll, _ = estimate_mu_pi(10, xs, u=self.us[10])
         self.assertEqual(mu, 3)
         self.assertAlmostEqual(pi, 0.7972585618117456)
         self.assertAlmostEqual(ll, -161.13938629955825)
@@ -36,7 +40,7 @@ class TestGodModel(TestCase):
     def test_estimate_mu_pi_2(self):
         # m = 6, mu = 1, pi = 0.9
         xs = np.array([1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1])
-        mu, pi, ll = estimate_mu_pi(6, xs, u=self.us[6])
+        mu, pi, ll, _ = estimate_mu_pi(6, xs, u=self.us[6])
         self.assertEqual(1, mu)
         self.assertAlmostEqual(0.9679518926215107, pi)
         self.assertAlmostEqual(-5.095497835660907, ll)
@@ -44,7 +48,7 @@ class TestGodModel(TestCase):
     def test_estimate_mu_pi_3(self):
         # m = 9, mu = 6, pi = 0.95
         xs = np.array([6,6,6,6,6,8,6,7,4,6,6,6,6,6,6,7,6,5,6,6])
-        mu, pi, ll = estimate_mu_pi(9, xs, u=self.us[9])
+        mu, pi, ll, _ = estimate_mu_pi(9, xs, u=self.us[9])
         self.assertEqual(6, mu)
         self.assertAlmostEqual(0.9201239523702662, pi)
         self.assertAlmostEqual(-18.670558582229166, ll)
@@ -52,7 +56,7 @@ class TestGodModel(TestCase):
     def test_estimate_mu_pi_4(self):
         # m = 6, mu = 1, pi = 0.9
         xs = np.array([1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1])
-        mu, pi, ll = estimate_mu_pi(6, xs, u=self.us[6])
+        mu, pi, ll, _ = estimate_mu_pi(6, xs, u=self.us[6])
         self.assertEqual(1, mu)
         self.assertAlmostEqual(0.9679518926215107, pi)
         self.assertAlmostEqual(-5.095497835660907, ll)
@@ -60,7 +64,7 @@ class TestGodModel(TestCase):
     def test_estimate_mu_pi_5(self):
         # m = 9, mu = 6, pi = 0.95
         xs = np.array([6,6,6,6,6,8,6,7,4,6,6,6,6,6,6,7,6,5,6,6])
-        mu, pi, ll = estimate_mu_pi(9, xs, u=self.us[9])
+        mu, pi, ll, _ = estimate_mu_pi(9, xs, u=self.us[9])
         self.assertEqual(6, mu)
         self.assertAlmostEqual(0.9201239523702662, pi)
         self.assertAlmostEqual(-18.670558582229166, ll)

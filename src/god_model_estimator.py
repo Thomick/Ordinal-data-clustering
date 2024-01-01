@@ -335,11 +335,9 @@ def estimate_mu_pi_grid(
 def estimate_mu_pi(
     m: int,
     data: list[int],
+    weights: Optional[np.ndarray] = None,
     epsilon: float = 1e-4,
     u: Optional[np.ndarray] = None,
-    weights: Optional[np.ndarray] = None,
-    pi_min: float = 0.5,
-    pi_max: float = 1,
 ) -> tuple[int, float, float]:
     """
     Estimate mu and pi given xs for the GOD model using the grid search algorithm
@@ -350,16 +348,12 @@ def estimate_mu_pi(
         Number of categories
     data : list[int]
         Observed categories
-    pi_min : float
-        Minimum value of pi
-    pi_max : float
-        Maximum value of pi
+    weights: np.ndarray
+        weights of each observation
     epsilon : float
         Precision of the estimation
     u : np.ndarray
         u coefficients of the polynomials
-    weights: np.ndarray
-        weights of each observation
 
     Return
     ------
@@ -369,6 +363,8 @@ def estimate_mu_pi(
         Estimated pi
     log_likelihood : float
         Log-likelihood of the model : log P(X | mu, pi)
+    probability : np.ndarray
+        Probability of each category : [ P(x | mu, pi) for x in [[1, m]] ]
     """
     if u is None:
         u = compute_u(m)
@@ -385,14 +381,18 @@ def estimate_mu_pi(
             m=m, data=data, mu=mu, pi=t, u=u, weights=weights
         )
         pi, log_likelihood = trichotomy_maximization(
-            log_likelihood_function, pi_min, pi_max, epsilon
+            log_likelihood_function, 0.5, 1, epsilon
         )
         if log_likelihood > best_likelihood:
             best_likelihood = log_likelihood
             best_mu = mu
             best_pi = pi
+    
+    probability = np.array(
+        [probability_xi_given_mu_pi(m=m, x=x, mu=best_mu, pi=best_pi, u=u) for x in data]
+    )
 
-    return best_mu, best_pi, best_likelihood
+    return best_mu, best_pi, best_likelihood, probability
 
 
 def plot_log_likelihoods(
