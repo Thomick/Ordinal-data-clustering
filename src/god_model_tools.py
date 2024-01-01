@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Optional
 import numpy as np
 from numba import njit
 
@@ -84,3 +84,25 @@ def trichotomy_maximization(f: Callable[[float], float],
             b = d
         i += 1
     return (a + b) / 2, f((a + b) / 2)
+
+
+@njit
+def group_sum(m: int, data: np.ndarray, weights: Optional[np.ndarray] = None) -> np.ndarray:
+    """
+    Compute the sum of weights grouped by unique values in data
+    Complexity: O(n + m)
+
+    Args:
+        data, array (n) of int in [[1, m]]: data group
+        weights, array (n) of floats: weights for each data point of shape (n)
+
+    Return:
+        array of sums of shape (m)
+    """
+    if weights is None:
+        weights = np.ones(data.shape[0])
+    assert data.shape[0] == weights.shape[0]
+    sums = np.zeros(m)
+    for i in range(data.shape[0]):
+        sums[data[i] - 1] += weights[i]
+    return sums
