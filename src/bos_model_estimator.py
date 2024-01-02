@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional
 import numpy as np
 try:
     from .god_model_tools import group_sum
@@ -310,3 +310,31 @@ def univariate_em(
             best_mu = mu
             best_probs = probs
     return best_mu, best_pi, best_ll, np.array(best_probs)
+
+
+def observation_likelihood(
+        m : int,
+        mu: int,
+        pi: float) -> np.ndarray:
+    """
+    Compute the observation likelihood for each observation
+    
+    Parameters
+    ----------
+    m : int
+        Number of categories
+    mu : int
+        Position parameter
+    pi : float
+        Precision parameter
+    
+    Returns
+    -------
+    np.ndarray
+        Observation likelihood
+        [ P(x | mu, pi) for x in [[1, m]] ]
+    """
+    pxc: list[list[Any, float]] = [compute_p_list(x, mu, pi, m) for x in range(1, m + 1)]
+    # p_lists[i][j] = p(x_i, c_j | mu, pi)
+
+    return np.array([sum(p for _, p in pxc[j]) for j in range(m)])
