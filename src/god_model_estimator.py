@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -176,6 +176,7 @@ def probability_xi_given_mu_pi(
     -------
         p: probability P(x | mu, pi)
     """
+    # assert 0.5 <= pi <= 1, f"pi={pi} not in [1/2, 1]"
     return pi ** (m - 1) * evaluate_polynomial(u[mu - 1, x - 1], (1 - pi) / pi)
 
 
@@ -234,7 +235,7 @@ def compute_log_likelihood(
 
 def grid_log_likelihood(
     m: int,
-    data: list[int] | np.ndarray,
+    data: Union[list[int], np.ndarray],
     u: np.ndarray,
     pi_min: float = 0.5,
     pi_max: float = 0.99,
@@ -283,7 +284,7 @@ def grid_log_likelihood(
 
 def estimate_mu_pi_grid(
     m: int,
-    data: list[int] | np.ndarray,
+    data: Union[list[int], np.ndarray],
     pi_min: float = 0.5,
     pi_max: float = 1,
     nb_pi: int = 100,
@@ -339,9 +340,9 @@ def estimate_mu_pi_grid(
 
 def estimate_mu_pi(
     m: int,
-    data: list[int] | np.ndarray,
+    data: Union[list[int], np.ndarray],
     weights: Optional[np.ndarray] = None,
-    epsilon: float = 1e-4,
+    epsilon: float = 1e-5,
     u: Optional[np.ndarray] = None,
 ) -> tuple[int, float, float, np.ndarray]:
     """
