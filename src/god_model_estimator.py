@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -147,12 +147,13 @@ For mu in [[1, m]]:
 Return the best pi and corresponding to the best log_likelihood.
 """
 
+
 def probability_xi_given_mu_pi(
-    m: int,
-    x: int,
-    mu: int,
-    pi: float,
-    u: np.ndarray) -> float:
+        m: int,
+        x: int,
+        mu: int,
+        pi: float,
+        u: np.ndarray) -> float:
     """
     Compute P(x | mu, pi) = sum_d=0^{m-1} u(mu, x, d) * pi^(m - d) * (1 - pi)^d
 
@@ -175,7 +176,7 @@ def probability_xi_given_mu_pi(
     -------
         p: probability P(x | mu, pi)
     """
-    return  pi ** (m - 1) * evaluate_polynomial(u[mu - 1, x - 1], (1 - pi) / pi)
+    return pi ** (m - 1) * evaluate_polynomial(u[mu - 1, x - 1], (1 - pi) / pi)
 
 
 def compute_log_likelihood(
@@ -233,7 +234,7 @@ def compute_log_likelihood(
 
 def grid_log_likelihood(
     m: int,
-    data: list[int],
+    data: list[int] | np.ndarray,
     u: np.ndarray,
     pi_min: float = 0.5,
     pi_max: float = 0.99,
@@ -264,7 +265,8 @@ def grid_log_likelihood(
     ------
     log_likelihood : np.ndarray
         log-likelihood of the model for different values of pi and all possible values of mu
-        log_likelihood[mu - 1, i] is the log-likelihood of the model for mu and pi = pi_min + i * (pi_max - pi_min) / nb_pi
+        log_likelihood[mu - 1, i] is the log-likelihood of the model
+        for mu and pi = pi_min + i * (pi_max - pi_min) / nb_pi
     pi_range : np.ndarray
         pi values tested
     """
@@ -272,6 +274,7 @@ def grid_log_likelihood(
     log_likelihood = np.zeros((m, nb_pi))
     for mu in range(1, m + 1):
         for i, pi in enumerate(pi_range):
+            pi: float
             log_likelihood[mu - 1, i] = compute_log_likelihood(
                 m, data, mu, pi, u, weights
             )
@@ -280,7 +283,7 @@ def grid_log_likelihood(
 
 def estimate_mu_pi_grid(
     m: int,
-    data: list[int],
+    data: list[int] | np.ndarray,
     pi_min: float = 0.5,
     pi_max: float = 1,
     nb_pi: int = 100,
@@ -304,6 +307,8 @@ def estimate_mu_pi_grid(
         Number of values of pi to test
     u : np.ndarray
         u coefficients of the polynomials
+    weights : np.ndarray
+        Weights of the observations
 
     Return
     ------
@@ -326,19 +331,19 @@ def estimate_mu_pi_grid(
     )
     best_pis = pi_range[np.argmax(log_likelihood, axis=1)]
     best_ll = np.max(log_likelihood, axis=1)
-    mu = np.argmax(best_ll) + 1
-    pi = best_pis[mu - 1]
-    log_likelihood = best_ll[mu - 1]
+    mu: int = np.argmax(best_ll) + 1
+    pi: float = best_pis[mu - 1]
+    log_likelihood: float = best_ll[mu - 1]
     return mu, pi, log_likelihood
 
 
 def estimate_mu_pi(
     m: int,
-    data: list[int],
+    data: list[int] | np.ndarray,
     weights: Optional[np.ndarray] = None,
     epsilon: float = 1e-4,
     u: Optional[np.ndarray] = None,
-) -> tuple[int, float, float]:
+) -> tuple[int, float, float, np.ndarray]:
     """
     Estimate mu and pi given xs for the GOD model using the grid search algorithm
 
@@ -405,7 +410,7 @@ def plot_log_likelihoods(
     nb_sample: int = None,
     seed: int = 0,
 ) -> None:
-    """ "
+    """
     Plot the log-likelihoods P(X | pi, mu) over pi in [0, 1] for each mu in [1, m]
 
     Parameters
@@ -466,12 +471,12 @@ if __name__ == "__main__":
     r = probability_distribution_x_given_pi(1, 1, 0.5)
     print(r)
 
-    xs: list[int] = god_model_sample(m=5, mu=2, pi=0.7, n_sample=200)
+    xs = god_model_sample(m=5, mu=2, pi=0.7, n_sample=200)
 
     print("xs:", xs)
 
     mu_hat_g, pi_hat_g, ll_g = estimate_mu_pi_grid(m=5, data=xs, nb_pi=100)
-    mu_hat_t, pi_hat_t, ll_t = estimate_mu_pi(m=5, data=xs)
+    mu_hat_t, pi_hat_t, ll_t, _ = estimate_mu_pi(m=5, data=xs)
     print(f"mu = 2, pi = 0.7")
     print(f"Grid: mu_hat = {mu_hat_g}, pi_hat = {pi_hat_g}, {ll_g=}")
     print(f"Trichotomy: mu_hat = {mu_hat_t}, pi_hat = {pi_hat_t}, {ll_t=}")
