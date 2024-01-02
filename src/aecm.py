@@ -31,6 +31,8 @@ class AECM:
             log likelihood of the model
         bic, float:
             BIC of the model
+        labels, np.ndarray (nb_samples,) of int:
+            cluster labels of the data
         data, np.ndarray (nb_samples, nb_features) of int:
             data to cluster (data[., j] in [[1, ms[j] ]])
         univariate_likelihoods, np.ndarray (max ms, nb_clusters, nb_features) of float:
@@ -46,8 +48,6 @@ class AECM:
         pxi, np.ndarray (nb_samples) of float:
             probability of each sample
             P(x^i | alpha, mu, pi)
-        eps, float:
-            threshold to stop the algorithm (difference between two log likelihoods)
         seed, int:
             seed for the initialization of the KMeans algorithm
         verbose, bool:
@@ -58,7 +58,6 @@ class AECM:
                  nb_features: int,
                  ms: np.ndarray,
                  data: np.ndarray,
-                 eps: float = 1e-5,
                  seed: int = 0,
                  verbose: bool = False):
         """
@@ -71,6 +70,8 @@ class AECM:
                 number of categories for each feature
             data, np.ndarray (nb_samples, nb_features) of int:
                 data to cluster (data[., j] in [[1, ms[j] ]])
+            seed, int:
+                seed for the initialization
             verbose, bool:
                 whether to print intermediate results
         """
@@ -82,13 +83,16 @@ class AECM:
         self.pis = np.ones((nb_clusters, nb_features))
         self.log_likelihood = -np.inf
         self.data = data
-        self.eps = eps
         self.seed = seed
         self.verbose = verbose
-        assert self.data.shape[1] == self.nb_features, f"Data has {self.data.shape[1]} features but {self.nb_features} were expected"
-        assert self.ms.shape[0] == self.nb_features, f"ms has {self.ms.shape[0]} features but {self.nb_features} were expected"
-        assert self.data.min(axis=1) >= 1, f"Data has values less than 1 for each feature"
-        assert data.max(axis=1) <= self.ms, f"Data has values greater than the number of categories for each feature"
+        assert self.data.shape[1] == self.nb_features, \
+            f"Data has {self.data.shape[1]} features but {self.nb_features} were expected"
+        assert self.ms.shape[0] == self.nb_features, \
+            f"ms has {self.ms.shape[0]} features but {self.nb_features} were expected"
+        assert np.all(self.data.min(axis=0) >= 1), \
+            f"Data has values less than 1 for each feature"
+        assert np.all(data.max(axis=0) <= self.ms), \
+            f"Data has values greater than the number of categories for each feature"
         self.pwik = np.ones((self.data.shape[0], self.nb_clusters))
         self.pxi = np.ones(self.data.shape[0])
         self.univariate_likelihoods = np.ones((self.ms.max(), self.nb_clusters, self.nb_features))
@@ -99,13 +103,23 @@ class AECM:
         """
         Compute the BIC of the model
         """
-        return self.log_likelihood - 0.5 * (self.nb_clusters - 1 + self.nb_features * self.nb_clusters) * np.log(self.data.shape[0])
+        return (self.log_likelihood
+                - 0.5 *
+                (self.nb_clusters - 1 + self.nb_features * self.nb_clusters) *
+                np.log(self.data.shape[0]))
+    
+    @property
+    def labels(self) -> np.ndarray:
+        """
+        Return the labels of the data
+        """
+        return np.argmax(self.pwik, axis=1)
 
     def _init_k_means(self):
         """
         Initialize the parameters of the model using the KMeans algorithm
         """
-        kmeans = KMeans(n_clusters=self.nb_clusters, random_state=self.seed).fit(self.data)
+        kmeans = KMeans(n_clusters=self.nb_clusters, random_state=self.seed, n_init="auto").fit(self.data)
         self.alphas = np.bincount(kmeans.labels_) / self.data.shape[0]
         for k in range(self.nb_clusters):
             for j in range(self.nb_features):
@@ -116,11 +130,16 @@ class AECM:
         """
         Initialize the parameters of the model randomly
         """
-        self.alphas = np.random.dirichlet(np.ones(self.nb_clusters))
-        self.pis = np.random.random((self.nb_clusters, self.nb_features))
+        if self.verbose:
+            print("Random initialization")
+        np.random.seed(self.seed)
+        # self.alphas = np.random.dirichlet(np.ones(self.nb_clusters))
+        self.alphas = np.ones(self.nb_clusters) / self.nb_clusters
         self.mus = np.random.randint(1, self.ms + 1, (self.nb_clusters, self.nb_features))
+        self.pis = np.random.random((self.nb_clusters, self.nb_features))
+        
 
-    def univariate_mu_pi_estimation(self, m, data, weiths, **kwargs) -> tuple[int, float, np.ndarray]:
+    def univariate_mu_pi_estimation(self, m, data, weights, **kwargs) -> tuple[int, float, np.ndarray]:
         """
         Estimate mu, pi for 1D data
 
@@ -135,7 +154,7 @@ class AECM:
         -------
             mu, int: position parameter
             pi, float: precision parameter
-            probs, np.ndarray (m,) of float: probabilities of each value
+            probs, np.ndarray (m) of float: probabilities of each value
                 [ P(x | mu, pi) for x in [[1, m]] ]
         """
         raise NotImplementedError
@@ -146,7 +165,7 @@ class AECM:
         for each feature and each cluster
         
         Args:
-            weigths:
+            weights:
                 
             **kwargs: arguments for the internal estimation
         """
@@ -154,7 +173,24 @@ class AECM:
             weights = self.pwik[:, k]
             for j in range(self.nb_features):
                 self.mus[k, j], self.pis[k, j], probs = self.univariate_mu_pi_estimation(
-                    m=self.ms[j], data=self.data[:, j], weights=weights, **kwargs)
+                    m=self.ms[j], data=self.data[:, j], weights=weights, pi_start=self.pis[k, j], **kwargs)
+                self.univariate_likelihoods[:, k, j] = probs
+    
+    def _only_prob_estimation(self, **kwargs):
+        """
+        Run the internal estimation of the parameters of the model
+        for each feature and each cluster
+        
+        Args:
+            weights:
+                
+            **kwargs: arguments for the internal estimation
+        """
+        for k in range(self.nb_clusters):
+            weights = self.pwik[:, k]
+            for j in range(self.nb_features):
+                _, _, probs = self.univariate_mu_pi_estimation(
+                    m=self.ms[j], data=self.data[:, j], weights=weights, pi_start=self.pis[k, j], **kwargs)
                 self.univariate_likelihoods[:, k, j] = probs
 
     def _maximization_step(self):
@@ -174,7 +210,8 @@ class AECM:
         """
         # px_knowing_w[i, k] = P(x^i | wik = 1, mu, pi)
         for i in range(self.data.shape[0]):
-            self.px_knowing_w[i] = np.prod(self.univariate_likelihoods[self.data[i] - 1, :, np.arange(self.nb_features)], axis=0)
+            self.px_knowing_w[i] = np.prod(
+                self.univariate_likelihoods[self.data[i] - 1, :, np.arange(self.nb_features)], axis=0)
         self.pxi = np.sum(self.px_knowing_w * self.alphas, axis=1)
         self.pwik = self.px_knowing_w * self.alphas / self.pxi[:, None]
     
@@ -184,7 +221,11 @@ class AECM:
         """
         self.log_likelihood = np.sum(np.log(self.pxi))
     
-    def fit(self, initialization: str = "kmeans", **kwargs) -> list[float]:
+    def fit(self, 
+            initialization: str = "random",
+            epsilon_aecm: float = 1e-1,
+            max_iter_aecm: int = 100,
+            **kwargs) -> list[float]:
         """
         Run the AECM algorithm
 
@@ -192,6 +233,19 @@ class AECM:
         ----------
             initialization, str in {'kmeans', 'random'}:
                 initialization method for the parameters of the model
+            epsilon_aecm, float:
+                threshold on the difference of log likelihood between two iterations
+            max_iter_aecm, int:
+                maximum number of iterations of the AECM algorithm
+            **kwargs: arguments for the internal estimation
+                BOS:
+                    n_iter: int
+                        number of iterations of the EM algorithm
+                    epsilon: float
+                        precision threshold on the value of pi
+                GOD:
+                    epsilon, float: precision threshold on the value of pi
+
         """
         if initialization == "kmeans":
             self._init_k_means()
@@ -200,19 +254,37 @@ class AECM:
         else:
             raise AttributeError(f"{initialization=} should be either kmeans or random")
     
-        self._internal_estimation(**kwargs)
-        old_log_likelihood = self.log_likelihood + 2 * self.eps
+        self._only_prob_estimation(**kwargs)
+        self._expectation_step()
+        self._compute_loglikelihood()
+        old_log_likelihood = self.log_likelihood - 2 * epsilon_aecm
         log_likelihoods = [old_log_likelihood]
 
-        while abs(old_log_likelihood - self.log_likelihood) > self.eps:
+        if self.verbose:
+            print("-" * 20)
+            print(f"Initial mu: {self.mus}")
+            print(f"Initial pi: {self.pis}")
+            print(f"Initial log likelihood: {self.log_likelihood}")
+            print("=" * 20)
+
+        i = 0
+        while abs(old_log_likelihood - self.log_likelihood) > epsilon_aecm and i < max_iter_aecm:
+            i += 1
             old_log_likelihood = self.log_likelihood
-            self._expectation_step()
             self._maximization_step()
             self._internal_estimation(**kwargs)
+            self._expectation_step()
             self._compute_loglikelihood()
             if self.verbose:
-                print(f"log likelihood: {self.log_likelihood}")
+                print(f"Iteration {i}")
+                print("-" * 20)
+                print(f"Current mu: {self.mus}")
+                print(f"Current pi: {self.pis}")
+                print(f"Current alpha: {self.alphas}")
+                print(f"Log likelihood: {self.log_likelihood}")
+                print("=" * 20)
             log_likelihoods.append(self.log_likelihood)
+            
         return log_likelihoods
 
 
@@ -256,8 +328,9 @@ class AECM_GOD(AECM):
     def univariate_mu_pi_estimation(self, 
                                     m: int, 
                                     data: np.ndarray, 
-                                    weiths: np.ndarray,
-                                    epsilon: float) -> tuple[int, float, np.ndarray]:
+                                    weights: np.ndarray,
+                                    pi_start: float,
+                                    epsilon_god: float = 1e-3) -> tuple[int, float, np.ndarray]:
         """
         Estimate mu, pi for 1D data
 
@@ -272,10 +345,10 @@ class AECM_GOD(AECM):
         -------
             mu, int: position parameter
             pi, float: precision parameter
-            probs, np.ndarray (m,) of float: probabilities of each value
+            probs, np.ndarray (m) of float: probabilities of each value
                 [ P(x | mu, pi) for x in [[1, m]] ]
         """
-        mu, pi, _, probs = estimate_mu_pi_god(m=m, data=data, weights=weiths, epsilon=epsilon, u=self.u[m])
+        mu, pi, _, probs = estimate_mu_pi_god(m=m, data=data, weights=weights, epsilon=epsilon_god, u=self.u[m])
         return mu, pi, probs
 
 
@@ -283,9 +356,9 @@ class AECM_BOS(AECM):
     def univariate_mu_pi_estimation(self, 
                                     m: int, 
                                     data: np.ndarray, 
-                                    weiths: np.ndarray,
-                                    n_iter: int = 100,
-                                    epsilon: float = 1e-3,
+                                    weights: np.ndarray,
+                                    epsilon_bos: float = 1e-1,
+                                    max_iter_bos: int = 10,
                                     pi_start: float = 0.5,
                                     ) -> tuple[int, float, np.ndarray]:
         """
@@ -306,13 +379,13 @@ class AECM_BOS(AECM):
         -------
             mu, int: position parameter
             pi, float: precision parameter
-            probs, np.ndarray (m,) of float: probabilities of each value
+            probs, np.ndarray (m) of float: probabilities of each value
                 [ P(x | mu, pi) for x in [[1, m]] ]
         """
         mu, pi, _, probs = estimate_mu_pi_bos(m=m, 
                                               data=data, 
-                                              weights=weiths,
-                                              n_iter=n_iter,
-                                              eps=epsilon,
+                                              weights=weights,
+                                              n_iter=max_iter_bos,
+                                              eps=epsilon_bos,
                                               pi=pi_start)
         return mu, pi, probs
