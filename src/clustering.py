@@ -307,6 +307,7 @@ class OrdinalClustering:
         data = data.astype(int)
 
         if self.init == "random":
+            np.random.seed(self.seed)
             mu = np.random.randint(np.ones(m.shape[0]), m + 1, (self.n_clusters, d))
             pi = np.random.random((self.n_clusters, d))
             alpha = np.ones((self.n_clusters)) / self.n_clusters
@@ -399,6 +400,7 @@ class OrdinalClustering:
                 print("-" * 20)
                 print(f"Current mu: {mu}")
                 print(f"Current pi: {pi}")
+                print(f"Current alpha: {alpha}")
             # E step
             breakpoint()
             pw1_x, p_list_x = expectation(data, mu, pi, m, alpha)
