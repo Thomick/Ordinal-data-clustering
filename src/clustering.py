@@ -467,10 +467,10 @@ class OrdinalClustering:
             log_likelihood_old = log_likelihood
             ll_list.append(log_likelihood)
 
-            if np.linalg.norm(pi - old_pi) < self.eps:
-                if not self.silent:
-                    print("Converged, stopping...")
-                break
+            # if np.linalg.norm(pi - old_pi) < self.eps:
+            #     if not self.silent:
+            #         print("Converged, stopping...")
+            #     break
 
         self.alpha = alpha
         self.mu = mu
