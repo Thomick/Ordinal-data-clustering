@@ -8,6 +8,7 @@ from sklearn.cluster import KMeans
 from src.god_model_estimator import (
     estimate_mu_pi_grid,
     probability_distribution_x_given_pi,
+    estimate_mu_pi
 )
 
 
@@ -387,9 +388,9 @@ class OrdinalClustering:
                 return pw1_x, p_list_x
 
             def maximize_mu(
-                data, pi, m, weights, em_func=estimate_mu_pi_grid, n_iter=10, eps=1e-1
+                data, pi, m, weights, em_func=estimate_mu_pi, n_iter=10, eps=1e-1
             ):
-                best_mu, best_pi, best_ll = em_func(m=m, data=data, weights=weights)
+                best_mu, best_pi, best_ll, _ = em_func(m=m, data=data, weights=weights)
                 return best_pi, best_mu
 
         log_likelihood_old = -np.inf
@@ -404,12 +405,18 @@ class OrdinalClustering:
             # E step
             breakpoint()
             pw1_x, p_list_x = expectation(data, mu, pi, m, alpha)
-
+            # p_list_x[i, k] = p(x_i | w_ik = 1, mu, pi)
+            # pw1_x[i, k] = p(w_ik = 1 | x_i, mu, pi)
+            
             # log_likelihood = np.sum(pw1_x * np.log(alpha * p_list_x))
             log_likelihood = np.sum(np.log(np.sum(alpha * p_list_x, axis=1)))
             if not self.silent:
                 print("Log-likelihood: {}".format(log_likelihood))
-                print()
+                # print("pw1_x[i, k] = p(w_ik = 1 | x_i, mu, pi)")
+                # print(pw1_x)
+                # print("p_list_x[i, k] = p(x_i | w_ik = 1, mu, pi)")
+                # print(p_list_x)
+                print("=" * 20)
             if np.abs(log_likelihood - log_likelihood_old) < self.eps:
                 if not self.silent:
                     print("Converged, stopping...")
@@ -447,7 +454,7 @@ class OrdinalClustering:
                         )
                     elif self.model == "god":
                         breakpoint()
-                        _, pi_update, _ = estimate_mu_pi_grid(
+                        _, pi_update, _, _ = estimate_mu_pi(
                             m[j], data[:, j], weights=weights
                         )
                         pi_update = [pi_update]
