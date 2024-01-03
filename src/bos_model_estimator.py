@@ -1,9 +1,11 @@
+from functools import cache
 from typing import Any, Optional
 import numpy as np
+from scipy.interpolate import lagrange
 try:
-    from .god_model_tools import group_sum
+    from .god_model_tools import group_sum, trichotomy_maximization
 except ImportError:
-    from god_model_tools import group_sum
+    from god_model_tools import group_sum, trichotomy_maximization
 
 
 compact_type_trajectory = list[tuple[int, int, int, int]]
@@ -228,7 +230,7 @@ def univariate_em_pi(
     lls_list = []
     old_ll = -np.inf
 
-    for _ in range(n_iter):
+    for iteration_index in range(n_iter):
         # E step
         p_lists = [compute_p_list(x, mu, pi, m) for x in data]
         # p_lists[i][j] = p(x_i, c_j | mu, pi)
@@ -273,6 +275,8 @@ def univariate_em_pi(
         if abs(lls_list[-1] - old_ll) < eps:  # threshold on log-likelihood
             break
         old_ll = lls_list[-1]
+    
+    # print(f"EM algorithm for {mu} converged after {iteration_index + 1} iterations")
 
     return pi_list, lls_list, p_tots
 
@@ -334,7 +338,258 @@ def observation_likelihood(
         Observation likelihood
         [ P(x | mu, pi) for x in [[1, m]] ]
     """
-    pxc: list[list[Any, float]] = [compute_p_list(x, mu, pi, m) for x in range(1, m + 1)]
-    # p_lists[i][j] = p(x_i, c_j | mu, pi)
+    return np.array([sum(p for _, p in compute_p_list(x, mu, pi, m)) for x in range(1, m + 1)])
 
-    return np.array([sum(p for _, p in pxc[j]) for j in range(m)])
+
+def _probability_x_given_mu_pi(
+        m : int,
+        x: int,
+        mu: int,
+        pi: float) -> float:
+    """
+    Compute the likelihood P(x | mu, pi)
+    
+    Parameters
+    ----------
+    m : int
+        Number of categories
+    x : int in [[1, m]]
+        Observation
+    mu : int in [[1, m]]
+        Position parameter
+    pi : float in [0, 1]
+        Precision parameter
+    
+    Returns
+    -------
+    float
+        P(x | mu, pi) with m categories
+    """
+    return sum(p for _, p in compute_p_list(x, mu, pi, m))
+
+
+# memoization
+def probability_x_given_mu_pi_scratch(m: int,
+                                      x: int, 
+                                      mu: int, 
+                                      pi: float,
+                                    ) -> float:
+    """
+    Compute the likelihood P(x | mu, pi) using recursion
+
+    Parameters
+    ----------
+    m : int
+        Number of categories
+    x : int in [[1, m]]
+        Observation
+    mu : int in [[1, m]]
+        Position parameter
+    pi : float in [0, 1]
+        Precision parameter
+    
+    Returns
+    -------
+    float
+        P(x | mu, pi) with m categories
+
+    Complexity: O(m^3) (not tight)
+    """
+    @cache
+    def aux_probability_x_given_mu_pi_scratch(lower: int, upper: int) -> float:
+        """
+        Auxiliary function to compute the probability
+        Compute P(x | mu, pi) if e_1 = [[lower, upper[[
+        """
+        s = 0
+        for y in range(lower, x):
+            s += (pi * (mu > y) + (1 - pi) * (upper - (y + 1)) / (upper - lower)) \
+                * aux_probability_x_given_mu_pi_scratch(y + 1, upper)
+        good_choice = mu == x
+        if lower == x:  # e_- = e_=
+            good_choice = good_choice or (mu <= x)
+        if upper == x + 1:  # e_+ = e_=
+            good_choice = good_choice or (mu >= x)
+        s += pi * good_choice + (1 - pi) * 1 / (upper - lower)
+        for y in range(x + 1, upper):
+            s += (pi * (mu < y) + (1 - pi) * (y - lower) / (upper - lower)) \
+                * aux_probability_x_given_mu_pi_scratch(lower, y)
+        return s  / (upper - lower)
+    
+    return aux_probability_x_given_mu_pi_scratch(1, m + 1)
+
+
+def compute_polynomials(m: int) -> np.ndarray:
+    """
+    Compute the polynomials coefficients u 
+    P(x | mu, pi) = sum_{d=0}^{m-1} u[mu, x, d] pi^(m - 1 - d)
+
+    Parameters
+    ----------
+    m : int
+        Number of categories
+    
+    Returns
+    -------
+    np.ndarray of shape (m, m, m)
+        Polynomials coefficients
+    """
+    pi_sample = np.arange(1, m + 1) / (m + 1)
+    u = np.zeros((m, m, m))
+    for mu in range(m):
+        for x in range(m):
+            for k, pi in enumerate(pi_sample):
+                u[mu, x, k] = probability_x_given_mu_pi_scratch(m=m, x=x + 1, mu=mu + 1, pi=pi)
+            poly = lagrange(pi_sample, u[mu, x]).coefficients
+            u[mu, x, -poly.shape[0]:] = poly
+    return u
+
+
+def probability_x_given_mu_pi_using_u(
+        m: int,
+        x: int,
+        mu: int,
+        pi: float,
+        u: np.ndarray) -> float:
+    """
+    Compute P(x | mu, pi) = sum_d=0^{m-1} u(mu, x, d) * pi^(m - 1 - d)
+
+    Complexity: O(m)
+
+    Arguments:
+    ----------
+        m: int with m >= 1
+            number of categories
+        x: int in [[1, m]]
+            observed category
+        mu: int in [[1, m]]
+            supposed category
+        pi: float in [1/2, 1]
+            probability of error
+        u: np.ndarray of int of shape (m, m, m)
+            coefficients of the polynomial u(mu, x, d)
+
+    Return:
+    -------
+        p: probability P(x | mu, pi)
+    """
+    # assert 0.5 <= pi <= 1, f"pi={pi} not in [1/2, 1]"
+    # p_poly = np.polyval(u[mu - 1, x - 1], pi)
+    # p_old = _probability_x_given_mu_pi(m=m, x=x, mu=mu, pi=pi)
+    # assert np.abs(p_poly - p_old) < 1e-10, \
+    #     f"p_poly={p_poly} != p_old={p_old} for {m=}, {x=}, {mu=}, {pi=}, {u[mu - 1, x - 1]=}"
+    return np.polyval(u[mu - 1, x - 1], pi)
+
+
+def compute_log_likelihood(
+    m: int,
+    data: list[int],
+    mu: int,
+    pi: float,
+    u: np.ndarray,
+    weights: np.ndarray = None,
+) -> float:
+    """
+    Compute the log-likelihood of the model
+
+    log P(X | mu, pi) = sum_i=1^m log(u(mu, i, .)(pi))
+    where u(mu, x^i, .) is the polynomial of degree m - 1 with coefficients u(mu, x^i, d)_d
+
+    Complexity: O(n * m) but if we can assume n = m it is O(m * m)
+
+    Arguments:
+    ----------
+        m: number of categories
+        data, list[int] on np.ndarray[int] in [[1, x - 1]]: observed categories
+        mu, int in [[1, m]]: supposed category
+        pi: probability of error
+        u, np.ndarray[int] of shape (m, m, m): coefficients of the polynomials u(mu, x, d)
+            /!\ coefficients are in the reverse order (ie p(x) = sum_{d=0}^{m-1} u[mu, x, d] * pi^(m - 1 - d))
+        weights, np.ndarray of shape len(data): weights of the observations, optional
+        only used for AECM
+
+    Return:
+    -------
+        log_likelihood: log-likelihood of the model
+    """
+
+    # version 1
+    log_likelihood = 0
+    for i, x in enumerate(data):
+        p = probability_x_given_mu_pi_using_u(m, x, mu, pi, u)
+        assert p >= 0, f"p should be > 0: {x=}, {u[mu - 1, x - 1]=}, {pi=}, {p=}"
+        if weights is None:
+            log_likelihood += np.log(p)
+        else:
+            if weights[i] == 0:
+                log_likelihood += 0
+            else:
+                log_likelihood += weights[i] * np.log(p)
+    assert (
+        log_likelihood <= 0
+    ), f"Log-likelihood should be negative, but {log_likelihood} > 0"
+    return log_likelihood
+
+
+def estimate_mu_pi(
+    m: int,
+    data: np.ndarray,
+    weights: Optional[np.ndarray] = None,
+    epsilon: float = 1e-5,
+    u: Optional[np.ndarray] = None,
+) -> tuple[int, float, float, np.ndarray]:
+    """
+    Estimate mu and pi given xs for the GOD model using the grid search algorithm
+
+    Parameters
+    ----------
+    m : int
+        Number of categories
+    data : list[int]
+        Observed categories
+    weights: np.ndarray
+        weights of each observation
+    epsilon : float
+        Precision of the estimation
+    u : np.ndarray
+        u coefficients of the polynomials
+
+    Return
+    ------
+    mu : int
+        Estimated mu
+    pi : float
+        Estimated pi
+    log_likelihood : float
+        Log-likelihood of the model : log P(X | mu, pi)
+    probability : np.ndarray
+        Probability of each category : [ P(x | mu, pi) for x in [[1, m]] ]
+    """
+    if u is None:
+        u = compute_polynomials(m)
+    # print("Polynomials computed")
+    
+    # sum of each group to reduce the complexity of the algorithm
+    weights = group_sum(m, data, weights)
+    data = np.arange(1, m + 1)
+
+    best_mu = -1
+    best_pi = -1
+    best_likelihood = -np.inf
+    for mu in range(1, m + 1):
+        log_likelihood_function = lambda t: compute_log_likelihood(
+            m=m, data=data, mu=mu, pi=t, u=u, weights=weights
+        )
+        pi, log_likelihood = trichotomy_maximization(
+            log_likelihood_function, 0, 1, epsilon
+        )
+        if log_likelihood > best_likelihood:
+            best_likelihood = log_likelihood
+            best_mu = mu
+            best_pi = pi
+    
+    probability = np.array(
+        [probability_x_given_mu_pi_using_u(m=m, x=x, mu=best_mu, pi=best_pi, u=u) for x in data]
+    )
+
+    return best_mu, best_pi, best_likelihood, probability
