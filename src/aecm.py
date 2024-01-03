@@ -2,12 +2,18 @@ import numpy as np
 from sklearn.cluster import KMeans
 try:
     from src.compute_u import compute_u
-    from src.god_model_estimator import estimate_mu_pi as estimate_mu_pi_god, probability_xi_given_mu_pi as probability_xi_given_mu_pi_god
-    from src.bos_model_estimator import univariate_em as estimate_mu_pi_bos, observation_likelihood as observation_likelihood_bos
+    from src.god_model_estimator import estimate_mu_pi as estimate_mu_pi_god, probability_xi_given_mu_pi as probability_x_given_mu_pi_god
+    from src.bos_model_estimator import (
+        estimate_mu_pi as estimate_mu_pi_bos,
+        probability_x_given_mu_pi_using_u as probability_x_given_mu_pi_bos, 
+        compute_polynomials as compute_polynomials_bos)
 except ImportError:
     from compute_u import compute_u
-    from god_model_estimator import estimate_mu_pi as estimate_mu_pi_god, probability_xi_given_mu_pi as probability_xi_given_mu_pi_god
-    from bos_model_estimator import univariate_em as estimate_mu_pi_bos, observation_likelihood as observation_likelihood_bos
+    from god_model_estimator import estimate_mu_pi as estimate_mu_pi_god, probability_xi_given_mu_pi as probability_x_given_mu_pi_god
+    from bos_model_estimator import (
+        estimate_mu_pi as estimate_mu_pi_bos,
+        probability_x_given_mu_pi_using_u as probability_x_given_mu_pi_bos, 
+        compute_polynomials as compute_polynomials_bos)
 
 
 class AECM:
@@ -143,7 +149,7 @@ class AECM:
                                     m: int, 
                                     data: np.ndarray,
                                     weights: np.ndarray,
-                                    **kwargs
+                                    epsilon_univariate: float = 1e-5
                                     ) -> tuple[int, float, np.ndarray]:
         """
         Estimate mu, pi for 1D data
@@ -156,7 +162,8 @@ class AECM:
                 data to cluster (data[., j] in [[1, m]])
             weights, np.ndarray (nb_samples,) of float: 
                 weights of the data
-            **kwargs: arguments for the estimation of mu, pi
+            epsilon_univariate, float:
+                precision threshold on the value of pi
         
         Return:
         -------
@@ -206,7 +213,7 @@ class AECM:
             weights = self.pwik[:, k]
             for j in range(self.nb_features):
                 self.mus[k, j], self.pis[k, j], probs = self.univariate_mu_pi_estimation(
-                    m=self.ms[j], data=self.data[:, j], weights=weights, pi_start=self.pis[k, j], **kwargs)
+                    m=self.ms[j], data=self.data[:, j], weights=weights, **kwargs)
                 self.univariate_likelihoods[:, k, j] = probs
     
     def _prob_estimation(self):
@@ -235,7 +242,6 @@ class AECM:
         """
         self.alphas = np.mean(self.pwik, axis=0)
     
-    # WARNING: TO CHECK
     def _expectation_step(self):
         """
         Run the expectation step of the AECM algorithm:
@@ -375,7 +381,6 @@ class AECM_GOD(AECM):
                                     m: int, 
                                     data: np.ndarray, 
                                     weights: np.ndarray,
-                                    pi_start: float,
                                     epsilon_god: float = 1e-3) -> tuple[int, float, np.ndarray]:
         """
         Estimate mu, pi for 1D data
@@ -419,17 +424,47 @@ class AECM_GOD(AECM):
             probs, np.ndarray (m) of float: probabilities of each value
                 [ P(x | mu, pi) for x in [[1, m]] ]
         """
-        return np.array([probability_xi_given_mu_pi_god(m=m, x=x, mu=mu, pi=pi, u=self.u[m]) for x in range(1, m + 1)])
+        return np.array([probability_x_given_mu_pi_god(m=m, x=x, mu=mu, pi=pi, u=self.u[m]) for x in range(1, m + 1)])
 
 
 class AECM_BOS(AECM):
+    def __init__(self,
+                 nb_clusters: int,
+                 nb_features: int,
+                 ms: np.ndarray,
+                 data: np.ndarray,
+                 eps: float = 1e-5,
+                 seed: int = 0,
+                 verbose: bool = False):
+        """
+        Args:
+            nb_clusters, int: 
+                number of clusters
+            nb_features, int: 
+                number of features
+            ms, np.ndarray (nb_features,) of int:
+                number of categories for each feature
+            data, np.ndarray (nb_samples, nb_features) of int:
+                data to cluster (data[., j] in [[1, ms[j] ]])
+            verbose, bool:
+                whether to print intermediate results
+        """
+        super().__init__(nb_clusters=nb_clusters, 
+                         nb_features=nb_features,
+                         ms=ms,
+                         data=data, 
+                         seed=seed, 
+                         verbose=verbose)
+        self.u = dict()
+        for m in ms:
+            if m not in self.u:
+                self.u[m] = compute_polynomials_bos(m)
+
     def univariate_mu_pi_estimation(self, 
                                     m: int, 
                                     data: np.ndarray, 
                                     weights: np.ndarray,
                                     epsilon_bos: float = 1e-1,
-                                    max_iter_bos: int = 10,
-                                    pi_start: float = 0.5,
                                     ) -> tuple[int, float, np.ndarray]:
         """
         Estimate mu, pi for 1D data
@@ -455,9 +490,8 @@ class AECM_BOS(AECM):
         mu, pi, _, probs = estimate_mu_pi_bos(m=m, 
                                               data=data, 
                                               weights=weights,
-                                              n_iter=max_iter_bos,
-                                              eps=epsilon_bos,
-                                              pi=pi_start)
+                                              epsilon=epsilon_bos,
+                                              u=self.u[m])
         return mu, pi, probs
 
     def univariate_mu_pi_data_likelihood(self,
@@ -482,4 +516,4 @@ class AECM_BOS(AECM):
             probs, np.ndarray (m) of float: probabilities of each value
                 [ P(x | mu, pi) for x in [[1, m]] ]
         """
-        return observation_likelihood_bos(m=m, mu=mu, pi=pi)
+        return np.array([probability_x_given_mu_pi_bos(m=m, x=x, mu=mu, pi=pi, u=self.u[m]) for x in range(1, m + 1)])
