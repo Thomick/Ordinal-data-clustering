@@ -161,4 +161,17 @@ cython_debug/
 
 .vscode/
 
-report/
+# report/
+# LaTeX
+*.aux
+*.bbl
+*.blg
+*.idx
+*.ind
+*.lof
+*.lot
+*.out
+*.toc
+*.fdb_latexmk
+*.synctex.gz
+*.fls

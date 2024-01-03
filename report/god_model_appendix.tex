@@ -1,0 +1,214 @@
+\begin{thm}
+    \label{thm:projection_appendix}
+    If we suppose that the prior distribution of $\mu$ is uniform over $\bbrack{1, m}$ and $\pi > \frac{1}{2}$, then \(\forall c \in \set{0, 1}^{m-1}\),
+    \[\argmax_{k \in \bbrack{1, m}} \Pr(\mu = k | C = c) = \argmin_{k \in \bbrack{1, m}} \norm{c - E_k}_1\]
+\end{thm}
+
+\begin{proof}
+\begin{lemma}
+    \[ \Pr(C[i] = c[i] | \mu < i) = c[i] \pi + (1 - c[i]) (1 - \pi) \]
+    \[ \Pr(C[i] = c[i] | \mu \not< i) = (1 - c[i]) \pi + c[i] (1 - \pi) \]
+\end{lemma}
+\begin{proof}
+    \begin{align}
+        &\ \Pr(C[i] = c[i] | \mu < i)\\
+        &\begin{aligned}
+        &= \Pr(C[i] = c[i] | Z[i] = 1, \mu < i) \Pr(Z[i] = 1) \\
+        &+ \Pr(C[i] = c[i] | Z[i] = 0, \mu < i) \Pr(Z[i] = 0)
+        \end{aligned}\\
+        &= c[i] \Pr(Z[i] = 1) + (1 - c[i]) \Pr(Z[i] = 0)\\
+        &= c[i] \pi + (1 - c[i]) (1 - \pi)\\
+        &\ \Pr(C[i] = c[i] | \mu \not< i)\\
+        &\begin{aligned}
+        &= \Pr(C[i] = c[i] | Z[i] = 1, \mu \not< i) \Pr(Z[i] = 1) \\
+        &+ \Pr(C[i] = c[i] | Z[i] = 0, \mu \not< i) \Pr(Z[i] = 0)
+        \end{aligned}\\
+        &= (1 - c[i]) \Pr(Z[i] = 1) + c[i] \Pr(Z[i] = 0)\\
+        &= (1 - c[i]) \pi + c[i] (1 - \pi)
+    \end{align}
+\end{proof}
+
+\begin{lemma}
+    \label{lemma:p_c_mu}
+    $\forall c \in \set{0, 1}^m, \forall k \in \bbrack{1, m}$,
+    \[\Pr(C = c | \mu = k) = \pi^{m - 1 - \norm{c - E_k}_1} (1 - \pi)^{\norm{c - E_k}_1}\]
+\end{lemma}
+\begin{proof}
+    Let us compute for $i \in \bbrack{1, m}$, $\Pr(C = c| \mu = i)$ as the $C[i] | \mu$ are independent and using the previous lemma:
+
+    \begin{align}
+        \Pr(C = c| \mu = k)
+        &= \prod_{i = 1}^{m -1} \Pr(C[i] = c[i] | \mu = k)\\
+        &= \prod_{i = 1}^{k-1} \Pr(C[i] = c[i] | \mu < i) \prod_{i = k}^{m-1} \Pr(C[i] = c[i] | \mu \not< i)\\
+        &= \prod_{i = 1}^{k-1} [c[i] \pi + (1 - c[i]) (1 - \pi)] \prod_{i = k}^{m-1} [(1 - c[i]) \pi + c[i] (1 - \pi)]\\
+        &= \pi^{\sum_{i = 1}^{k-1} c[i]} (1 - \pi)^{\sum_{i = 1}^{k-1} (1 - c[i])} \pi^{\sum_{i = k}^{m-1} (1 - c[i])} (1 - \pi)^{\sum_{i = k}^{m-1} c[i]}\\
+        &= \pi^{\sum_{i = 1}^{k-1} c[i] + \sum_{i = k}^{m-1} (1 - c[i])} (1 - \pi)^{\sum_{i = 1}^{k-1} (1 - c[i]) + \sum_{i = k}^{m-1} c[i]} \\
+        &= \pi^{m - 1 - \left[\sum_{i = 1}^{k-1} (1 - c[i]) + \sum_{i = k}^{m -1} c[i] \right]} (1 - \pi)^{\sum_{i = 1}^{k-1} (1 - c[i]) + \sum_{i = k}^{m-1} c[i]}\\
+        &= \pi^{m - 1 - \norm{E_k - c}_1} (1 - \pi)^{\norm{E_k - c}_1}
+    \end{align}
+\end{proof}
+
+
+\begin{align}
+    \Pr(\mu = k | C = c) 
+    &= \frac{\Pr(C = c | \mu = k) \Pr(\mu = k)}{\Pr(C=c)}\\
+    &= \frac{\Pr(C = c | \mu = k) \Pr(\mu = k)}{\sum_{i = 1}^m \Pr(C = c | \mu = i) \Pr(\mu = i)}
+\end{align}
+
+As $\mu$ is uniformly distributed over $\bbrack{1, m}$, $\Pr(\mu = k) = \frac{1}{m}$
+
+\begin{align}
+    \Pr(\mu = k | C = c) 
+    &= \frac{\Pr(C = c| \mu = k)}{\sum_{i = 1}^m \Pr(C | \mu = i)}
+\end{align}
+
+using Lemma~\ref{lemma:p_c_mu}:
+
+\begin{align}
+    \Pr(\mu = k | C = c)
+    &= \frac{\pi^{m - 1 - \norm{c - E_k}_1} (1 - \pi)^{\norm{c - E_k}_1}}{\sum_{i = 1}^m \pi^{m - 1 - \norm{c - E_i}_1} (1 - \pi)^{\norm{c - E_i}_1}}\\
+\end{align}
+
+As $\pi > \frac{1}{2}$, we conclude that:
+\[\argmax_{k \in \bbrack{1, m}} \Pr(\mu = k | C = c) = \argmin_{k \in \bbrack{1, m}} \norm{c - E_k}_1\]
+\end{proof}
+
+
+\begin{lemma}
+    \label{lemma:p_x_c_knowing_pi_mu_appendix}
+    \[\Pr(x, c | \pi, \mu) = \indic{}_{\mathcal{C}_x}(c) \pi^{m-1}  \frac{\left(\frac{1 - \pi}{\pi}\right)^{\norm{c - E_{\mu}}_1}}{\card{\argmin_{k \in \bbrack{1, m}} \norm{c - E_k}_1}} \]
+\end{lemma}
+\begin{proof}
+    Using Bayes' theorem, then Lemma~\ref{lemma:p_c_mu} and the fact that $\mu$ is uniformly distributed over the set defined by the $\argmin$, we have:
+    \begin{align}
+        \Pr(x, C=c | \pi, \mu)
+        &= \Pr(x | c, \pi, \mu) \Pr(C = c | \pi, \mu)\\
+        &=  \indic{}_{\mathcal{C}_x}(c) \Pr(x | c \in \mathcal{C}_x, \pi, \mu) \Pr(c | \pi, \mu)\\
+        &= \indic{}_{\mathcal{C}_x}(c) \frac{\pi^{m - 1 - \norm{c - E_{\mu}}_1} (1 - \pi)^{\norm{c - E_{\mu}}_1}}{\card{\argmin_{k \in \bbrack{1, m}} \norm{c - E_k}_1}}\\
+        &= \indic{}_{\mathcal{C}_x}(c) \pi^{m-1}  \frac{\left(\frac{1 - \pi}{\pi}\right)^{\norm{c - E_{\mu}}_1}}{\card{\argmin_{k \in \bbrack{1, m}} \norm{c - E_k}_1}}
+    \end{align}
+\end{proof}
+
+
+\begin{thm}[Observation likelihood]
+    \label{thm:p_x_knowing_pi_mu}
+    \[\Pr(x | \pi, \mu) = \pi^{m-1} \sum_{d = 0}^{m-1} \left(\frac{1 - \pi}{\pi}\right)^d u(x, \mu, d)\]
+\end{thm}
+\begin{proof}
+Using the previous lemma, we have:
+
+\begin{align}
+    \Pr(x | \pi, \mu)
+    &= \sum_{c \in \set{0, 1}^{m-1}} \Pr(x, c | \pi, \mu)\\
+    &= \pi^{m-1} \sum_{c \in \mathcal{C}_x} \left(\frac{1 - \pi}{\pi}\right)^{\norm{c - E_{\mu}}_1} \card{\argmin_{k \in \bbrack{1, m}} \norm{c - E_k}_1}^{-1}\\
+    &= \pi^{m-1} \sum_{d = 0}^{m-1} \left(\frac{1 - \pi}{\pi}\right)^d \sum_{c \in \mathcal{C}_x / \norm{c - E_{\mu}}_1 = d}  \card{\argmin_{k \in \bbrack{1, m}} \norm{c - E_k}_1}^{-1}
+\end{align}
+\end{proof}
+
+\begin{lemma}[Concavity of log composed functions]
+    \label{lemma:concavity_log_composed_functions}
+    For $f: I \rightarrow \RR_+^*$ be a twice-differentiable function, we have that:
+    \[ \ln \circ f \text{ is concave} \iff f'(x)^2 - f(x) f''(x) \geq 0 \]
+\end{lemma}
+\begin{proof}
+    We have that:
+    \[ (\ln \circ f)''(x) = \frac{f''(x)f(x) - f'(x)^2}{f(x)^2} \]
+    
+    Therefore, $\ln \circ f$ is concave if and only if $f'(x)^2 - f(x) f''(x) \geq 0$.
+\end{proof}
+
+
+\begin{lemma}
+    \label{lemma:cd_log_concave_compatible}
+    We define for $d \in \NN$,
+    \[ c_d: \begin{cases}
+        [\frac{1}{2}, 1[ &\rightarrow \RR_+^*\\
+        x &\mapsto \left(\frac{1 - x}{x}\right)^d
+    \end{cases}\]
+
+    We have that $\forall d \in \NN, \forall x \in [\frac{1}{2}, 1[$
+    \[ c_d'(x)^2 - c_d(x) c_d''(x) \geq 0 \]
+\end{lemma} 
+\begin{proof}
+    We have that:
+    \[ c_d'(x) = -d x^{-2} \left(\frac{1 - x}{x}\right)^{d - 1} \]
+    \begin{align}
+        c_d''(x) 
+        &= 2d x^{-3} \left(\frac{1 - x}{x}\right)^{d - 1} +  d(d-1) x^{-4} \left(\frac{1 - x}{x}\right)^{d - 2} \\
+        &= d x^{-4} \left(\frac{1 - x}{x}\right)^{d - 2} \left(2 x\left(\frac{1 - x}{x}\right) + (d - 1)\right) \\
+        &= d x^{-4} \left(\frac{1 - x}{x}\right)^{d - 2} \left(1 - 2x + d\right)
+    \end{align}
+
+    Therefore, we have that:
+    \begin{align}
+        c_d'(x)^2 - c_d(x) c_d''(x) 
+        &= d^2 x^{-4} \left(\frac{1 - x}{x}\right)^{2d - 2} - d x^{-4} \left(\frac{1 - x}{x}\right)^{2d - 2} \left(1 - 2x + d\right)\\
+        &= d x^{-4} \left(\frac{1 - x}{x}\right)^{2d - 2} \left(d - 1 + 2x - d\right)\\
+        &= d x^{-4} \left(\frac{1 - x}{x}\right)^{2d - 2} \left(2x - 1\right)
+    \end{align}
+
+    We get the desired result as $2x - 1 \geq 0$ on $[\frac{1}{2}, 1[$.
+\end{proof}
+
+
+\begin{thm}
+    \label{thm:log_likelihood_concave_appendix}
+    $\forall \mu \in \bbrack{1, m}$, 
+    \[ \pi \mapsto L_W(\pi, \mu) \]
+    is concave on $[\frac{1}{2}, 1]$.
+\end{thm}
+
+\begin{proof}
+    We use the following expression:
+    \[L_W(\pi, \mu) = (m-1)\left(\sum_{i=1}^{m} w_i\right) \log\pi + \sum_{i=1}^{m} w_i \log\left[ \sum_{d = 0}^{m-1} \left(\frac{1 - \pi}{\pi}\right)^d u(x^i, \mu, d) \right] \] 
+
+    As $\pi \mapsto (m-1)\left(\sum_{i=1}^{m} w_i\right) \log\pi$ is concave and the sum of positive weighted ($w_i \geq 0$) concave functions is concave, we only need to prove that $\ln g$ is concave where:
+    \[g: x\mapsto \sum_{d=0}^{m-1} c_d(x) u_d \]
+    As we will only use the fact that $u(x^i, \mu, d) \geq 0$ we simpliied wlog the $u(x^i, \mu, d)$.
+
+    Using the lemma~\ref{lemma:concavity_log_composed_functions} we just have to check that $\forall x \in [\frac{1}{2}, 1[, g'(x)^2 - g(x) g''(x) \geq 0$.
+
+    As $g$ is a positively weighted sum of $c_d$ and as each $c_d$ verify that $c_d'(x)^2 - c_d(x) c_d''(x) \geq 0$ we have $g'(x)^2 - g(x) g''(x) \geq 0$.
+    
+    We can conclued that $L_W(\bullet, \mu)$ is concave on $[\frac{1}{2}, 1[$.
+\end{proof}
+
+
+\paragraph{Open combinatorial problem}
+
+
+\begin{definition}[Heaviside vector]
+    For $k \in \bbrack{1, m}$, we define:
+    \[E_k := (1)^{k - 1} (0)^{m - k} = (\underset{k - 1}{\underbrace{1, \dots, 1}}, \underset{m - k}{\underbrace{0, \dots, 0}} ). \]
+\end{definition}
+
+We define for $x \in \bbrack{1, m}$, 
+\[ \mathcal{C}_x := \set{c \in \set{0, 1}^{m - 1} | x \in \argmin_{k \in \bbrack{1, m}} \norm{c - E_k}_1 } \]
+
+The goal is to find an algorithm that compute for every $x \in \bbrack{1, m}$, $\mu \in \bbrack{1, m}$ and $d \in \bbrack{0, m - 1}$ $u(d, \mu, x)$ where:
+
+\[ u(\mu, x, d) := \sum_{c \in \mathcal{C}_x / \norm{c-E_{\mu}}_1 = d} \card{\argmin_{k \in \bbrack{1, m}} \norm{c - E_k}_1}^{-1} \]
+
+The algorithm could be efficient at computing only all this values at the same time.
+We have an algorithm that compute $u(d, \mu, x)$ in $O(m 2^m)$ for all $d$ and $O(m^2 2^m)$ for all $d,x,\mu$. Is there a better algorithm? (Or alternatively is the problem NP-hard?)
+
+\begin{lemma}
+    \[ \sum_{c \in \set{0, 1}^{m - 1}} \card{\argmin_{k \in \bbrack{1, m}} \norm{c - E_k}_1} = 2^{m} - \binom{m}{\floor{\frac{m}{2}}} \]
+\end{lemma}
+\begin{proof}
+    May include the fact that:
+    \[2^{m} - \binom{m}{\floor{\frac{m}{2}}} = \sum_{k=0}^{m-1} \binom{m}{\floor{\frac{k}{2}}}\]
+\end{proof}
+
+
+\begin{lemma}
+    $\forall m \geq 3$:
+    \[  \sum_{c \in \set{0, 1}^{m - 1}} \indic{}(\card{\argmin_{k \in \bbrack{1, m}}} = 2) = 2^{m-3} \]
+    $\forall m \geq 4$:
+    \[  \sum_{c \in \set{0, 1}^{m - 1}} \indic{}(\card{\argmin_{k \in \bbrack{1, m}}} = 3) =  2^{m - 4} - \binom{m - 4}{\floor{\frac{m - 4}{2}}}\]
+    $\forall m \geq 5$:
+    \[  \sum_{c \in \set{0, 1}^{m - 1}} \indic{}(\card{\argmin_{k \in \bbrack{1, m}}} = 4) =  2^{m - 5} - \binom{m - 4}{\floor{\frac{m - 4}{2}}}\]
+    $\forall m \geq 4$:
+    \[  \sum_{c \in \set{0, 1}^{m - 1}} \indic{}(\card{\argmin_{k \in \bbrack{1, m}}} = 5) = A191389[m - 4] \]
+
+\end{lemma}
