@@ -194,11 +194,7 @@ def compute_log_likelihood(
     log P(X | mu, pi) = sum_i=1^n log(m * u(mu, x^i, .)((1 - pi) / pi))
     where u(mu, x^i, .) is the polynomial of degree m - 1 with coefficients u(mu, x^i, d)_d
 
-    Complexity: O(n * m ) in the current implementation
-    if we can assume n = m it is O(m * m)
-
-    The p can be computed with evaluate_polynomial(u[mu, x - 1], (1 - pi) / pi)
-    but this cause issues with pi = 0 or pi = 1.
+    Complexity: O(n * m ) but if we assume n = m it is O(m * m)
 
     Arguments:
     ----------
