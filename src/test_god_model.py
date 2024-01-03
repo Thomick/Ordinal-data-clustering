@@ -32,7 +32,7 @@ class TestGodModel(TestCase):
     
     def test_estimate_mu_pi_1(self):
         xs = np.array([3,4,3,3,3,2,3,2,3,3,4,9,3,3,4,3,1,3,2,3,2,5,1,3,3,1,1,3,2,7,3,5,4,3,5,3,1,10,3,3,2,2,2,1,2,3,3,3,2,3,3,3,3,3,3,10,1,3,1,4,3,3,5,1,2,3,2,3,3,3,3,4,3,9,2,1,3,1,1,3,3,3,3,3,7,3,4,1,5,3,4,3,2,2,1,2,5,3,3,2])
-        mu, pi, ll, _ = estimate_mu_pi(10, xs, u=self.us[10])
+        mu, pi, ll, _ = estimate_mu_pi(10, xs, u=self.us[10], epsilon=1e-4)
         self.assertEqual(mu, 3)
         self.assertAlmostEqual(pi, 0.7972585618117456)
         self.assertAlmostEqual(ll, -161.13938629955825)
@@ -40,7 +40,7 @@ class TestGodModel(TestCase):
     def test_estimate_mu_pi_2(self):
         # m = 6, mu = 1, pi = 0.9
         xs = np.array([1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1])
-        mu, pi, ll, _ = estimate_mu_pi(6, xs, u=self.us[6])
+        mu, pi, ll, _ = estimate_mu_pi(6, xs, u=self.us[6], epsilon=1e-4)
         self.assertEqual(1, mu)
         self.assertAlmostEqual(0.9679518926215107, pi)
         self.assertAlmostEqual(-5.095497835660907, ll)
@@ -48,7 +48,7 @@ class TestGodModel(TestCase):
     def test_estimate_mu_pi_3(self):
         # m = 9, mu = 6, pi = 0.95
         xs = np.array([6,6,6,6,6,8,6,7,4,6,6,6,6,6,6,7,6,5,6,6])
-        mu, pi, ll, _ = estimate_mu_pi(9, xs, u=self.us[9])
+        mu, pi, ll, _ = estimate_mu_pi(9, xs, u=self.us[9], epsilon=1e-4)
         self.assertEqual(6, mu)
         self.assertAlmostEqual(0.9201239523702662, pi)
         self.assertAlmostEqual(-18.670558582229166, ll)
@@ -56,7 +56,7 @@ class TestGodModel(TestCase):
     def test_estimate_mu_pi_4(self):
         # m = 6, mu = 1, pi = 0.9
         xs = np.array([1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1])
-        mu, pi, ll, _ = estimate_mu_pi(6, xs, u=self.us[6])
+        mu, pi, ll, _ = estimate_mu_pi(6, xs, u=self.us[6], epsilon=1e-4)
         self.assertEqual(1, mu)
         self.assertAlmostEqual(0.9679518926215107, pi)
         self.assertAlmostEqual(-5.095497835660907, ll)
@@ -64,7 +64,7 @@ class TestGodModel(TestCase):
     def test_estimate_mu_pi_5(self):
         # m = 9, mu = 6, pi = 0.95
         xs = np.array([6,6,6,6,6,8,6,7,4,6,6,6,6,6,6,7,6,5,6,6])
-        mu, pi, ll, _ = estimate_mu_pi(9, xs, u=self.us[9])
+        mu, pi, ll, _ = estimate_mu_pi(9, xs, u=self.us[9], epsilon=1e-4)
         self.assertEqual(6, mu)
         self.assertAlmostEqual(0.9201239523702662, pi)
         self.assertAlmostEqual(-18.670558582229166, ll)
