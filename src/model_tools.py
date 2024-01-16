@@ -223,7 +223,7 @@ def estimate_mu_pi_trichotomy(
             best_pi = pi
     
     probability = np.array(
-        [probability_x_given_mu_pi(m=m, x=x, mu=best_mu, pi=best_pi, u=u) for x in data]
+        [probability_x_given_mu_pi(m=m, x=x, mu=best_mu, pi=best_pi, u=u) for x in range(1, m + 1)]
     )
 
     return best_mu, best_pi, best_likelihood, probability
