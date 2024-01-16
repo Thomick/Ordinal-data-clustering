@@ -2,18 +2,18 @@ import numpy as np
 from sklearn.cluster import KMeans
 try:
     from src.compute_u import compute_u
-    from src.god_model_estimator import estimate_mu_pi as estimate_mu_pi_god, probability_xi_given_mu_pi as probability_x_given_mu_pi_god
+    from src.god_model_estimator import estimate_mu_pi_god as estimate_mu_pi_god, probability_x_given_mu_pi as probability_x_given_mu_pi_god
+    from src.bos_model_polynomials import compute_polynomials as compute_polynomials_bos
     from src.bos_model_estimator import (
         estimate_mu_pi_bos as estimate_mu_pi_bos,
-        probability_x_given_mu_pi_using_u as probability_x_given_mu_pi_bos, 
-        compute_polynomials as compute_polynomials_bos)
+        probability_x_given_mu_pi_using_u as probability_x_given_mu_pi_bos)
 except ImportError:
     from compute_u import compute_u
-    from god_model_estimator import estimate_mu_pi as estimate_mu_pi_god, probability_xi_given_mu_pi as probability_x_given_mu_pi_god
+    from god_model_estimator import estimate_mu_pi_god as estimate_mu_pi_god, probability_x_given_mu_pi as probability_x_given_mu_pi_god
+    from bos_model_polynomials import compute_polynomials as compute_polynomials_bos
     from bos_model_estimator import (
         estimate_mu_pi_bos as estimate_mu_pi_bos,
-        probability_x_given_mu_pi_using_u as probability_x_given_mu_pi_bos, 
-        compute_polynomials as compute_polynomials_bos)
+        probability_x_given_mu_pi_using_u as probability_x_given_mu_pi_bos)
 
 
 class AECM:
