@@ -63,8 +63,8 @@ def compute_u(m: int) -> np.ndarray:
     is_minimal: np.ndarray = np.min(distance, axis=1)[:, None] == distance
     card_min = np.sum(is_minimal, axis=1)
     u = np.zeros((m, m, m))
-    for x in range(1, m + 1):
-        for i in range(2 ** (m - 1)):
+    for i in range(2 ** (m - 1)):
+        for x in range(1, m + 1):
             if is_minimal[i, x - 1]:
                 for mu in range(1, m + 1):
                     d = distance[i, mu - 1]
