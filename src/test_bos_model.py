@@ -3,7 +3,7 @@ import numpy as np
 from scipy.special import comb
 from compute_u import compute_u
 from data_generator import bos_model
-from bos_model_estimator import univariate_em, estimate_mu_pi, _probability_x_given_mu_pi, probability_x_given_mu_pi_scratch
+from bos_model_estimator import univariate_em, _probability_x_given_mu_pi, probability_x_given_mu_pi_scratch, estimate_mu_pi_bos as estimate_mu_pi
 
 
 def bos_model_sample(m: int, n: int, seed: int = None) -> np.ndarray:
