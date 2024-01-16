@@ -106,3 +106,124 @@ def group_sum(m: int, data: np.ndarray, weights: Optional[np.ndarray] = None) ->
     for i in range(data.shape[0]):
         sums[data[i] - 1] += weights[i]
     return sums
+
+
+def compute_log_likelihood(
+    m: int,
+    weights: np.ndarray,
+    mu: int,
+    pi: float,
+    u: np.ndarray,
+    probability_x_given_mu_pi: Callable[[int, int, int, float, np.ndarray], float],
+) -> float:
+    """
+    Compute the log-likelihood of the model
+
+    log P(X | mu, pi) = sum_i=1^m w_i log(P(i | mu, pi))
+
+    Complexity: O(m * C(probability_x_given_mu_pi)) but for BOS and GOD models,
+    C(probability_x_given_mu_pi) = O(m) so the complexity is O(m^2)
+
+    Arguments:
+    ----------
+        m, int: 
+            number of categories
+        weights, np.ndarray of shape m: 
+            weights[i] is the weight of the observation i
+        mu, int in [[1, m]]: 
+            supposed category
+        pi, float in [0, 1]: 
+            probability of error
+        u, np.ndarray[int] of shape (m, m, m): 
+            coefficients of the polynomials u(mu, x, d)
+        probability_x_given_mu_pi, Callable[[int, int, int, float, np.ndarray], float]:
+            probability of x given mu and pi
+            takes as arguments: m, x, mu, pi and u
+        
+    Return:
+    -------
+        log_likelihood: log-likelihood of the model
+    """
+    assert m == weights.shape[0], f"m={m} != weights.shape[0]={weights.shape[0]}"
+
+    log_likelihood = 0
+    for x, w in enumerate(weights):
+        if w != 0:
+            p = probability_x_given_mu_pi(m=m, x=x + 1, mu=mu, pi=pi, u=u)
+            assert p >= 0, f"p should be > 0: {x=}, {u[mu - 1, x - 1]=}, {pi=}, {p=}"
+            log_likelihood += w * np.log(p)
+    assert (
+        log_likelihood <= 0
+    ), f"Log-likelihood should be negative, but {log_likelihood} > 0"
+    return log_likelihood
+
+
+def estimate_mu_pi_trichotomy(
+    m: int,
+    probability_x_given_mu_pi: Callable[[int, int, int, float, np.ndarray], float],
+    data: np.ndarray,
+    weights: Optional[np.ndarray] = None,
+    epsilon: float = 1e-5,
+    u: Optional[np.ndarray] = None,
+    compute_polynomials: Optional[Callable[[int], np.ndarray]] = None,
+    pi_min: float = 0,
+    pi_max: float = 1
+) -> tuple[int, float, float, np.ndarray]:
+    """
+    Estimate mu and pi given xs for the GOD model using the grid search algorithm
+
+    Parameters
+    ----------
+    m : int
+        Number of categories
+    probability_x_given_mu_pi : Callable[[int, int, int, float, np.ndarray], float]
+        Probability of x given mu and pi for the model takes u as argument
+    data : np.ndarray of int in [[1, m]]
+        Observed categories
+    weights: np.ndarray
+        weights of each observation
+    epsilon : float
+        Precision of the estimation
+    u : np.ndarray
+        u coefficients of the polynomials
+    compute_polynomials : Callable[[int], np.ndarray]
+        Function to compute the polynomials u(mu, x, d)
+
+    Return
+    ------
+    mu : int
+        Estimated mu
+    pi : float
+        Estimated pi
+    log_likelihood : float
+        Log-likelihood of the model : log P(X | mu, pi)
+    probability : np.ndarray
+        Probability of each category : [ P(x | mu, pi) for x in [[1, m]] ]
+    """
+    if u is None:
+        assert compute_polynomials is not None, "u or compute_polynomials should be given"
+        u = compute_polynomials(m)
+    
+    # sum of each group to reduce the complexity of the algorithm
+    weights = group_sum(m, data, weights)
+
+    best_mu = -1
+    best_pi = -1
+    best_likelihood = -np.inf
+    for mu in range(1, m + 1):
+        log_likelihood_function = lambda t: compute_log_likelihood(
+            m=m, weights=weights, mu=mu, pi=t, u=u, probability_x_given_mu_pi=probability_x_given_mu_pi
+        )
+        pi, log_likelihood = trichotomy_maximization(
+            log_likelihood_function, pi_min, pi_max, epsilon
+        )
+        if log_likelihood > best_likelihood:
+            best_likelihood = log_likelihood
+            best_mu = mu
+            best_pi = pi
+    
+    probability = np.array(
+        [probability_x_given_mu_pi(m=m, x=x, mu=best_mu, pi=best_pi, u=u) for x in data]
+    )
+
+    return best_mu, best_pi, best_likelihood, probability
