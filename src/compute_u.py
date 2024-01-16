@@ -1,9 +1,9 @@
 from typing import Iterable
 import numpy as np
 try:
-    from .god_model_tools import count_errors
+    from .model_tools import count_errors
 except ImportError:
-    from god_model_tools import count_errors
+    from model_tools import count_errors
 
 
 def enumerate_order_info(m: int) -> Iterable[tuple[int, np.ndarray]]:

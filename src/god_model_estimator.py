@@ -3,11 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 try:
-    from .god_model_tools import evaluate_polynomial, trichotomy_maximization, group_sum, estimate_mu_pi_trichotomy
+    from .model_tools import evaluate_polynomial, trichotomy_maximization, group_sum, estimate_mu_pi_trichotomy
     from .compute_u import get_all_errors, compute_u
     from .god_model_generator import god_model_sample
 except ImportError:
-    from god_model_tools import evaluate_polynomial, trichotomy_maximization, group_sum, estimate_mu_pi_trichotomy
+    from model_tools import evaluate_polynomial, trichotomy_maximization, group_sum, estimate_mu_pi_trichotomy
     from god_model_generator import god_model_sample
     from compute_u import get_all_errors, compute_u
 

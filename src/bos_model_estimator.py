@@ -3,10 +3,10 @@ from typing import Any, Optional
 import numpy as np
 from scipy.interpolate import lagrange
 try:
-    from .god_model_tools import estimate_mu_pi_trichotomy, trichotomy_maximization, group_sum
+    from .model_tools import estimate_mu_pi_trichotomy, trichotomy_maximization, group_sum
     from .bos_model_polynomials import compute_polynomials
 except ImportError:
-    from god_model_tools import estimate_mu_pi_trichotomy, trichotomy_maximization, group_sum
+    from model_tools import estimate_mu_pi_trichotomy, trichotomy_maximization, group_sum
     from bos_model_polynomials import compute_polynomials
 
 

@@ -1,9 +1,9 @@
 from typing import Optional
 import numpy as np
 try:    
-    from .god_model_tools import count_errors
+    from .model_tools import count_errors
 except ImportError:
-    from god_model_tools import count_errors
+    from model_tools import count_errors
 
 
 def god_model_generator(m: int, mu: int, pi: float) -> int:
