@@ -4,11 +4,11 @@ from numba import njit
 
 
 @njit
-def mul_add_polynomials(a_1: float,
-                        a_0: float,
-                        p: np.ndarray,
-                        s: np.ndarray
-                        ) -> np.ndarray:
+def mul_add_polynomials_rec(a_1: float,
+                            a_0: float,
+                            p: np.ndarray,
+                            s: np.ndarray
+                            ) -> np.ndarray:
     """
     Compute s(X) = s(X) + (a_1 * x + a_0) * p(X)
     where:
@@ -26,7 +26,7 @@ def mul_add_polynomials(a_1: float,
     s[-k - 1: -1] += a_1 * p
 
 
-def compute_polynomials(m: int) -> np.ndarray:
+def compute_polynomials_recursive(m: int) -> np.ndarray:
     """
     Compute the polynomials coefficients u 
     P(x | mu, pi) = sum_{d=0}^{m-1} u[mu, x, d] pi^(m - 1 - d)
@@ -67,7 +67,7 @@ def compute_polynomials(m: int) -> np.ndarray:
             for y in range(x):
                 p = aux_compute_bos_polynomials(h=h - y - 1, x=x - y - 1, mu=max(mu - y - 1, 0))
                 prop = (h - y - 1) / h
-                mul_add_polynomials(a_1=(mu > y) - prop, a_0=prop, p=p, s=s)
+                mul_add_polynomials_rec(a_1=(mu > y) - prop, a_0=prop, p=p, s=s)
             good_choice = mu == x or (0 == x and mu <= x) or (h - 1 == x and  mu >= x)
             #                           e_- == e_=                  e_+ == e_=
             s[-2] += good_choice - 1 / h
@@ -75,7 +75,7 @@ def compute_polynomials(m: int) -> np.ndarray:
             for y in range(x + 1, h):
                 p = aux_compute_bos_polynomials(h=y, x=x, mu=min(mu, y - 1))
                 prop = y / h
-                mul_add_polynomials(a_1=(mu < y) - prop, a_0=prop, p=p, s=s)
+                mul_add_polynomials_rec(a_1=(mu < y) - prop, a_0=prop, p=p, s=s)
             return s / h
 
     u = np.zeros((m, m, m))
@@ -86,7 +86,7 @@ def compute_polynomials(m: int) -> np.ndarray:
 
 
 @njit
-def mul_add_polynomials_v2(h: int,
+def _mul_add_polynomials(h: int,
                            a_1: float,
                            a_0: float,
                            p: np.ndarray,
@@ -111,80 +111,10 @@ def mul_add_polynomials_v2(h: int,
     # s[:-1] += a_1 * p[1:]
 
 
-# @njit
-def compute_polynomials_v3(m: int) -> np.ndarray:
-    """
-    Compute the polynomials coefficients u 
-    P(x | mu, pi) = sum_{d=0}^{m-1} u[mu, x, d] pi^(m - 1 - d)
-
-    Parameters
-    ----------
-    m : int
-        Number of categories
-    
-    Returns
-    -------
-    np.ndarray of shape (m, m, m)
-        Polynomials coefficients
-    """
-    u = np.zeros((m, m, m, m)) # h, mu, x, d
-    is_computed = np.zeros((m, m, m), dtype=bool) # h, mu, x
-    is_computed[0, :, :] = True
-    u[0, :, :, -1] = 1. 
-
-    # @njit
-    def aux_compute_bos_polynomials(h: int,
-                                    x: int,
-                                    mu: int
-                                    ) -> np.ndarray:
-        """
-        Compute [ u_i, i in [[0, h[[ ] where
-        P(x | x in [[0, h[[, mu, pi) = sum_{i=0}^{h-1} u_i * pi^{h - 1 - i}
-
-        Args:
-            h, int:  
-                number of categories
-            x, int in [[0, h[[: 
-                observed value
-            mu, int in [[0, h[[:
-                true value
-        """
-        if is_computed[h - 1, mu, x]:
-            return u[h - 1, mu, x]
-        # elif x > h // 2:
-        #     is_computed[h - 1, mu, x] = True
-        #     assert is_computed[h - 1, h - 1 - mu, h - 1 - x], f"u[{h - 1}, {h - 1 - mu}, {h - 1 - x}] is not computed (symmetry) (h={h}, x={x}, mu={mu})"
-        #     return aux_compute_bos_polynomials(h=h, x=h - 1 - x, mu=h - 1 - mu)
-        else:
-            s = u[h - 1, mu, x]
-            for y in range(x):
-                p = aux_compute_bos_polynomials(h=h - y - 1, x=x - y - 1, mu=max(mu - y - 1, 0))
-                prop = (h - y - 1) / h
-                mul_add_polynomials_v2(h=h - y, a_1=(mu > y) - prop, a_0=prop, p=p, s=s)
-            good_choice = mu == x or (0 == x and mu <= x) or (h - 1 == x and  mu >= x)
-            #                           e_- == e_=                  e_+ == e_=
-            s[-2] += good_choice - 1 / h
-            s[-1] += 1 / h
-            for y in range(x + 1, h):
-                p = aux_compute_bos_polynomials(h=y, x=x, mu=min(mu, y - 1))
-                prop = y / h
-                mul_add_polynomials_v2(h=y + 1, a_1=(mu < y) - prop, a_0=prop, p=p, s=s)
-            
-            s /= h
-            is_computed[h - 1, mu, x] = True
-            return s
-
-    v = np.zeros((m, m, m))
-    for mu in range(m):
-        for x in range(m):
-            v[mu, x] = aux_compute_bos_polynomials(h=m, x=x, mu=mu)
-    return v
-
-
 @njit
-def compute_polynomials_v4(m: int) -> np.ndarray:
+def compute_polynomials(m: int) -> np.ndarray:
     """
-    Compute the polynomials coefficients u 
+    Compute the polynomials coefficients u
     P(x | mu, pi) = sum_{d=0}^{m-1} u[mu, x, d] pi^(m - 1 - d)
 
     Parameters
@@ -198,7 +128,7 @@ def compute_polynomials_v4(m: int) -> np.ndarray:
         Polynomials coefficients
     """
     u = np.zeros((m, m, m, m)) # h, mu, x, d
-    is_computed = np.zeros((m, m, m), dtype=np.bool8) # h, mu, x
+    # is_computed = np.zeros((m, m, m), dtype=np.bool8) # h, mu, x
     # is_computed[0, :, :] = True
     u[0, :, :, -1] = 1. 
 
@@ -215,7 +145,7 @@ def compute_polynomials_v4(m: int) -> np.ndarray:
                         # assert is_computed[h - y - 1 - 1, max(mu - y - 1, 0), x - y - 1], f"u[{h - y - 1}, {x - y - 1}, {max(mu - y - 1, 0)}] is not computed (e_+) (h={h}, x={x}, mu={mu})"
                         p = u[h - y - 1 - 1, max(mu - y - 1, 0), x - y - 1]
                         prop = (h - y - 1) / h
-                        mul_add_polynomials_v2(h=h - y, a_1=(mu > y) - prop, a_0=prop, p=p, s=s)
+                        _mul_add_polynomials(h=h - y, a_1=(mu > y) - prop, a_0=prop, p=p, s=s)
                     good_choice = mu == x or (0 == x and mu <= x) or (h - 1 == x and  mu >= x)
                     #                           e_- == e_=                  e_+ == e_=
                     s[-2] += good_choice - 1 / h
@@ -224,7 +154,7 @@ def compute_polynomials_v4(m: int) -> np.ndarray:
                         # assert is_computed[y - 1, min(mu, y - 1), x], f"u[{y}, {x}, {min(mu, y - 1)}] is not computed (e_-) (h={h}, x={x}, mu={mu})"
                         p = u[y - 1, min(mu, y - 1), x]
                         prop = y / h
-                        mul_add_polynomials_v2(h=y + 1, a_1=(mu < y) - prop, a_0=prop, p=p, s=s)
+                        _mul_add_polynomials(h=y + 1, a_1=(mu < y) - prop, a_0=prop, p=p, s=s)
                     
                     s /= h
                     # is_computed[h - 1, mu, x] = True
@@ -232,9 +162,7 @@ def compute_polynomials_v4(m: int) -> np.ndarray:
 
 
 if __name__ == "__main__":
-    print("Version 1")
-    print(compute_polynomials(4))
-    print("Version 2")
-    print(compute_polynomials_v3(2))
-    print("Version 3")
-    print(compute_polynomials_v4(2))
+    print("Version Recursive")
+    print(compute_polynomials_recursive(3))
+    print("Version Iterative")
+    print(compute_polynomials(3))
