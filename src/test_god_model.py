@@ -2,7 +2,7 @@ from unittest import TestCase, main
 import numpy as np
 from scipy.special import comb
 from compute_u import compute_u
-from god_model_estimator import estimate_mu_pi, probability_xi_given_mu_pi, probability_distribution_x_given_pi
+from god_model_estimator import probability_x_given_mu_pi, probability_distribution_x_given_pi, estimate_mu_pi_god as estimate_mu_pi
 
 
 class TestGodModel(TestCase):
@@ -27,7 +27,7 @@ class TestGodModel(TestCase):
                     probs_old = probability_distribution_x_given_pi(m, x, pi)
                     for mu in range(1, m + 1):
                         print(f"m={m}, pi={pi}, x={x}, mu={mu}")
-                        prob = probability_xi_given_mu_pi(m, x, mu, pi, u)
+                        prob = probability_x_given_mu_pi(m, x, mu, pi, u)
                         self.assertAlmostEqual(prob, probs_old[mu - 1])
     
     def test_estimate_mu_pi_1(self):

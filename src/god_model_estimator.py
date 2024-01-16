@@ -3,11 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 try:
-    from .god_model_tools import evaluate_polynomial, trichotomy_maximization, group_sum
+    from .god_model_tools import evaluate_polynomial, trichotomy_maximization, group_sum, estimate_mu_pi_trichotomy
     from .compute_u import get_all_errors, compute_u
     from .god_model_generator import god_model_sample
 except ImportError:
-    from god_model_tools import evaluate_polynomial, trichotomy_maximization, group_sum
+    from god_model_tools import evaluate_polynomial, trichotomy_maximization, group_sum, estimate_mu_pi_trichotomy
     from god_model_generator import god_model_sample
     from compute_u import get_all_errors, compute_u
 
@@ -148,38 +148,6 @@ Return the best pi and corresponding to the best log_likelihood.
 """
 
 
-def probability_xi_given_mu_pi(
-        m: int,
-        x: int,
-        mu: int,
-        pi: float,
-        u: np.ndarray) -> float:
-    """
-    Compute P(x | mu, pi) = sum_d=0^{m-1} u(mu, x, d) * pi^(m - d) * (1 - pi)^d
-
-    Complexity: O(m)
-
-    Arguments:
-    ----------
-        m: int with m >= 1
-            number of categories
-        x: int in [[1, m]]
-            observed category
-        mu: int in [[1, m]]
-            supposed category
-        pi: float in [1/2, 1]
-            probability of error
-        u: np.ndarray of int of shape (m, m, m)
-            coefficients of the polynomial u(mu, x, d)
-
-    Return:
-    -------
-        p: probability P(x | mu, pi)
-    """
-    # assert 0.5 <= pi <= 1, f"pi={pi} not in [1/2, 1]"
-    return pi ** (m - 1) * evaluate_polynomial(u[mu - 1, x - 1], (1 - pi) / pi)
-
-
 def compute_log_likelihood(
     m: int,
     data: list[int],
@@ -214,7 +182,7 @@ def compute_log_likelihood(
     # version 1
     log_likelihood = 0
     for i, x in enumerate(data):
-        p = probability_xi_given_mu_pi(m, x, mu, pi, u)
+        p = probability_x_given_mu_pi(m, x, mu, pi, u)
         assert p >= 0, f"p should be > 0: {x=}, {u[mu - 1, x - 1]=}, {pi=}, {p=}"
         if weights is None:
             log_likelihood += np.log(p)
@@ -391,7 +359,7 @@ def estimate_mu_pi(
             best_pi = pi
     
     probability = np.array(
-        [probability_xi_given_mu_pi(m=m, x=x, mu=best_mu, pi=best_pi, u=u) for x in data]
+        [probability_x_given_mu_pi(m=m, x=x, mu=best_mu, pi=best_pi, u=u) for x in data]
     )
 
     return best_mu, best_pi, best_likelihood, probability
@@ -460,6 +428,89 @@ def plot_log_likelihoods(
     plt.title(f"True parameters mu={mu}, pi={pi}")
     plt.legend()
     plt.show()
+
+
+"""
+Useful functions:
+"""
+
+def probability_x_given_mu_pi(
+        m: int,
+        x: int,
+        mu: int,
+        pi: float,
+        u: np.ndarray) -> float:
+    """
+    Compute P(x | mu, pi) = sum_d=0^{m-1} u(mu, x, d) * pi^(m - d) * (1 - pi)^d
+
+    Complexity: O(m)
+
+    Arguments:
+    ----------
+        m: int with m >= 1
+            number of categories
+        x: int in [[1, m]]
+            observed category
+        mu: int in [[1, m]]
+            supposed category
+        pi: float in [1/2, 1]
+            probability of error
+        u: np.ndarray of int of shape (m, m, m)
+            coefficients of the polynomial u(mu, x, d)
+
+    Return:
+    -------
+        p: probability P(x | mu, pi)
+    """
+    # assert 0.5 <= pi <= 1, f"pi={pi} not in [1/2, 1]"
+    return pi ** (m - 1) * evaluate_polynomial(u[mu - 1, x - 1], (1 - pi) / pi)
+
+
+def estimate_mu_pi_god(
+    m: int,
+    data: Union[list[int], np.ndarray],
+    weights: Optional[np.ndarray] = None,
+    epsilon: float = 1e-5,
+    u: Optional[np.ndarray] = None,
+) -> tuple[int, float, float, np.ndarray]:
+    """
+    Estimate mu and pi given xs for the GOD model using the grid search algorithm
+
+    Parameters
+    ----------
+    m : int
+        Number of categories
+    data : list[int]
+        Observed categories
+    weights: np.ndarray
+        weights of each observation
+    epsilon : float
+        Precision of the estimation
+    u : np.ndarray
+        u coefficients of the polynomials
+
+    Return
+    ------
+    mu : int
+        Estimated mu
+    pi : float
+        Estimated pi
+    log_likelihood : float
+        Log-likelihood of the model : log P(X | mu, pi)
+    probability : np.ndarray
+        Probability of each category : [ P(x | mu, pi) for x in [[1, m]] ]
+    """
+    return estimate_mu_pi_trichotomy(
+        m=m,
+        probability_x_given_mu_pi=probability_x_given_mu_pi,
+        data=data,
+        weights=weights,
+        epsilon=epsilon,
+        u=u,
+        compute_polynomials=compute_u,
+        pi_min=0.5,
+        pi_max=1
+    )
 
 
 if __name__ == "__main__":
