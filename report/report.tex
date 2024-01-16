@@ -89,6 +89,7 @@
 \newcommand{\permut}{\mathfrak{S}}
 \newcommand{\id}{\text{Id}}
 \newcommand{\indic}{\mathds{1}}
+\newcommand{\indickronecker}[1]{\indic\left\{#1\right\}}
 \renewcommand{\leq}{\leqslant}
 \renewcommand{\geq}{\geqslant}
 \newcommand{\mat}[2]{\mathcal{M}_{#1}(#2)}
@@ -318,6 +319,8 @@ Since the features are independent, the probability of observing a sample $x$ kn
     \end{equation}
     And then the parameters $(\mu_k^{(t+1)}, \pi_k^{(t+1)})$ are updated after using an EM algorithm in the univariate case for every cluster $k$ and for every dimension of the multivariate variables independently using the data on the corresponding dimension.
 \end{enumerate}
+
+\input{bos_model_appendix.tex}
 
 \input{god_model}
 
