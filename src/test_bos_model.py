@@ -20,19 +20,19 @@ def bos_model_sample(m: int, n: int, seed: int = None) -> np.ndarray:
     return data, true_mu, true_pi
 
 
-class TestGodModel(TestCase):
-    # def setUp(self) -> None:
-    #     self.us = [None] + [compute_u(m) for m in range(1, 11)]
-    
-    # def test_compute_u(self):
-    #     for m in range(1, 11):
-    #         u = self.us[m]
-    #         self.assertEqual(u.shape[0], m)
-    #         self.assertEqual(u.shape[1], m)
-    #         self.assertTrue((u >= 0).all())
-    #         self.assertTrue(np.array_equal(u[:, :, 0], np.eye(m)))
-    #         comb_values = np.array([comb(m - 1, j, exact=True) for j in range(m)])
-    #         self.assertTrue(np.abs(u.sum(axis=1) - comb_values).max() < 1e-10)
+class TestBosModel(TestCase):
+    #def setUp(self) -> None:
+    #    self.us = [None] + [compute_u(m) for m in range(1, 11)]
+
+    #def test_compute_u(self):
+    #    for m in range(1, 11):
+    #        u = self.us[m]
+    #        self.assertEqual(u.shape[0], m)
+    #        self.assertEqual(u.shape[1], m)
+    #        self.assertTrue((u >= 0).all())
+    #        self.assertTrue(np.array_equal(u[:, :, 0], np.eye(m)))
+    #        comb_values = np.array([comb(m - 1, j, exact=True) for j in range(m)])
+    #        self.assertTrue(np.abs(u.sum(axis=1) - comb_values).max() < 1e-10)
     
     def test_probability_x_given_mu_pi(self):
         for m in range(1, 7):
