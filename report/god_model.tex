@@ -73,7 +73,7 @@ Proof in appendix~\ref{lemma:p_x_c_knowing_pi_mu_appendix}.
 
 \begin{definition}
     We define for $x \in \bbrack{1, m}, \mu \in \bbrack{1, m}, d \in \bbrack{0, m-1}$:
-    \[ u(x, \mu, d) := \sum_{c \in \mathcal{C}_x / \norm{c - E_{\mu}}_1 = d}  \card{\argmin_{k \in \bbrack{1, m}} \norm{c - E_k}_1}^{-1} .\]
+    \[ u(\mu, x, d) := \sum_{c \in \mathcal{C}_x / \norm{c - E_{\mu}}_1 = d}  \card{\argmin_{k \in \bbrack{1, m}} \norm{c - E_k}_1}^{-1} .\]
 \end{definition}
 
 For a given $m$, $u$ can be fully computed in $\mathcal O(m^2 2^m)$ time. We believe that it might be possible to compute it in polynomial time, but we did not have time to find how. Although still costly, it only needs to be computed once for a given $m$ and can be stored in $\mathcal O(m^3)$ space.
