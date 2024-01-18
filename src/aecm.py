@@ -6,14 +6,16 @@ try:
     from src.bos_model_polynomials import compute_polynomials as compute_polynomials_bos
     from src.bos_model_estimator import (
         estimate_mu_pi_bos as estimate_mu_pi_bos,
-        probability_x_given_mu_pi_using_u as probability_x_given_mu_pi_bos)
+        probability_x_given_mu_pi_using_u as probability_x_given_mu_pi_bos,
+        univariate_em as univariate_em_bos)
 except ImportError:
     from compute_u import compute_u
     from god_model_estimator import estimate_mu_pi_god as estimate_mu_pi_god, probability_x_given_mu_pi as probability_x_given_mu_pi_god
     from bos_model_polynomials import compute_polynomials as compute_polynomials_bos
     from bos_model_estimator import (
         estimate_mu_pi_bos as estimate_mu_pi_bos,
-        probability_x_given_mu_pi_using_u as probability_x_given_mu_pi_bos)
+        probability_x_given_mu_pi_using_u as probability_x_given_mu_pi_bos,
+        univariate_em as univariate_em_bos)
 
 
 class AECM:
@@ -149,7 +151,8 @@ class AECM:
                                     m: int, 
                                     data: np.ndarray,
                                     weights: np.ndarray,
-                                    epsilon_univariate: float = 1e-5
+                                    pi_start: float = 0.5,
+                                    **kwargs
                                     ) -> tuple[int, float, np.ndarray]:
         """
         Estimate mu, pi for 1D data
@@ -213,7 +216,7 @@ class AECM:
             weights = self.pwik[:, k]
             for j in range(self.nb_features):
                 self.mus[k, j], self.pis[k, j], probs = self.univariate_mu_pi_estimation(
-                    m=self.ms[j], data=self.data[:, j], weights=weights, **kwargs)
+                    m=self.ms[j], data=self.data[:, j], weights=weights, pi_start=self.pis[k, j], **kwargs)
                 self.univariate_likelihoods[:, k, j] = probs
     
     def _prob_estimation(self):
@@ -296,18 +299,20 @@ class AECM:
         else:
             raise AttributeError(f"{initialization=} should be either kmeans or random")
     
+        if self.verbose: print("--Initial E step--")
         self._prob_estimation()
-        # self._internal_estimation(**kwargs)
         self._expectation_step()
+        if self.verbose: print("--Init log-likelihood--")
         self._compute_loglikelihood()
         old_log_likelihood = self.log_likelihood - 2 * epsilon_aecm
-        log_likelihoods = [old_log_likelihood]
+        log_likelihoods = [self.log_likelihood]
 
         if self.verbose:
             print("-" * 20)
             print(f"Initial mu: {self.mus}")
             print(f"Initial pi: {self.pis}")
             print(f"Initial log likelihood: {self.log_likelihood}")
+            print(f"Likelihoods: {log_likelihoods}")
             # print("p(w_ik = 1 | x_i, mu, pi) = self.pwik")
             # print(self.pwik)
             # print("p(x_i | w_ik = 1, mu, pi) = self.px_knowing_w")
@@ -318,10 +323,15 @@ class AECM:
         while abs(old_log_likelihood - self.log_likelihood) > epsilon_aecm and i < max_iter_aecm:
             i += 1
             old_log_likelihood = self.log_likelihood
+            if self.verbose: print(f"--M step {i}--")
             self._maximization_step()
+            if self.verbose: print(f"--Internal estimation {i}--")
             self._internal_estimation(**kwargs)
+            if self.verbose: print(f"--E step {i}")
             self._expectation_step()
+            if self.verbose: print(f"--Update log-likelihood {i}--")
             self._compute_loglikelihood()
+            log_likelihoods.append(self.log_likelihood)
             if self.verbose:
                 print(f"Iteration {i}")
                 print("-" * 20)
@@ -329,8 +339,8 @@ class AECM:
                 print(f"Current pi: {self.pis}")
                 print(f"Current alpha: {self.alphas}")
                 print(f"Log likelihood: {self.log_likelihood}")
+                print(f"Likelihoods: {log_likelihoods}")
                 print("=" * 20)
-            log_likelihoods.append(self.log_likelihood)
             
         return log_likelihoods
 
@@ -381,6 +391,7 @@ class AECM_GOD(AECM):
                                     m: int, 
                                     data: np.ndarray, 
                                     weights: np.ndarray,
+                                    pi_start: float = 0.5,
                                     epsilon_god: float = 1e-3) -> tuple[int, float, np.ndarray]:
         """
         Estimate mu, pi for 1D data
@@ -390,6 +401,7 @@ class AECM_GOD(AECM):
             m, int: number of categories
             data: data to cluster (data[., j] in [[1, m]])
             weights: weights of the data
+            pi_start, float: used to start the EM algorithm ie not used here
             epsilon, float: precision threshold on the value of pi
         
         Return:
@@ -464,6 +476,7 @@ class AECM_BOS(AECM):
                                     m: int, 
                                     data: np.ndarray, 
                                     weights: np.ndarray,
+                                    pi_start: float = 0.5,
                                     epsilon_bos: float = 1e-1,
                                     ) -> tuple[int, float, np.ndarray]:
         """
@@ -474,12 +487,11 @@ class AECM_BOS(AECM):
             m, int: number of categories
             data: data to cluster (data[., j] in [[1, m]])
             weights: weights of the data
-            n_iter: int
-                number of iterations of the EM algorithm
+            pi_start, float:
+                pi_start, float: used to start the EM algorithm ie not used here
             eps: float
                 precision threshold on the value of pi
-            pi_start, float:
-                pi to start
+            
         Return:
         -------
             mu, int: position parameter
@@ -517,3 +529,42 @@ class AECM_BOS(AECM):
                 [ P(x | mu, pi) for x in [[1, m]] ]
         """
         return np.array([probability_x_given_mu_pi_bos(m=m, x=x, mu=mu, pi=pi, u=self.u[m]) for x in range(1, m + 1)])
+
+
+class AECM_BOS_EM(AECM_BOS):
+    def univariate_mu_pi_estimation(self, 
+                                    m: int, 
+                                    data: np.ndarray, 
+                                    weights: np.ndarray,
+                                    epsilon_bos: float = 1e-1,
+                                    max_iter_bos: int = 10,
+                                    pi_start: float = 0.5,
+                                    ) -> tuple[int, float, np.ndarray]:
+        """
+        Estimate mu, pi for 1D data
+
+        Arguments:
+        ----------
+            m, int: number of categories
+            data: data to cluster (data[., j] in [[1, m]])
+            weights: weights of the data
+            n_iter: int
+                number of iterations of the EM algorithm
+            eps: float
+                precision threshold on the value of pi
+            pi_start, float:
+                pi to start
+        Return:
+        -------
+            mu, int: position parameter
+            pi, float: precision parameter
+            probs, np.ndarray (m) of float: probabilities of each value
+                [ P(x | mu, pi) for x in [[1, m]] ]
+        """
+        mu, pi, _, probs = univariate_em_bos(m=m, 
+                                             data=data, 
+                                             weights=weights,
+                                             n_iter=max_iter_bos,
+                                             eps=epsilon_bos,
+                                             pi=pi_start)
+        return mu, pi, probs

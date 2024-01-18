@@ -224,6 +224,7 @@ def univariate_em_pi(
     list[float]
         List of p(x_i | mu, pi_q)
     """
+    # print(f"univariate_em_pi, {data=}, {m=}, {mu=}, {n_iter=}, {eps=}, {pi=}, {weights=}")
     assert m >= 1, "m must be >= 1"
     if m == 1:
         return [1], [0]
@@ -266,9 +267,9 @@ def univariate_em_pi(
                     if c[j][1] == 1:  # if z = 1
                         si += p
             if weights is not None:
-                s += (si / (m - 1) / (p_tots[i] + 1e-20)) * weights[i]
+                s += (si / (m - 1) / (p_tots[i])) * weights[i]
             else:
-                s += si / (m - 1) / (p_tots[i] + 1e-20)
+                s += si / (m - 1) / (p_tots[i])
         if weights is not None:
             s = s / np.mean(weights)
         pi = s / len(data)
@@ -279,7 +280,7 @@ def univariate_em_pi(
         old_ll = lls_list[-1]
     
     # print(f"EM algorithm for {mu} converged after {iteration_index + 1} iterations")
-
+    # print(f"univariate_em_pi returns {pi_list[-1]=}, {lls_list[-1]=}")
     return pi_list, lls_list, p_tots
 
 
@@ -299,8 +300,11 @@ def univariate_em(
     and [ P(x | mu, pi) for x in [[1, m]] ] (TODO)
     """
     # sum of each group to reduce the complexity of the algorithm
+    # print(f"univariate_em, original: {data=}, {weights=}")
     weights = group_sum(m, data, weights)
     data = np.arange(1, m + 1)
+    # print(f"univariate_em, grouped: {data=}, {weights=}")
+    
 
     best_pi = None
     best_mu = None
@@ -315,6 +319,9 @@ def univariate_em(
             best_pi = pi_list[-1]
             best_mu = mu
             best_probs = probs
+    # we can compute the probabilities using the best mu and pi
+    # if we take the probs computed by univariate_em_pi, we have the probabilities for the pi[-2] but we want the pi[-1]
+    best_probs = observation_likelihood(m, best_mu, best_pi)
     return best_mu, best_pi, best_ll, np.array(best_probs)
 
 
