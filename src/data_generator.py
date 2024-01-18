@@ -1,5 +1,6 @@
 # Generate synthetic multivariate ordinal data
 
+from typing import Optional
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -65,6 +66,37 @@ def bos_model(n_cat: int, mu: int, pi: float) -> int:
         if len(cur_e) == 1:
             return cur_e[0]
     return cur_e[0]
+
+
+def bos_model_sample(
+    m: int,
+    mu: int,
+    pi: float,
+    n_sample: int,
+    seed: Optional[int] = None,
+) -> np.ndarray:
+    """
+    Generate n_sample x in [[1, n_cat]] from BOS model with parameters mu and pi
+
+    Args:
+        m: number of categories
+        mu: true category
+        pi: probability of error
+        n_sample: number of samples
+        seed: random seed
+
+    Return:
+        x: generated categories (n_sample)
+    """
+    assert 1 <= mu <= m, f"mu must be in [[1, m]] but got {mu}"
+    assert 0 < pi <= 1, f"pi must be in ]0.5, 1] but got {pi}"
+    assert n_sample > 0, f"n_sample must be > 0 but got {n_sample}"
+    if seed is not None:
+        np.random.seed(seed)
+    x = np.empty(n_sample, dtype=int)
+    for i in range(n_sample):
+        x[i] = bos_model(m, mu, pi)
+    return x
 
 
 def generate_data(n: int,
