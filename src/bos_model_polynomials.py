@@ -1,6 +1,7 @@
 from functools import cache
 import numpy as np
 from numba import njit
+from scipy.interpolate import lagrange
 
 
 @njit
@@ -159,6 +160,79 @@ def compute_polynomials(m: int) -> np.ndarray:
                     s /= h
                     # is_computed[h - 1, mu, x] = True
     return u[-1]
+
+
+def probability_x_given_mu_pi_scratch(m: int,
+                                      x: int, 
+                                      mu: int, 
+                                      pi: float,
+                                    ) -> float:
+    """
+    Compute the likelihood P(x | mu, pi) using recursion
+
+    Parameters
+    ----------
+    m : int
+        Number of categories
+    x : int in [[1, m]]
+        Observation
+    mu : int in [[1, m]]
+        Position parameter
+    pi : float in [0, 1]
+        Precision parameter
+    
+    Returns
+    -------
+    float
+        P(x | mu, pi) with m categories
+
+    Complexity: O(m^3) (not tight)
+    """
+    @cache
+    def aux_probability_x_given_mu_pi_scratch(lower: int, upper: int) -> float:
+        """
+        Auxiliary function to compute the probability
+        Compute P(x | mu, pi) if e_1 = [[lower, upper[[
+        """
+        s = 0
+        for y in range(lower, x):
+            s += (pi * (mu > y) + (1 - pi) * (upper - (y + 1)) / (upper - lower)) \
+                * aux_probability_x_given_mu_pi_scratch(y + 1, upper)
+        good_choice = mu == x or (lower == x and mu <= x) or (upper == x + 1 and  mu >= x)
+        #                           e_- == e_=                  e_+ == e_=
+        s += pi * good_choice + (1 - pi) * 1 / (upper - lower)
+        for y in range(x + 1, upper):
+            s += (pi * (mu < y) + (1 - pi) * (y - lower) / (upper - lower)) \
+                * aux_probability_x_given_mu_pi_scratch(lower, y)
+        return s  / (upper - lower)
+    
+    return aux_probability_x_given_mu_pi_scratch(1, m + 1)
+
+
+def compute_polynomials_interpolate(m: int) -> np.ndarray:
+    """
+    Compute the polynomials coefficients u 
+    P(x | mu, pi) = sum_{d=0}^{m-1} u[mu, x, d] pi^(m - 1 - d)
+
+    Parameters
+    ----------
+    m : int
+        Number of categories
+    
+    Returns
+    -------
+    np.ndarray of shape (m, m, m)
+        Polynomials coefficients
+    """
+    pi_sample = np.arange(1, m + 1) / (m + 1)
+    u = np.zeros((m, m, m))
+    for mu in range(m):
+        for x in range(m):
+            for k, pi in enumerate(pi_sample):
+                u[mu, x, k] = probability_x_given_mu_pi_scratch(m=m, x=x + 1, mu=mu + 1, pi=pi)
+            poly = lagrange(pi_sample, u[mu, x]).coefficients
+            u[mu, x, -poly.shape[0]:] = poly
+    return u
 
 
 if __name__ == "__main__":
