@@ -217,7 +217,7 @@ class AECM:
             for j in range(self.nb_features):
                 self.mus[k, j], self.pis[k, j], probs = self.univariate_mu_pi_estimation(
                     m=self.ms[j], data=self.data[:, j], weights=weights, pi_start=self.pis[k, j], **kwargs)
-                self.univariate_likelihoods[:, k, j] = probs
+                self.univariate_likelihoods[:self.ms[j], k, j] = probs
     
     def _prob_estimation(self):
         """
@@ -235,7 +235,7 @@ class AECM:
             for j in range(self.nb_features):
                 probs = self.univariate_mu_pi_data_likelihood(
                     m=self.ms[j], mu=self.mus[k, j], pi=self.pis[k, j])
-                self.univariate_likelihoods[:, k, j] = probs
+                self.univariate_likelihoods[:self.ms[j], k, j] = probs
 
     def _maximization_step(self):
         """
