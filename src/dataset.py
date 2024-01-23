@@ -16,6 +16,7 @@ from sklearn.cluster import KMeans
 from collections import defaultdict
 from time import time
 from scipy.stats import wasserstein_distance
+from src.aecm import AECM_GOD, AECM_BOS
 
 
 class BaseDataset:
@@ -182,18 +183,34 @@ class BaseDataset:
         if self.X is None or self.y is None:
             self.compute_Xy()
 
-        self.ordinal_clustering = OrdinalClustering(
-            n_clusters,
-            n_iter=self.n_iter,
-            init=init,
-            model="god",
+        # self.ordinal_clustering = OrdinalClustering(
+        #     n_clusters,
+        #     n_iter=self.n_iter,
+        #     init=init,
+        #     model="god",
+        #     eps=self.eps,
+        #     silent=self.silent,
+        #     seed=self.seed,
+        # )
+
+        self.ordinal_clustering = AECM_GOD(
+            nb_clusters=n_clusters,
+            nb_features=self.X.shape[1],
+            ms=m,
+            data=self.X,
             eps=self.eps,
-            silent=self.silent,
             seed=self.seed,
         )
-        self.clusters = (
-            self.ordinal_clustering.fit_transform(self.X, m) + 1
-        )  # 1-indexed
+
+        loglikelihoods = self.ordinal_clustering.fit(
+            initialization=init, epsilon_aecm=self.eps
+        )
+        self.clusters = self.ordinal_clustering.labels + 1
+
+        # self.clusters = (j
+        #     self.ordinal_clustering.fit_transform(self.X, m) + 1
+        # )  # 1-indexed
+
         self.n_clusters_compute = n_clusters
 
         self.compute_target_decoder()
@@ -209,9 +226,9 @@ class BaseDataset:
 
         if not self.silent:
             print("Clustered data into {} clusters".format(n_clusters))
-            print(f"Estimated alpha: {self.ordinal_clustering.alpha}")
-            print(f"Estimated mu: {self.ordinal_clustering.mu}")
-            print(f"Estimated pi: {self.ordinal_clustering.pi}")
+            print(f"Estimated alpha: {self.ordinal_clustering.alphas}")
+            print(f"Estimated mu: {self.ordinal_clustering.mus}")
+            print(f"Estimated pi: {self.ordinal_clustering.pis}")
 
         self.runtime[self.last_runtype] += time() - start_time
         return self.clusters
@@ -234,18 +251,33 @@ class BaseDataset:
         if self.X is None or self.y is None:
             self.compute_Xy()
 
-        self.ordinal_clustering = OrdinalClustering(
-            n_clusters,
-            n_iter=self.n_iter,
-            model="bos",
-            init=init,
+        # self.ordinal_clustering = OrdinalClustering(
+        #     n_clusters,
+        #     n_iter=self.n_iter,
+        #     model="bos",
+        #     init=init,
+        #     eps=self.eps,
+        #     silent=self.silent,
+        #     seed=self.seed,
+        # )
+
+        self.ordinal_clustering = AECM_BOS(
+            nb_clusters=n_clusters,
+            nb_features=self.X.shape[1],
+            ms=m,
+            data=self.X,
             eps=self.eps,
-            silent=self.silent,
             seed=self.seed,
         )
-        self.clusters = (
-            self.ordinal_clustering.fit_transform(self.X, m) + 1
-        )  # 1-indexed
+
+        loglikelihoods = self.ordinal_clustering.fit(
+            initialization=init, epsilon_aecm=self.eps
+        )
+        self.clusters = self.ordinal_clustering.labels + 1
+
+        # self.clusters = (
+        #     self.ordinal_clustering.fit_transform(self.X, m) + 1
+        # )  # 1-indexed
         self.n_clusters_compute = n_clusters
 
         self.compute_target_decoder()
@@ -261,9 +293,9 @@ class BaseDataset:
 
         if not self.silent:
             print("Clustered data into {} clusters".format(n_clusters))
-            print(f"Estimated alpha: {self.ordinal_clustering.alpha}")
-            print(f"Estimated mu: {self.ordinal_clustering.mu}")
-            print(f"Estimated pi: {self.ordinal_clustering.pi}")
+            print(f"Estimated alpha: {self.ordinal_clustering.alphas}")
+            print(f"Estimated mu: {self.ordinal_clustering.mus}")
+            print(f"Estimated pi: {self.ordinal_clustering.pis}")
 
         self.runtime[self.last_runtype] += time() - start_time
         return self.clusters
@@ -582,7 +614,9 @@ class Animals(BaseDataset):
             )
 
         self.y = self.data_processed["class_type"].values
-        self.X = self.data_processed.drop(["animal_name", "class_type"], axis=1).values
+        self.X = self.data_processed.drop(
+            ["animal_name", "class_type"], axis=1
+        ).values.astype(int)
         self.n_clusters = len(np.unique(y))
 
     def compute_n_cat(self):
@@ -647,12 +681,12 @@ class CarEvaluation(BaseDataset):
 
         self.X, self.y = X.to_numpy()[n:], y.to_numpy()[n:]
 
-        self.m = [len(X[col].unique()) for col in X.columns]
+        self.m = np.array([len(X[col].unique()) for col in X.columns])
         self.n_clusters = y.nunique()
 
         self.X, self.y = X.to_numpy(), y.to_numpy()
         permutation = np.random.permutation(len(self.X))
-        self.X, self.y = self.X[permutation][:n], self.y[permutation][:n]
+        self.X, self.y = self.X[permutation][:n].astype(int), self.y[permutation][:n]
 
 
 class HayesRoth(BaseDataset):
@@ -671,10 +705,10 @@ class HayesRoth(BaseDataset):
         self.target_decoder = {v: k for k, v in enumerate(y.unique(), 1)}
         self.target_decoder_inv = {k: v for k, v in enumerate(y.unique(), 1)}
 
-        self.m = [len(X[col].unique()) for col in X.columns]
+        self.m = np.array([len(X[col].unique()) for col in X.columns])
         self.n_clusters = y.nunique()
 
-        self.X, self.y = X.to_numpy(), y.to_numpy()
+        self.X, self.y = X.to_numpy().astype(int), y.to_numpy()
 
 
 class Caesarian(BaseDataset):
@@ -706,7 +740,7 @@ class Caesarian(BaseDataset):
         self.target_decoder = {v: k for k, v in enumerate(y.unique(), 1)}
         self.target_decoder_inv = {k: v for k, v in enumerate(y.unique(), 1)}
 
-        self.m = [len(X[col].unique()) for col in X.columns]
+        self.m = np.array([len(X[col].unique()) for col in X.columns])
         self.n_clusters = y.nunique()
 
-        self.X, self.y = X.to_numpy(), y.to_numpy()
+        self.X, self.y = X.to_numpy().astype(int), y.to_numpy()
