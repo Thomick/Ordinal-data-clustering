@@ -173,7 +173,7 @@ Using the previous lemma, we have:
     We can conclued that $L_W(\bullet, \mu)$ is concave on $[\frac{1}{2}, 1[$.
 \end{proof}
 
-
+\newpage
 \paragraph{Open combinatorial problem}
 
 
@@ -190,7 +190,7 @@ The goal is to find an algorithm that compute for every $x \in \bbrack{1, m}$, $
 \[ u(\mu, x, d) := \sum_{c \in \mathcal{C}_x / \norm{c-E_{\mu}}_1 = d} \card{\argmin_{k \in \bbrack{1, m}} \norm{c - E_k}_1}^{-1} \]
 
 The algorithm could be efficient at computing only all this values at the same time.
-We have an algorithm that compute $u(d, \mu, x)$ in $O(m 2^m)$ for all $d$ and $O(m^2 2^m)$ for all $d,x,\mu$. Is there a better algorithm? (Or alternatively is the problem NP-hard?)
+We have an algorithm that compute $u(d, \mu, x)$ in $O(m 2^m)$ for all $d,x,\mu$. Is there a better algorithm? (Or alternatively is the problem NP-hard?)
 
 \begin{lemma}
     \[ \sum_{c \in \set{0, 1}^{m - 1}} \card{\argmin_{k \in \bbrack{1, m}} \norm{c - E_k}_1} = 2^{m} - \binom{m}{\floor{\frac{m}{2}}} \]

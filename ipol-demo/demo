@@ -1,0 +1,104 @@
+{
+   "archive": {
+      "files": {
+         "input.csv": "input data",
+         "output.png": "result in png format",
+         "result.csv": "result as csv file",
+         "estimated_params.txt": "estimated parameters"
+      },
+      "params": [
+         "nclusters",
+         "niters",
+         "epsilon"
+      ]
+   },
+   "build": {
+      "build1": {
+         "url": "git@github.com:Thomick/Ordinal-data-clustering.git",
+         "rev": "origin/main",
+         "dockerfile": ".ipol/Dockerfile"
+      }
+   },
+   "general": {
+      "demo_title": "Clustering Multivariate Ordinal Data",
+      "xlink_article": "",
+      "input_description": "Input type (.csv) should be in format: X1, X2, ..., Xn given at each line (each line correspond to a single item with n categorical ordinal features represented as integer). ",
+      "param_description": "You can set the following parameters:<br><ul>     <li>Desired number of clusters</li>   <li> Number of iteration of the clustering algorithm</li>   <li> Precision of the inner optimization step (epsilon)</li></ul>",
+      "description": "This demo cluster ordinal categorical data."
+   },
+   "inputs": [
+      {
+         "description": "Input",
+         "max_weight": 524288000,
+         "ext": ".csv",
+         "required": true,
+         "type": "data"
+      }
+   ],
+   "results": [
+      {
+         "contents": {
+            "result (PNG)": "output.png",
+            "result (CSV)": "result.csv",
+            "output (TXT)": "estimated_params.txt"
+         },
+         "label": "<b>Download results:</b>",
+         "type": "file_download"
+      },
+      {
+         "contents": "estimated_params.txt",
+         "label": "<h2>Output:</h2>",
+         "type": "text_file"
+      },
+      {
+         "contents": "input.csv",
+         "name": "toto",
+         "label": "Input data ",
+         "type": "file_download",
+         "visible": "info.bad_dx==0 && info.bad_alloc==0"
+      },
+      {
+         "contents": "result.png",
+         "label": "png_result",
+         "type": "file_download",
+         "visible": "info.bad_dx==0 && info.bad_alloc==0"
+      }
+   ],
+   "params": [
+      {
+         "label": "Desired number of clusters",
+         "id": "c",
+         "type": "numeric",
+         "comments": "",
+         "values": {
+            "default": 4,
+            "min": 0,
+            "max": 50,
+            "step": 1
+         }
+      },
+      {
+         "label": "Number of iteration of the clustering algorithm",
+         "id": "i",
+         "type": "numeric",
+         "values": {
+            "default": 10,
+            "min": 0,
+            "max": 500,
+            "step": 1
+         }
+      },
+      {
+         "label": "Precision",
+         "id": "e",
+         "type": "numeric",
+         "values": {
+            "default": 0.01,
+            "min": 0,
+            "max": 0.1,
+            "step": 0.0001
+         }
+      }
+   ],
+   "run": "python3 $bin/src/demo.py --n_clusters $c --n_iter $i --eps $e"
+}

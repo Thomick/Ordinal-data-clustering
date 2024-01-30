@@ -3,7 +3,14 @@ import numpy as np
 from scipy.special import comb
 from compute_u import compute_u
 from data_generator import bos_model
-from bos_model_estimator import univariate_em, _probability_x_given_mu_pi, probability_x_given_mu_pi_scratch, estimate_mu_pi_bos as estimate_mu_pi
+from bos_model_polynomials import probability_x_given_mu_pi_scratch
+from clustering import compute_p_list
+from bos_model_estimator import univariate_em, estimate_mu_pi_bos as estimate_mu_pi
+
+
+def _probability_x_given_mu_pi(m: int, x: int, mu: int, pi: float) -> float:
+    # use compute_p_list
+    return sum(p for _, p in compute_p_list(x=x, mu=mu, pi=pi, m=m))
 
 
 def bos_model_sample(m: int, n: int, seed: int = None) -> np.ndarray:
@@ -34,6 +41,17 @@ class TestBosModel(TestCase):
     #        comb_values = np.array([comb(m - 1, j, exact=True) for j in range(m)])
     #        self.assertTrue(np.abs(u.sum(axis=1) - comb_values).max() < 1e-10)
     
+    def test_estimate_mu_pi(self):
+        for m in range(2, 5):
+            for seed in range(3):
+                print(f'm: {m}, seed: {seed}')
+                data, _, _ = bos_model_sample(m, 1_000, seed)
+                mu_hat_em, pi_hat_em, ll_em, _ = univariate_em(m=m, data=data, eps=1e-12)
+                mu_hat_tri, pi_hat_tri, ll_tri, _ = estimate_mu_pi(m=m, data=data, epsilon=1e-12)
+                self.assertEqual(mu_hat_tri, mu_hat_em)
+                self.assertAlmostEqual(pi_hat_tri, pi_hat_em, places=3)
+                self.assertAlmostEqual(ll_em, ll_tri, places=3)
+
     def test_probability_x_given_mu_pi(self):
         for m in range(1, 7):
             for pi in [0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1]:
@@ -43,17 +61,6 @@ class TestBosModel(TestCase):
                         prob_old = _probability_x_given_mu_pi(m, x, mu, pi)
                         prob = probability_x_given_mu_pi_scratch(m, x, mu, pi)
                         self.assertAlmostEqual(prob, prob_old)
-    
-    def test_estimate_mu_pi(self):
-        for m in range(2, 5):
-            for seed in range(3):
-                print(f'm: {m}, seed: {seed}')
-                data, _, _ = bos_model_sample(m, 100, seed)
-                mu_hat_em, pi_hat_em, ll_em, _ = univariate_em(m=m, data=data, eps=1e-6)
-                mu_hat_tri, pi_hat_tri, ll_tri, _ = estimate_mu_pi(m=m, data=data, epsilon=1e-6)
-                self.assertEqual(mu_hat_tri, mu_hat_em)
-                self.assertAlmostEqual(pi_hat_tri, pi_hat_em, places=3)
-                self.assertAlmostEqual(ll_em, ll_tri, places=3)
 
 
 if __name__ == "__main__":
