@@ -5,6 +5,7 @@ import sys
 import argparse
 from pathlib import Path
 import numpy as np
+import pandas as pd
 
 
 from aecm import AECM_BOS, AECM_GOD
@@ -14,13 +15,30 @@ def process_data(data_path):
     """
     Process data from csv file
     """
-    data = np.loadtxt(data_path, delimiter=",", dtype=int)
+    # Check if file has header
+    first_line = open(data_path).readline().strip().split(",")
+    has_header = False
+    for i in range(len(first_line)):
+        try:
+            int(first_line[i])
+        except ValueError:
+            has_header = True
+            break
+    print("First line: {}".format(first_line))
+    print("Has header: {}".format(has_header))
+    if has_header:
+        dataframe = pd.read_csv(data_path, header="infer")
+    else:
+        dataframe = pd.read_csv(
+            data_path, names=["Feature {}".format(i) for i in range(len(first_line))]
+        )
+    data = dataframe.values
 
     ma, mi = np.max(data, axis=0), np.min(data, axis=0)
     n_cat = ma - mi + 1
     shifted_data = data - mi[np.newaxis, :] + 1
     # TODO decide if we want to handle missing values
-    return shifted_data, n_cat
+    return shifted_data, n_cat, dataframe
 
 
 if __name__ == "__main__":
@@ -48,7 +66,7 @@ if __name__ == "__main__":
         print(args.data_path)
         sys.exit(1)
 
-    data, n_cat = process_data(args.data_path)
+    data, n_cat, df = process_data(args.data_path)
     d = data.shape[1]
     m = n_cat
 
@@ -73,8 +91,51 @@ if __name__ == "__main__":
 
     Path(args.output_dir).mkdir(parents=True, exist_ok=True)
     with open(os.path.join(args.output_dir, "estimated_params.txt"), "w") as f:
-        f.write(
-            "Estimated alpha: {}, Estimated mu: {}, Estimated pi: {}".format(
-                clustering.alphas, clustering.mus, clustering.pis
-            )
+        for i in range(args.n_clusters):
+            f.write("Cluster {}\n".format(i))
+            f.write("alpha: {}\n".format(clustering.alphas[i]))
+            f.write("mu: {}\n".format(clustering.mus[i]))
+            f.write("pi: {}\n".format(clustering.pis[i]))
+            f.write("\n")
+
+    # Plot parameters of each cluster as a bar plot
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    sns.set_theme(style="whitegrid")
+    patterns = ["/", "o", "\\", "*", "-", "|", "+", "O", "x", "."]
+
+    fig, ax = plt.subplots()
+    width = 0.7 / d
+    for i in range(d):
+        ax.bar(
+            np.arange(args.n_clusters) + width * i,
+            clustering.mus[:, i],
+            width,
+            label=df.columns[i],
+            hatch=patterns[i % len(patterns)],
         )
+    ax.set_ylabel("Mean")
+    ax.set_xlabel("Cluster")
+    ax.set_title("Estimated means for each cluster")
+    # Center the labels
+    ax.set_xticks(np.arange(args.n_clusters) + width * (d - 1) / 2)
+    ax.set_xticklabels(np.arange(args.n_clusters))
+    ax.legend()
+    plt.tight_layout()
+    plt.savefig(os.path.join(args.output_dir, "estimated_mean.png"))
+
+    # plot weight of each cluster in the dataset
+    fig, ax = plt.subplots()
+    ax.bar(np.arange(args.n_clusters), clustering.alphas)
+    ax.set_ylabel("Weight")
+    ax.set_xlabel("Cluster")
+    ax.set_title("Estimated weight for each cluster")
+    ax.set_xticks(np.arange(args.n_clusters))
+    ax.set_xticklabels(np.arange(args.n_clusters))
+    plt.tight_layout()
+    plt.savefig(os.path.join(args.output_dir, "estimated_weight.png"))
+
+    # write the dataset with the cluster labels
+    df["Cluster"] = labels
+    df.to_csv(os.path.join(args.output_dir, "clustered_data.csv"), index=False)
