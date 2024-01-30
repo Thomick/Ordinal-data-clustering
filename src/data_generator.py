@@ -8,6 +8,7 @@ import seaborn as sns
 import os
 import sys
 import time
+
 try:
     from .god_model_generator import god_model_generator
 except ImportError:
@@ -99,15 +100,17 @@ def bos_model_sample(
     return x
 
 
-def generate_data(n: int,
-                  p: int,
-                  n_cat: list[int],
-                  k: int,
-                  alpha: list[float],
-                  mu: list[list[int]],
-                  pi: list[list[float]],
-                  seed: int,
-                  model: str = "bos"):
+def generate_data(
+    n: int,
+    p: int,
+    n_cat: list[int],
+    k: int,
+    alpha: list[float],
+    mu: list[list[int]],
+    pi: list[list[float]],
+    seed: int,
+    model: str = "bos",
+):
     """
     Generate synthetic multivariate ordinal dataset
 
@@ -170,34 +173,37 @@ if __name__ == "__main__":
     # Test bos_model
     # plot_hist_bos_model(5, 3, 0.5)
 
-    # seed = 0
-    plot_hist_bos_model(5, 3, 0.7, show=False)
+    seed = 0
+    """plot_hist_bos_model(5, 3, 0.7, show=False)
     plot_hist_god_model(5, 3, 0.5 + 0.7 * 0.5, show=False)
     plt.legend()
+    plt.show()"""
+
+    n = 10000
+    p = 2
+    n_cat = [5, 5]
+    k = 2
+    alpha = [0.5, 0.5]
+    mu = [[2, 4], [4, 2]]
+    pi = [[0.4, 0.4], [0.4, 0.4]]
+
+    output_file = "../data/synthetic.csv"
+
+    x, w = generate_data(n, p, n_cat, k, alpha, mu, pi, seed, model="bos")
+    # save data
+    df = pd.DataFrame(x)
+    df.to_csv(
+        os.path.join(os.path.dirname(__file__), output_file), index=False, header=False
+    )
+
+    df["w"] = w
+
+    # plot data
+    sns.pairplot(
+        df,
+        hue="w",
+        kind="hist",
+        plot_kws={"alpha": 0.6, "bins": n_cat},
+        diag_kws={"bins": n_cat[0]},
+    )
     plt.show()
-    """
-        n = 10000
-        p = 2
-        n_cat = [5, 5]
-        k = 2
-        alpha = [0.5, 0.5]
-        mu = [[2, 4], [4, 2]]
-        pi = [[0.4, 0.4], [0.4, 0.4]]
-
-        output_file = "../data/synthetic.csv"
-
-        x, w = generate_data(n, p, n_cat, k, alpha, mu, pi, seed)
-        # save data
-        df = pd.DataFrame(x)
-        df["w"] = w
-        df.to_csv(os.path.join(os.path.dirname(__file__), output_file), index=False)
-
-        # plot data
-        sns.pairplot(
-            df,
-            hue="w",
-            kind="hist",
-            plot_kws={"alpha": 0.6, "bins": n_cat},
-            diag_kws={"bins": n_cat[0]},
-        )
-        plt.show()"""
