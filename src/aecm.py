@@ -276,8 +276,8 @@ class AECM:
 
         Arguments:
         ----------
-            initialization, str in {'kmeans', 'random'}:
-                initialization method for the parameters of the model
+            initialization, str in {'kmeans', 'random', None}:
+                initialization method for the parameters of the model, if None we use the current parameters
             epsilon_aecm, float:
                 threshold on the difference of log likelihood between two iterations
             max_iter_aecm, int:
@@ -292,7 +292,9 @@ class AECM:
                     epsilon, float: precision threshold on the value of pi
 
         """
-        if initialization == "kmeans":
+        if initialization is None:
+            pass
+        elif initialization == "kmeans":
             self._init_k_means()
         elif initialization == "random":
             self._init_random()
@@ -343,6 +345,42 @@ class AECM:
                 print("=" * 20)
             
         return log_likelihoods
+    
+    def init_parameters(self, alpha: np.ndarray, mu: np.ndarray, pi: np.ndarray) -> None:
+        """
+        Initialize the parameters of the model
+
+        Arguments:
+        ----------
+            alpha, np.ndarray (nb_clusters,) of float:
+                mixing coefficients of the clusters
+            mu, np.ndarray (nb_clusters, nb_features) of int:
+                positions parameters of each cluster and each feature
+            pi, np.ndarray (nb_clusters, nb_features) of float:
+                precision parameters of each cluster and each feature
+        """
+        assert alpha.shape == (self.nb_clusters,), \
+            f"alpha should have shape {(self.nb_clusters,)} but has shape {alpha.shape}"
+        assert mu.shape == (self.nb_clusters, self.nb_features), \
+            f"mu should have shape {(self.nb_clusters, self.nb_features)} but has shape {mu.shape}"
+        assert mu.min() >= 1, \
+            f"mu should be greater than 1 but is {mu.min()}"
+        assert mu.max() <= self.ms.max(), \
+            f"mu should be less than {self.ms.max()} but is {mu.max()}"
+        assert pi.shape == (self.nb_clusters, self.nb_features), \
+            f"pi should have shape {(self.nb_clusters, self.nb_features)} but has shape {pi.shape}"
+        assert np.all(pi >= 0), \
+            f"pi should be greater than 0 but is {pi.min()}"
+        assert np.all(pi <= 1), \
+            f"pi should be less than 1 but is {pi.max()}"
+        self.alphas = alpha
+        self.mus = mu
+        self.pis = pi
+
+        # recompute the likelihoods
+        self._prob_estimation()
+        self._expectation_step()
+        self._compute_loglikelihood()
 
 
 class AECM_GOD(AECM):
