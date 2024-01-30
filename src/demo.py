@@ -24,8 +24,7 @@ def process_data(data_path):
         except ValueError:
             has_header = True
             break
-    print("First line: {}".format(first_line))
-    print("Has header: {}".format(has_header))
+
     if has_header:
         dataframe = pd.read_csv(data_path, header="infer")
     else:
@@ -128,13 +127,13 @@ if __name__ == "__main__":
     # plot weight of each cluster in the dataset
     fig, ax = plt.subplots()
     ax.bar(np.arange(args.n_clusters), clustering.alphas)
-    ax.set_ylabel("Weight")
+    ax.set_ylabel("Proportion")
     ax.set_xlabel("Cluster")
-    ax.set_title("Estimated weight for each cluster")
+    ax.set_title("Estimated proportion of each cluster")
     ax.set_xticks(np.arange(args.n_clusters))
     ax.set_xticklabels(np.arange(args.n_clusters))
     plt.tight_layout()
-    plt.savefig(os.path.join(args.output_dir, "estimated_weight.png"))
+    plt.savefig(os.path.join(args.output_dir, "estimated_proportion.png"))
 
     # write the dataset with the cluster labels
     df["Cluster"] = labels
