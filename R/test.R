@@ -2,6 +2,7 @@ library(ordinalClust)
 
 data("dataqol")
 
+seed <- 100
 set.seed(1)
 
 nbSEM <- 150
@@ -91,47 +92,104 @@ ggplot(x_synthetic_univariate, aes(x = value, fill = factor(w))) +
   labs(x = "x", y = "Frequency") + 
   ggtitle(paste0("mu = ", mu[[1]], ", pi = ", pi[[1]]))
 
-n <- 100
+run_univariate <- function(n_cat, n, k, p){
+  alpha <- runif(k)
+  alpha <- alpha/sum(alpha)
+  
+  mu <- lapply(1:k, function(x) sapply(n_cat, function(nc) sample(1:nc, 1)))
+  pi <- lapply(1:k, function(x) runif(p))
+  mu
+  pi
+  
+  
+  seed <- 12345
+  set.seed(seed)
+  
+  output_synthetic_multivariate <- generate_data(n, p, n_cat, k, alpha, mu, pi, seed)
+  x_synthetic_multivariate <- output_synthetic_multivariate[1]
+  w_synthetic_multivariate <- output_synthetic_multivariate[2]
+  
+  nbSEM <- 120
+  nbSEMburn <- 80
+  nbindmini <- 1
+  init <- "kmeans" #kmeans or random or randomBurnin
+  # # clustering setting:
+  data_synthetic_multivariate <- as.matrix(as.data.frame(x_synthetic_multivariate))
+  start_time <- Sys.time()
+  clust <- bosclust(x=data_synthetic_multivariate, kr=k, m=max(n_cat), nbSEM=nbSEM,
+                    nbSEMburn=nbSEMburn,
+                    nbindmini=nbindmini,
+                    init = init
+  )
+  run_time <- Sys.time() - start_time
+  summary(clust)
+  # print a data frame of the estimated parameters
+  estimated_pis <- clust@params[[1]]$pis
+  estimated_mus <- clust@params[[1]]$mus
+  
+  print("Run time")
+  print(run_time)
+  print("True pis:")
+  print(pi)
+  print("True mus:")
+  print(mu)
+  print("Estimated pis:")
+  print(estimated_pis)
+  print("Estimated mus:")
+  print(estimated_mus)
+  
+  return(list(estimated_pis, estimated_mus, pi, mu, run_time))
+}
+
+n <- 1000
+p <- 2
+k <- 2
+m <-4
+n_cat <- matrix(p)
+for (j in 1:p) {
+  n_cat
+  n_cat[j] <- sample(2:m, 1)
+}
+output <- run_univariate(n_cat, n, k, p)
+
+n <- 1000
 p <- 1
-k <- 3
-n_cat <- sample(2:3, p, replace=TRUE)
-alpha <- runif(k)
-alpha <- alpha/sum(alpha)
+k <- 1
+n_cats <- 2:3
+run_times <- c()
+for(n_cat in n_cats){
+  output <- run_univariate(n_cat, n, k, p)
+  run_times <- c(run_times, output[[5]])
+}
 
-mu <- lapply(1:k, function(x) sapply(n_cat, function(nc) sample(1:nc, 1)))
-pi <- lapply(1:k, function(x) runif(p))
-
-seed <- 12345
-set.seed(seed)
-
-output_synthetic_multivariate <- generate_data(n, p, n_cat, k, alpha, mu, pi, seed)
-x_synthetic_multivariate <- output_synthetic_multivariate[1]
-w_synthetic_multivariate <- output_synthetic_multivariate[2]
-
-nbSEM <- 150
-nbSEMburn <- 100
-nbindmini <- 1
-init <- "kmeans" #kmeans or random or randomBurnin
-# # clustering setting:
-
-print("True pis:")
-print(pi)
-print("True mus:")
-print(mu)
-
-data_synthetic_multivariate <- as.matrix(as.data.frame(x_synthetic_multivariate))
-clust <- bosclust(x=data_synthetic_multivariate, kr=k, m=n_cat, nbSEM=nbSEM,
-                  nbSEMburn=nbSEMburn,
-                  nbindmini=nbindmini,
-                  init = init
-                  )
-# print a data frame of the estimated parameters
-estimated_pis <- clust@params$pis
-estimated_mus <- clust@params$mus
-
-print("Estimated pis:")
-print(estimated_pis)
-print("Estimated mus:")
-print(estimated_mus)
+# plot run times with ggplot
+run_times <- data.frame(run_times, n_cats)
+ggplot(run_times, aes(x = n_cats, y = run_times)) + 
+  geom_point() + 
+  geom_line() + 
+  labs(x = "Number of categories", y = "Run time (s)") + 
+  theme_bw()
 
 
+
+# set.seed(1)
+# library(ordinalClust)
+# # loading the real dataset
+# data("dataqol")
+# # loading the ordinal data
+# x <- as.matrix(dataqol[,2:31])
+# # defining different number of categories:
+# m <- c(4,7)
+# # defining number of row and column clusters
+# krow <- 3
+# kcol <- c(3,1)
+# # configuration for the inference
+# nbSEM <- 20
+# nbSEMburn <- 15
+# nbindmini <- 2
+# init <- 'random'
+# d.list <- c(1,29)
+# object <- boscoclust(x = x,kr = krow, kc = kcol, m = m,
+#                      idx_list = d.list, nbSEM = nbSEM,
+#                      nbSEMburn = nbSEMburn, nbindmini = nbindmini,
+#                      init = init)
