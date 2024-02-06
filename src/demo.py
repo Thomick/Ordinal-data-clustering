@@ -52,6 +52,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--method", type=str, default="bos", help="method to use (bos or god)"
     )
+    parser.add_argument(
+        "--init", type=str, default="random", help="initialization method"
+    )
     parser.add_argument("--n_clusters", type=int, default=3, help="number of clusters")
     parser.add_argument("--n_iter", type=int, default=100, help="number of iterations")
     parser.add_argument(
@@ -87,11 +90,14 @@ if __name__ == "__main__":
             data=data,
             verbose=args.verbose,
         )
-    ll_list = clustering.fit(epsilon_aecm=args.eps, max_iter_aecm=args.n_iter)
+    ll_list = clustering.fit(
+        epsilon_aecm=args.eps, max_iter_aecm=args.n_iter, initialization=args.init
+    )
     labels = clustering.labels
 
     print("Method: " + "BOS model" if args.method == "bos" else "GOD model")
-    print("Time taken: ", perf_counter() - t)
+    print("Number of clusters: ", args.n_clusters)
+    print(f"Time: {perf_counter() - t:.2f}s")
 
     Path(args.output_dir).mkdir(parents=True, exist_ok=True)
     with open(os.path.join(args.output_dir, "estimated_params.txt"), "w") as f:
