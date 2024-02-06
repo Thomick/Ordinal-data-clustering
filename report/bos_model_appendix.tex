@@ -10,15 +10,15 @@
 We now suppose $e_j = \bbrack{l, h - 1}$:
 
 \begin{align}
-    &\Pr(x | x \in \bbrack{l, h-1}, \mu, \pi)
-    &= \begin{aligned}
+    &\Pr(x | x \in \bbrack{l, h-1}, \mu, \pi) =\\
+    &\begin{aligned}
         &\sum_{y=x + 1}^{h-1} \Pr(\bbrack{l, y - 1} | \bbrack{l, h-1}, \mu, \pi) \Pr(x | x \in \bbrack{l, y - 1}, \mu, \pi) \\
         &+ \Pr(\set{x} | \bbrack{l, h-1}, \mu, \pi) \Pr(x | x \in \set{x}, \mu, \pi) \\
         &+ \sum_{y=l}^{x - 1} \Pr(\bbrack{y + 1, h-1} | \bbrack{l, h-1}, \mu, \pi) \Pr(x | x \in \bbrack{y + 1, h-1}, \mu, \pi)
     \end{aligned} \\
     &= \begin{aligned}
         &\frac{1}{h - l} \sum_{y=x + 1}^{h-1} \left[ \pi \indickronecker{\mu < y} + (1-\pi) \frac{y - l}{h - l} \right] \Pr(x | x \in \bbrack{l, y - 1}, \mu, \pi) \\
-        &+\frac{1}{h - l} \left[ \pi \indickronecker{\mu = x \lor (x = l \land \mu \leq x) \lor (x = h - 1 \land \mu \geq x)} + (1 - \pi) \frac{1}{h-l} \right] 
+        &+\frac{1}{h - l} \left[ \pi \indickronecker{\mu = x \lor (x = l \land \mu \leq x) \lor (x = h - 1 \land \mu \geq x)} + (1 - \pi) \frac{1}{h-l} \right] \\
         &\Pr(x | x \in \set{x}, \mu, \pi) \\
         &+\frac{1}{h - l} \sum_{y=l}^{x - 1} \left[ \pi \indickronecker{\mu > y} + (1-\pi) \frac{h - y - 1}{h - l} \right] \Pr(x | x \in \bbrack{y + 1, h-1}, \mu, \pi)
     \end{aligned}
@@ -72,3 +72,24 @@ We can now prove that $\forall x \in \bbrack{0, h - 1}, \forall \mu \in \bbrack{
 
     Hence the theorem holds for $h$.
 \end{proof}
+
+
+
+\subsubsection{Sum of Z}
+
+\begin{align}
+    \sum_{j=k}^{m - 1} \Pr(z_j = 1 | x \in e_k, \mu, \pi) 
+    &= \Pr(z_k = 1 | x \in e_k, \mu, \pi) + \sum_{j=k+1}^{m - 1} \Pr(z_j = 1 | x \in e_k, \mu, \pi) \\
+    \sum_{j=k+1}^{m - 1} \Pr(z_j = 1 | x \in e_k, \mu, \pi) 
+    &= \sum_{e_{k+1} \subset e_k} \sum_{j=k+1}^{m - 1} \Pr(z_j = 1, e_{k+1} | x \in e_k, \mu, \pi)  \\
+    &= \sum_{e_{k+1} \subset e_k} \sum_{j=k+1}^{m - 1} \Pr(z_j = 1 | e_{k+1}, x \in e_k, \mu, \pi) \Pr(e_{k+1} | x \in e_k, \mu, \pi) \\
+    &= \sum_{e_{k+1} \subset e_k ; x\in e_{k+1}} \Pr(e_{k+1} | x \in e_k, \mu, \pi) \sum_{j=k+1}^{m - 1} \Pr(z_j = 1 | e_{k+1}, x \in e_k, \mu, \pi) 
+\end{align}
+
+
+\begin{align}
+    \Pr(z_k = 1 | x \in e_k, \mu, \pi) 
+    &= \sum_{e_{k+1} \subset e_k} \Pr(z_k = 1, e_{k+1} | x \in e_k, \mu, \pi) \\
+    &= \sum_{e_{k+1} \subset e_k; \mu, x \in e_{k+1}}  \Pr(z_k = 1, e_{k+1} | x \in e_k, \mu, \pi) \\
+    &= \sum_{e_{k+1} \subset e_k; \mu, x \in e_{k+1}}  \Pr(z_k = 1 | x \in e_{k+1}, \mu, \pi) \Pr(e_{k+1} | x \in e_k, \mu, \pi)
+\end{align}

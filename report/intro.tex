@@ -1,0 +1,183 @@
+%\section{TODOs}
+%\begin{itemize}
+%    \item For the experiments:
+%    \begin{itemize}
+%        \item Test the robustness of the algorithm when facing outliers or skewed distributions.
+%        \item Use noisy ordinal data (add discrete noise on a few features).
+%        \item Test scalability of the algorithm (number of variables and data points).
+%    \end{itemize}
+%\end{itemize}
+
+\section{Introduction}
+The exploration of hidden structures within datasets is a crucial task for data scientists, and clustering serves as a valuable tool in this endeavor. Mixture models have emerged as a standard approach for clustering due to their capacity to provide a well-defined mathematical framework for parameter estimation and model selection. These models, instrumental in determining the number of clusters, not only encapsulate classical geometric methods but also find successful application in diverse practical scenarios.
+
+In the realm of model-based clustering, the classification of data hinges on the availability of a suitable probability distribution tailored to the nature of the data at hand—be it numerical, rankings, functional, or categorical. Notably, ordinal data, where categories possess a specific order, represent a common occurrence, especially in fields like marketing where product evaluations are solicited through ordinal scales. Despite their prevalence, ordinal data have received comparatively less attention in the context of model-based clustering. Often, practitioners resort to transforming ordinal data into quantitative or nominal formats to align with readily applicable distributions, neglecting valuable order information.
+
+This paper explores the less-explored domain of model-based clustering for ordinal data, specifically focusing on ordinal data derived from ordered categories. Ordinal data find widespread application in fields such as social sciences, psychology, marketing, healthcare, and more. They enable researchers to capture nuanced information, such as preferences, attitudes, or severity levels, in cases where continuous measures are neither significant nor possible. For example, when assessing tumor severity, the precise size may not be as crucial as the current state of development of the disease as it is assessed by specialists. The use of ordinal data enriches the comprehension of subjective opinions, behaviors, and hierarchical relationships across diverse research contexts. Over the years, various approaches have been proposed to define probability distributions for ordinal data, including modeling cumulative probabilities, constraining multinomial models to reflect ordinality, assuming ordinal data as discretization of continuous latent variables, and constructing distributions to meet specific properties.
+
+Among these approaches, the work by \cite{biernacki2016model}, studied in the context of this project, delves into an original strategy—modeling the hypothetical data generating process for ordinal data. While this general principle has found success in ranking data scenarios, the distinction in the data generating process becomes apparent for ordinal data. In this context, a search algorithm, specifically the binary search algorithm, emerges as a fitting choice, respecting the ordinal nature of data through comparisons without necessitating links to nominal or continuous distributions.
+
+The proposed model, parameterized with a position parameter (modal category) and a precision parameter, exhibits desirable properties such as a unique mode, probability distribution decrease on either side of the mode, and the flexibility to accommodate uniform or Dirac distributions. Maximum likelihood estimation using an EM algorithm is employed, leveraging the binary search algorithm's latent variable interpretation. While combinatorial complexity limits straightforward estimation for models based on latent Gaussian variables, the proposed approach remains tractable for ordinal data with up to eight categories—a common scenario for most ordinal variables.
+
+In this project, we aim to replicate and build upon the findings of \cite{biernacki2016model}. We re-implemented their suggested probabilistic model, parameter estimation method, and model-based clustering algorithm in Python. Drawing inspiration from their approach, we propose an alternative probabilistic model with similar properties. The goal is to address computational limitations, enabling the clustering of more extensive datasets with potentially more categories than the previous method allows. We also present a preliminary analysis of this new method to justify the decreased computational cost of estimating parameters for this model. Additionally, we  test \cite{biernacki2016model}'s approach on real-world datasets and compare it to the proposed approach, along with baseline models. This is done on different datasets of multiple nature in order to check whether the proposed methods are successful in these settings in practice and what their advantages are. The ultimate goal is to check whether the gains are significant against methods that are not adapted for ordinal datasets, in order to decide whether these approaches are interesting to use in general as a default method of choice for this type of variable.
+% \tm {Explain better what we do for the experiments}
+
+
+\section{Method}
+The approach taken in this report follows the one proposed by \cite{biernacki2016model}. It involves defining a probabilistic model based on the observation of categorical data. More precisely, the authors introduce a Stochastic Binary Search process that leads to the selection of a category. 
+
+For this particular model, we need to make the assumption that:
+\begin{itemize}
+    \item The categories must be well-ordered (ordinal data): The categories are linearly ordered, and each non-empty subset contains the least element. This implies that any element can be compared to any other, and we can enumerate all the categories in increasing order.
+    \item The set of categories is finite. This simplifies the previous assumption to the existence of a linear ordering. This assumption is necessary to ensure that the stochastic search terminates after a fixed number of steps, implying a finite number of possible runs of the search.
+\end{itemize}
+We will first define the binary ordinal search (BOS) model in the univariate case. The multivariate variant can be deduced by applying a similar search to each of the features independently. Then, we will discuss how to estimate the parameters of the model from a set of samples following the general method of the Expectation-Maximization algorithm (EM). Finally, we will show how the original authors extend EM to cluster ordinal data.
+
+\subsection{Probabilistic model}
+\paragraph{Stochastic Binary Ordinal Search} The BOS model is inspired by a standard binary search with added noise in the comparison. Consequently, the algorithm may at times misidentify the next subset for the search, ultimately causing it to overlook the sought-after value.
+
+The stochastic binary ordinal search unfolds as follows: Let $m$ be the number of categories. For simplicity, we denote the categories using unique values from $1$ to $m$. Then, for at most $m-1$ steps, we perform the following three operations. At step $j$, we start with a subset of all the categories, denoted as $e_j\subseteq \{1,...,m\}$.
+
+\begin{enumerate}
+    \item Sample a breakpoint $y_j$ uniformly in $e_j$.
+    \item Draw an accuracy indicator $z_j$ from a Bernoulli distribution with parameter $\pi$. A value of $z_j=1$ indicates that the comparison is perfect, and the next step will be computed optimally. A value of $z_j=0$ implies a blind comparison at the next step.
+    \item Determine the new subset $e_{j+1}$ for the next iteration. Firstly, split the subset into three intervals, namely $e_j^-$, $e_j^=$, and $e_j^+$. $e_{j+1}$ will be chosen among these intervals. If the comparison is blind ($z_j=0$), randomly select the interval with a probability proportional to its size. Alternatively, if $z_j=1$ and the comparison is perfect, select the interval containing $\mu$ (or, by default, the one closest to it).
+\end{enumerate}
+After $m-1$ steps, the resulting interval contains a single value, which is the observed result $e_m={x}$ of the BOS model.
+
+For data with multiple ordinal features, the samples are generated independently with different parameters $\mu$ and $\pi$ and possibly different numbers of categories for each feature.
+
+\paragraph{Mixture model} 
+The BOS model can be extended to a mixture model by considering multiple BOS models with different parameters. In this case, the data is generated by first sampling a cluster $k$ from a multinomial distribution with parameter $\alpha$ and then sampling the data from the BOS model with parameters $\mu_k$ and $\pi_k$.
+
+We can also consider a multivariate version of the BOS model in addition to the mixture case where we have a BOS model for each feature independently. Each dimension is then concatenated to get the multivariate dataset that follows a multivariate BOS distribution.
+
+Therefore, for $p$ clusters, and $d$ features, the parameters of the model are $\alpha \in \mathbb{R}^p$, $\mu \in \mathbb{R}^{p\times d}$ and $\pi \in \mathbb{R}^{p\times d}$
+Since the features are independent, the probability of observing a sample $x$ knowing it belongs to cluster $k$ is given by:
+\begin{equation}
+    \mathbb{P}(x | \alpha_k, \mu_{k}, \pi_k) = \prod_{j=1}^d \mathbb{P}(x_j | \alpha_k, \mu_{kj}, \pi_{kj})
+\end{equation}
+
+\begin{figure}[htbp]
+\centering
+\begin{adjustbox}{width=\textwidth}
+\begin{tikzpicture}
+  \node[obs]                               (xi) {$x_i$};
+  \node[latent, left=of xi]               (em) {$e_m$};
+  \node[latent, below=of em]               (zm1) {$z_{m-1}$};
+  \node[latent, left=of em]               (ym1) {$y_{m-1}$};
+  \node[const, left=of ym1]               (dots2) {$\ldots$};
+  \node[latent, left=of dots2]               (ej) {$e_{j}$};
+  \node[latent, below=of ej]               (zj) {$z_{j}$};
+  \node[latent, left=of ej]               (yj) {$y_{j}$};
+  \node[const, left=of yj]               (dots1) {$\ldots$};
+  \node[latent, left=of dots1]               (e2) {$e_2$};
+  \node[latent, below=of e2]               (z1) {$z_1$};
+  \node[latent, left=of e2]               (y1) {$y_1$};
+  \node[latent, left=of y1]               (e1) {$e_1$};
+  \node[const, above=of ej]    (mu) {$\mu$};
+  \node[const, below=of zj, yshift=-.25cm]  (pi) {$\pi$};
+
+  \edge{e1}{y1};
+  \edge{y1}{e2};
+  \edge{z1}{e2};
+  \edge{e2}{dots1};
+  \edge{dots1}{yj};
+  \edge{yj}{ej};
+  \edge{zj}{ej};
+  \edge{ej}{dots2};
+  \edge{dots2}{ym1};
+  \edge{ym1}{em};
+  \edge{zm1}{em};
+  \edge{em}{xi};
+  \edge {mu} {e2, ej, em};
+  \edge {pi} {z1,zj, zm1};
+
+  \plate[inner sep=.25cm] {} {(xi)(e1)(zm1)(z1)} {$i=1, \ldots, n$};
+\end{tikzpicture}
+\end{adjustbox}
+\caption{Graphical model of the stochastic Binary Ordinal Search.}
+\label{fig:graphical_model}
+\end{figure}
+
+%\ar{Do a figure for the Mixture case}
+%\tm{Maybe, although it does not give much more information since it can be trivially derived from this one. Good job for the figure by the way}
+%\ar{Agreed, and probably too complicated to do anyways}
+
+
+\subsection{Parameter estimation}
+\paragraph{EM algorithm.} In the univariate case, the underlying BOS distribution of a data sample $(x_1, \ldots, x_n)$ can be estimated using the Expectation-Maximization (EM) algorithm. The main idea behind EM is to iteratively compute the parameters $(\mu, \pi)$ of the distribution to maximize the log-likelihood until convergence when the model is explained by latent variables that are not observed with the data as it is the case with the BOS distribution \citep{biernacki2016model}.
+\begin{enumerate}
+    \item Initialization: The parameters of the distribution are initialized using a pre-defined heuristic. In our case, we initialize $(\mu^{(0)}, \pi^{(0)})$ randomly in their respective range.
+    \item Expectation step: The latent variables $(c_i)_{i \in \{1, \ldots, n\}}$ are estimated using the current approximation of the parameters $(\mu^{(t)}, \pi^{(t)})$. This consists in computing the posterior probability of every latent variable using the conditional probability formula for all $i\in \{1, \ldots, ..., n\}$
+    \begin{equation}
+        \mathbb{P}(c_i | x_i, \mu^{(t)}, \pi^{(t)}) = \frac{\mathbb{P}(c_i, x_i| \mu^{(t)}, \pi^{(t)})}{\mathbb{P}(x_i| \mu^{(t)}, \pi^{(t)})}
+    .\end{equation}
+    This can be computed recursively for the different latent variables using their prior distribution (BOS model):
+    \begin{equation}
+        \mathbb{P}(e_{j+1}| \mu^{(t)}, \pi^{(t)}) = \sum_{e\in \mathcal{P}(\{1, \ldots, m\})} \mathbb{P}(e_{j+1}|e_j=e,  \mu^{(t)}, \pi^{(t)}) \mathbb{P}(e_j=e| \mu^{(t)}, \pi^{(t)})
+    .\end{equation}
+    The intermediate conditional probability is obtained by conditioning on the different values that can be taken by $y_j$ and $z_j$ when $e_j=e$:
+    \begin{align}
+    \mathbb{P}(e_{j+1}|e_j=e, \mu^{(t)}, \pi^{(t)}) &= \sum_{y_j \in e} \mathbb{P}(e_{j+1}|e_j=e, y_j, \mu^{(t)}, \pi^{(t)})\mathbb{P}(y_j|e_j=e) \\
+    &\begin{aligned}
+        = &\sum_{y_j \in e} (\pi^{(t)}\mathbb{P}(e_{j+1}|e_j, y_j, z_j=1, \mu^{(t)}, \pi^{(t)}) \\ 
+        & + (1-\pi^{(t)})\mathbb{P}(e_{j+1}|e_j, y_j, z_j=0, \mu^{(t)}, \pi^{(t)}))\mathbb{P}(y_j|e_j=e)
+    .\end{aligned}
+    \end{align}
+    The components of the sum can be more easily computed by distinguishing between the cases where $z_j=0$ and $z_j=1$ with closed-forms expressions from the prior. \\
+    Moreover, for $y_j$, the posterior distribution can also be obtained using the following expression where we also condition on $e_j$:
+    \begin{equation}
+    \mathbb{P}(y_j| \mu^{(t)}, \pi^{(t)}) = \sum_{e\in \mathcal{P}(\{1, \ldots, m\}} \mathbb{P}(y_j|e_j=e, \mu^{(t)}, \pi^{(t)})\mathbb{P}(e_j=e| \mu^{(t)}, \pi^{(t)})
+    .\end{equation}
+    For $z_j$, $\mathbb{P}(z_j| \mu^{(t)}, \pi^{(t)})$ is a Bernoulli variable of probability $\pi^{(t)}$ so it can easily be expressed:
+    \begin{equation}
+    \mathbb{P}(z_j| \mu^{(t)}, \pi^{(t)}) = \begin{cases}
+        \pi^{(t)}\quad &\text{if } z_j = 1\\
+        1 - \pi^{(t)}\quad &\text{if } z_j = 0
+        \end{cases}
+    .\end{equation}
+    %\ar{How does this allow to derive $\mathbb{P}(c_{ij}, x_i| \mu, \pi)?$. Ok}
+    Note that since in the BOS model $e_m$ is identified with $x_i$, we get the following joint distribution for all the latent variables $c_i$ with the observation $x_i$: 
+    \begin{equation}
+       \mathbb{P}(c_i,x_i| \mu^{(t)}, \pi^{(t)}) = \mathbb{P}(e_m|c_i, \mu^{(t)}, \pi^{(t)})\mathbb{P}(c_i| \mu^{(t)}, \pi^{(t)})
+    .\end{equation}
+    \item Maximization step: During this step, the next iteration of the parameters $(\mu^{(t+1)}, \pi^{(t+1)})$ that maximizes the log-likelihood of observing the data taking into account the latent-variables probabilities computed during the Expectation step. As proposed by \citet{biernacki2016model}, only $\pi$ is updated and $\mu$ is fixed during the entire algorithm. This is done for every possible value of $\mu$ and the value that maximizes the log-likelihood is chosen. \\
+    The new value of $\pi$ is given after computing the maximizer of the expectation of the log-likelihood in $\pi$:
+    \begin{equation}
+    \pi^{(t+1)} = \frac{\sum_{i=1}^N \sum_{j=1}^{m-1} \mathbb{P}(z_{ij}=1|x_i, \mu^{(t)}, \pi^{(t)})}{n(m-1)}
+    .\end{equation}
+    % \begin{proof}
+    % \ar{Add the proof for this formula?}
+    % \tm{Yes. I need to check it but not sure there is much to it. Théo opinion ?}
+    % \end{proof}
+    \footnote{The authors of the paper did not mention how they computed this formula. We computed it by marginalizing on every possible run of the binary search algorithm, leading to high computational cost.
+
+    We use the following expression:
+    \begin{align}
+        \Pr(z_{ij}=1|x_i, \mu, \pi) &= \sum_{c_i} \Pr(z_{ij}=1, c_i|x_i, \mu, \pi) \\
+        &= \sum_{c_i} \Pr(z_{ij}=1|c_i, x_i, \mu, \pi)\Pr(c_i|x_i, \mu, \pi) \\
+        &= \sum_{c_i} \Pr(z_{ij}=1|c_i) \frac{\Pr(c_i, x_i|\mu, \pi)}{\Pr(x_i|\mu, \pi)} \\
+        &= \frac{1}{\Pr(x_i|\mu, \pi)} \sum_{c_i} \Pr(z_{ij}=1|c_i) \Pr(c_i, x_i|\mu, \pi) 
+    \end{align}
+    And then:
+    \begin{align}
+        \sum_{j=1}^{m-1} \Pr(z_{ij}=1|x_i, \mu, \pi) &= \sum_{j=1}^{m-1} \frac{1}{\Pr(x_i|\mu, \pi)}  \sum_{c_i} \Pr(z_{ij}=1|c_i) \Pr(c_i, x_i|\mu, \pi) \\
+        &= \frac{1}{\Pr(x_i|\mu, \pi)} \sum_{c_i} \Pr(c_i, x_i|\mu, \pi)  \sum_{j=1}^{m-1} \Pr(z_{ij}=1|c_i)
+    \end{align}
+    }
+
+\end{enumerate}
+
+\paragraph{AECM algorithm.} Similarly to the EM algorithm, Alternating Expectation-Conditional Maximization (AECM) \citep{meng1997algorithm} is separated in two steps. However, in this case, we consider multivariate ordinal data with different possible distributions (clusters) priors for the data. This is done, just like for the Gaussian Mixture Model case, using latent variables $w_{ik}$ which describe whether the data $x_i$ belongs to the cluster $k$ or not, and parameters $(\alpha_k)_{k\in \{1, \ldots, p\}}$ which describe the probability of belonging to each cluster. 
+\begin{enumerate}
+    \item Expectation step: In this case, the expectation step consists in just computing the probability for every data point to belong to each cluster:
+    \begin{equation}
+        \mathbb{P}(w_{ik}=1|x_i, \alpha^{(t)}, \mu^{(t)}, \pi^{(t)}) = \frac{\alpha_k^{(t)}\mathbb{P}(x_i|w_{ik}=1, \mu_k^{(t)}, \pi_k^{(t)})}{\sum_{l=1}^p\alpha_l^{(t)}\mathbb{P}(x_i|w_{il}=1, \mu_l^{(t)}, \pi_l^{(t)})}.
+    \end{equation}
+    \item Maximization step: The parameters are updated using the new expected values for belonging to the different cluster. Since there are two groups of latent variables, the clusters variables $\alpha_k^{(t)}$ are updated first to maximize the log-likelihood:
+    \begin{equation}
+    \alpha_k^{(t+1)} = \frac{1}{n} \sum_{i=1}^n \mathbb{P}(w_{ik}=1|x_i, \alpha^{(t)}, \mu^{(t)}, \pi^{(t)}).
+    \end{equation}
+    And then the parameters $(\mu_k^{(t+1)}, \pi_k^{(t+1)})$ are updated after using an EM algorithm in the univariate case for every cluster $k$ and for every dimension of the multivariate variables independently using the data on the corresponding dimension.
+\end{enumerate}
