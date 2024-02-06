@@ -6,6 +6,7 @@ import argparse
 from pathlib import Path
 import numpy as np
 import pandas as pd
+from time import perf_counter
 
 
 from aecm import AECM_BOS, AECM_GOD
@@ -69,6 +70,7 @@ if __name__ == "__main__":
     d = data.shape[1]
     m = n_cat
 
+    t = perf_counter()
     if args.method == "bos":
         clustering = AECM_BOS(
             nb_clusters=args.n_clusters,
@@ -87,6 +89,9 @@ if __name__ == "__main__":
         )
     ll_list = clustering.fit(epsilon_aecm=args.eps, max_iter_aecm=args.n_iter)
     labels = clustering.labels
+
+    print("Method: " + "BOS model" if args.method == "bos" else "GOD model")
+    print("Time taken: ", perf_counter() - t)
 
     Path(args.output_dir).mkdir(parents=True, exist_ok=True)
     with open(os.path.join(args.output_dir, "estimated_params.txt"), "w") as f:
