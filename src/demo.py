@@ -97,6 +97,7 @@ if __name__ == "__main__":
 
     print("Method: " + "BOS model" if args.method == "bos" else "GOD model")
     print("Number of clusters: ", args.n_clusters)
+    print("Initialization: ", args.init)
     print(f"Time: {perf_counter() - t:.2f}s")
 
     Path(args.output_dir).mkdir(parents=True, exist_ok=True)
