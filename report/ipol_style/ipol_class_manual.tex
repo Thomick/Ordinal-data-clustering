@@ -1,0 +1,359 @@
+%-------------------------------------------------------------------------------
+% IPOL LaTeX class manual
+% by rafael grompone von gioi
+% ver 0.5 - July 1, 2014
+%-------------------------------------------------------------------------------
+\documentclass{ipol}
+
+\ipolSetTitle{IPOL \LaTeX\ Class Manual, ver.0.5}
+\ipolSetAuthors{Rafael Grompone von Gioi\ipolAuthorMark{1},
+                Rapha\"el Toucour\ipolAuthorMark{2}}
+\ipolSetAffiliations{%
+\ipolAuthorMark{1} CMLA, ENS Cachan, France
+                   (\texttt{grompone@cmla.ens-cachan.fr})\\
+\ipolAuthorMark{2} IIE, UdelaR, Uruguay (\texttt{jirafa@fing.edu.uy})}
+
+%-------------------------------------------------------------------------------
+\begin{document}
+
+%-------------------------------------------------------------------------------
+\begin{ipolAbstract}
+This document describes and illustrates how to use the IPOL \LaTeX\ class,
+created to produce a uniform layout for IPOL articles. The restrictions imposed
+on articles to be published in IPOL are briefly discussed.
+\end{ipolAbstract}
+
+%-------------------------------------------------------------------------------
+\ipolKeywords{IPOL, LaTeX class, documentation}
+
+%-------------------------------------------------------------------------------
+\section{Getting Started}
+
+There is no need for installation to use this class, just two files need to be
+copied to the same directory were the \LaTeX\ source files are. These files are
+the class itself, \verb|ipol.cls|, and the logo file, that can be either
+\verb|ipol_logo.eps| if you compile with \verb|latex|, or \verb|ipol_logo.pdf|
+if you compile with \verb|pdflatex|. If not sure, just copy the three of these
+files. You may also need \verb|siims_logo.eps| or \verb|siims_logo.jpg| when
+preparing a SIIMS companion article.
+
+The minimal example of use of this class is as follows:
+\begin{verbatim}
+\documentclass{ipol}
+\begin{document}
+\end{document}
+\end{verbatim}
+It will only generate the IPOL header, including its logo, the words ``title''
+and ``authors'' where the title and authors should be placed, and a red
+``PREPRINT'' label including the compilation date. This example is useless but
+can be used to test your system. The \LaTeX\ source file
+\verb|ipol_class_manual.tex|, which generates this manual, also uses the IPOL
+class and provides an example of how to use it.
+
+IPOL class is based on the standard ``article'' class of \LaTeX\ and it is used
+essentially in the same way. There are two main restrictions: the layout must
+not be changed and the title is not generated with the usual \verb|\title|,
+\verb|\author|, \verb|\date| and \verb|\maketitle| commands; special IPOL
+commands must be used instead. Let us discuss these topics one by one.
+
+This class was created to provide a uniform layout for IPOL articles, so no
+command should be used that would change the page layout: do not change paper
+size (it must be A4 paper), do not change the page margins, do not change the
+font type, size, or color.
+
+The commands \verb|\ipolSetTitle|, \verb|\ipolSetAuthors| and
+\verb|\ipolSetAffiliations| are provided by the IPOL class to set the
+information needed to generate the title of the article. These commands must be
+used in the preamble of the \LaTeX\ file, that is between the
+\verb|\documentclass{ipol}| and \verb|\begin{document}| commands; this is
+important, otherwise the title will not be generated correctly. As the name of
+the commands imply, \verb|\ipolSetTitle| sets the title of the article,
+\verb|\ipolSetAuthors| sets the authors, and \verb|\ipolSetAffiliations| sets
+the authors' affiliations. This last command is optional. The following is an
+example of how to use it:
+\begin{verbatim}
+\documentclass{ipol}
+\ipolSetTitle{Ceci n'est pas un article}
+\ipolSetAuthors{Rapha\"el Toucour}
+\ipolSetAffiliations{CMLA, ENS Cachan, France}
+\begin{document}
+\end{document}
+\end{verbatim}
+If there are more than one author, and they have different affiliations, they
+may be indicated using the command \verb|\ipolAuthorMark| (authors must be
+separated by commas, never by ``and'' or \&):
+\begin{verbatim}
+\documentclass{ipol}
+\ipolSetTitle{Ceci n'est pas un article}
+\ipolSetAuthors{Rapha\"el Toucour\ipolAuthorMark{1},
+                Rafael Grompone von Gioi\ipolAuthorMark{2}}
+\ipolSetAffiliations{\ipolAuthorMark{1} CMLA, ENS Cachan, France\\
+                     \ipolAuthorMark{2} IIE, UdelaR, Uruguay}
+\begin{document}
+\end{document}
+\end{verbatim}
+For the rest, the class is used as the \LaTeX\ standard ``article'' class:
+packages or definitions can be added in the preamble, and the main text can
+contain sections, subsections, mathematics, figures, tables, etc.
+
+The rest of this document describes some special command for IPOL and briefly
+comments on some conditions that will be imposed for a final article, just
+before publishing at IPOL. (These restrictions are not necessary for
+submissions but will reduce work later.)
+
+%-------------------------------------------------------------------------------
+\section{IPOL Commands for Authors}
+
+%-------------------------------------------------------------------------------
+\subsection{DOI and Links}
+
+Once an article is published in IPOL, it will be assigned a DOI number and a
+universal DOI web address to refer to it. The IPOL class provides a command
+that will later contain the article's DOI number (\verb|\ipolDOI|) and a
+command that will contain the article's web address (\verb|\ipolLink|). These
+are the only reference that should be used for the IPOL article itself and to
+its complementary content on the web.
+
+These commands will have a default value in a preprint version, but once the
+paper is accepted they will be replaced by the correct one. One may want to
+have a valid link while the article is being prepared and peer reviewed. For
+that purpose, the command \verb|\ipolPreprintLink| is used to set the article
+link \verb|\ipolLink| to a temporary value. For example,
+\begin{verbatim}
+\ipolPreprintLink{https://tools.ipol.im/wiki/ref/manuscript_guidelines/}
+\end{verbatim}
+This command should be used in the document's preamble (i.e., after
+\verb|\documentclass{ipol}| and before \verb|\begin{document}|).
+
+The command \verb|\ipolLink| provides the address of the corresponding IPOL
+article as \emph{text}. To produce a \emph{link} in the PDF with this or other
+address, the command \verb|\href{}{}| should be used. The first parameter is
+the link address and the second is the text that will be shown in the resulting
+document. Also, to be able to read the address in a printed version of the
+document, the address will be printed as footnote. For example, the commands
+\begin{verbatim}
+\href{\ipolLink}{the article page}
+\href{https://tools.ipol.im/wiki/ref/manuscript_guidelines/}{guidelines}
+\end{verbatim}
+produce the following links:
+\href{\ipolLink}{the article page} and
+\href{https://tools.ipol.im/wiki/ref/manuscript_guidelines/}{guidelines}.
+
+%-------------------------------------------------------------------------------
+\subsection{Abstract, Code, Supplementary Material and Keywords}
+
+Three environments are defined to generate specific sections of IPOL articles:
+the abstract, the Source Code description paragraph, and the Supplementary
+Material description paragraph. The corresponding environments are
+\verb|ipolAbstract|, \verb|ipolCode| and \verb|ipolSupp|. These environment
+work similarly as the \LaTeX\ ``abstract'' and should be used after the
+\verb|\begin{document}| and before the main text of the article. It is
+important to use the \verb|ipolAbstract| for the abstract and not the
+\LaTeX\ ``abstract''.
+
+There is a particular restriction for the abstract: it must contain only
+\emph{one} paragraph. This restriction is necessary to produce the final
+article as the abstract is included in the PDF metadata, and this would
+generate an error if the abstract contains more than one paragraph.
+
+The command \verb|\ipolKeywords| is used to set the keywords of the article.
+The command is followed by a list of keywords separated by commas, as in
+\verb|\ipolKeywords{Earth, Water, Air, Fire}|. This command is to be used after
+the abstract, the source code paragraph and the supplementary material, but
+before the beginning of the article itself.
+
+The following example illustrates the use of the four commands:
+\begin{verbatim}
+\documentclass{ipol}
+\ipolSetTitle{Ceci n'est pas un article}
+\ipolSetAuthors{Rapha\"el Toucour}
+\begin{document}
+
+\begin{ipolAbstract}
+A short description of the article.
+\end{ipolAbstract}
+
+\begin{ipolCode}
+Description of the source code to be found \href{\ipolLink}{here}.
+\end{ipolCode}
+
+\begin{ipolSupp}
+Some articles could provide additional material, not part of the
+peer reviewed article but related and useful. It should be found at
+\href{\ipolLink}{the web page}.
+\end{ipolSupp}
+
+\ipolKeywords{IPOL, LaTeX class, documentation}
+
+\section{Introduction}
+The article main text starts here.
+
+\end{document}
+\end{verbatim}
+
+%-------------------------------------------------------------------------------
+\subsection{SIIMS Companion Article}
+
+IPOL encourages authors to do joint submissions to IPOL and
+\href{http://www.siam.org/journals/siims.php}{SIIMS (SIAM Journal of Imaging
+  Science)}. Upon acceptance, cross links between both electronic articles will
+be placed, so readers will be able to automatically navigate between the SIIMS
+and IPOL complementary materials. The environment \verb|ipolSIIMS| is used to
+set the link. It should be used after the \verb|\begin{document}| but before
+the abstract. The following source code provides an example:
+\begin{verbatim}
+\documentclass{ipol}
+\begin{document}
+
+\begin{ipolSIIMS}
+This IPOL article is related to a companion publication in the SIAM
+Journal on Imaging Sciences:\\
+R. Toucour, ``Ceci n'est pas un article.''
+\textsl{SIAM Journal on Imaging Sciences}, vol.~X, no.~X,
+pp.~N--M, YYYY. \url{http://dx.doi.org/10.1137/nnnnnnnnn}
+\end{ipolSIIMS}
+
+\end{document}
+\end{verbatim}
+
+%-------------------------------------------------------------------------------
+\section{Manuscripts for IPOL}
+
+Authors must check the
+\href{https://tools.ipol.im/wiki/ref/manuscript_guidelines/}{IPOL manuscript
+  guidelines} where the requirements and suggestions about the contents, style
+and description detail for IPOL articles are described.
+
+The PDF files for IPOL submissions are generated by the authors using any
+method that produces a readable PDF file. Once an article is accepted, however,
+the final version will be generated at IPOL servers in order to provide PDF
+files with controlled sizes and resolutions conditions. For that aim, there are
+some restrictions that must be imposed to the source files. Please check
+\href{https://tools.ipol.im/wiki/ref/manuscript_guidelines/}{here} for a
+complete list of restrictions. The main consideration is that the final
+documents will be generated using pdf\LaTeX. This forces some restrictions, in
+particular the only graphical formats directly accepted are PNG, JPEG and PDF
+itself. Images or figures in other kind of formats should be converted to one
+of these. The files and directories must follow a strict naming as defined
+\href{https://tools.ipol.im/wiki/ref/manuscript_guidelines/}{here}.
+
+Authors must warrant to be the authors of every part of the final article, or
+must include permission of the copyright holder. In particular, if images not
+owned by the authors are used, the authors and permissions to be used must be
+included in the article. For example, by adding a final section as follows:
+\begin{verbatim}
+\section*{Image Credits}
+
+\includegraphics[height=2em]{image1.png}
+\href{http://a.link.here}{Courtesy of Name Surname}
+\\
+\includegraphics[height=2em]{image2.png}
+\copyright\ Pierre Dupont CC-BY
+\\
+\includegraphics[height=2em]{image3.png}
+the authors
+\end{verbatim}
+
+%-------------------------------------------------------------------------------
+\section{IPOL Commands for Final Production}
+
+This section describes some commands used for final article production.
+These commands \textbf{must never be used by authors}.
+
+
+%-------------------------------------------------------------------------------
+\subsection{Article Final Data}
+
+Before an article is ready for publication, some data need to be declared.
+These data are used to create the IPOL header, the article's citation on the
+footer of the first page, and are included in the PDF metadata. Part of the
+data was already added by the authors as the title, authors and
+affiliations. What needs to be added in final production is the submission,
+acceptance and publication dates, the article ID, and the first page number.
+
+This is done by including the following commands in the preamble of the
+\LaTeX\ file, that is between the \verb|\documentclass{ipol}| and
+\verb|\begin{document}| commands. Some random values were including here just
+to provide an example:
+\begin{verbatim}
+\ipolSetSubmissionDay{11}
+\ipolSetSubmissionMonth{11}
+\ipolSetSubmissionYear{2010}
+\ipolSetAcceptedDay{1}
+\ipolSetAcceptedMonth{3}
+\ipolSetAcceptedYear{2011}
+\ipolSetPublicationDay{28}
+\ipolSetPublicationMonth{3}
+\ipolSetPublicationYear{2014}
+\ipolSetID{gjmr-lsd}
+\ipolSetVolume{4}
+\setcounter{page}{124}
+\end{verbatim}
+When no data is missing, the ``PREPRINT'' label disappear. If the ``PREPRINT''
+label is still present, some data may be missing or the
+\verb|\ipolPreprintLink| command was used to set a temporary link for the
+article and needs to be removed.
+
+When the PDF is generated in the final article mode (that is when the
+``PREPRINT'' label disappear) the article's abstract is included in the PDF
+metadata. This could generate a \LaTeX\ error if the abstract is composed of
+more than one paragraph. The error generated would be as follows:
+\begin{verbatim}
+Class ipol Warning: If an error follows, the abstract may have many paragraphs.
+ To work correctly, IPOL class requires the abstract to be only ONE paragraph.
+
+Runaway argument?
+! Paragraph ended before \def was complete.
+<to be read again>
+                   \par
+l.74 \end{ipolAbstract}
+
+?
+\end{verbatim}
+A warning was generated by the IPOL class to help the user to spot the source
+of the problem. The solution is to merge the abstract into \emph{one}
+paragraph.
+
+%-------------------------------------------------------------------------------
+\subsection{Corrections to Citation}
+
+With the previous data, the class will generate a citation reference for the
+article that is put in the footer of the first page. In some cases, the
+automatically generated citation may not be correct or satisfactory. In such
+cases, one can force a manual citation using the command
+\verb|\ipolForceCitation| as in the following example, to be used in the
+preamble of the \LaTeX\ file, that is between the \verb|\documentclass{ipol}|
+and \verb|\begin{document}| commands:
+\begin{verbatim}
+\ipolForceCitation{Rapha\"el Toucour, ``Ceci n'est pas un article,''
+\emph{Image Processing On Line}, vol.~2013, pp.~123--124.
+http://dx.doi.org/10.5201/ipol}
+\end{verbatim}
+The standard citation would be obtained with:
+\begin{verbatim}
+\ipolForceCitation{\ipolAuthors, ``\ipolTitle,''
+\emph{Image Processing On Line}, vol.~\ipolPublicationYear,
+pp.~\pageref*{ipol:class:first:page}--\pageref*{ipol:class:last:page}.
+\ipolLink}
+\end{verbatim}
+The latter may be useful: it is better to modify just what is wrong and leave
+the rest unchanged. For example, unless there is problem there, it is better to
+keep the \verb|\pageref*| than manually including the page numbers.
+
+%-------------------------------------------------------------------------------
+\subsection{IPOL Class Version}
+
+From IPOL class version 0.3 on, one can easily verify the version of this class
+that generated a given PDF: the version is printed in light gray in the
+upper-left side of the first page of the document and also included in the PDF
+metadata (the latter only if the system that generated the PDF included an
+up-to-date version of the package ``hyperref'').
+
+%-------------------------------------------------------------------------------
+\section*{Image Credits}
+
+\includegraphics[height=2em]{ipol_logo} \copyright\ IPOL (there's no need to
+credit this image, here is used as an example.)
+
+\end{document}
+%-------------------------------------------------------------------------------
