@@ -52,77 +52,7 @@
 \usetikzlibrary{bayesnet}
 
 
-
-\newcommand{\dd}{\text{d}}
-\renewcommand{\vec}{\overrightarrow}
-\renewcommand{\Im}{\mathfrak{Im}\ }
-\newcommand{\Ker}{\text{Ker}\ }
-\newcommand{\bijective}{%
-  \hookrightarrow\mathrel{\mspace{-15mu}}\rightarrow
-}
-\newcommand{\surjective}{\twoheadrightarrow}
-\newcommand{\injective}{\hookrightarrow}
-\newcommand{\implication}{\Longrightarrow}
-\newcommand{\reciprocal}{\Longleftarrow}
-\newcommand{\equivalent}{\Longleftrightarrow}
-\newcommand{\NN}{\ensuremath{\mathbb{N}}}
-\newcommand{\RR}{\ensuremath{\mathbb{R}}}
-\newcommand{\QQ}{\ensuremath{\mathbb{Q}}}
-\newcommand{\ZZ}{\ensuremath{\mathbb{Z}}}
-\newcommand{\CC}{\ensuremath{\mathbb{C}}}
-\newcommand{\EE}{\ensuremath{\mathbb{E}}}
-\newcommand{\PP}{\ensuremath{\mathbb{P}}}
-\newcommand{\II}{\ensuremath{\mathds{1}}}
-\newcommand{\cR}{\ensuremath{\mathcal{R}}}
-\newcommand{\cY}{\ensuremath{\mathcal{Y}}}
-\newcommand{\cZ}{\ensuremath{\mathcal{Z}}}
-\newcommand{\cX}{\ensuremath{\mathcal{X}}}
-\newcommand{\cN}{\ensuremath{\mathcal{N}}}
-\newcommand{\cT}{\ensuremath{\mathcal{T}}}
-
-\renewcommand{\epsilon}{\varepsilon}
-\renewcommand{\phi}{\varphi}
-\newcommand{\floor}[1]{\left\lfloor #1 \right\rfloor}
-\newcommand{\ceil}[1]{\left\lceil #1 \right\rceil}
-\newcommand{\comb}[2]{\displaystyle{#2 \choose #1}}
-\newcommand{\parts}{\mathcal{P}}
-\newcommand{\permut}{\mathfrak{S}}
-\newcommand{\id}{\text{Id}}
-\newcommand{\indic}{\mathds{1}}
-\newcommand{\indickronecker}[1]{\indic\left\{#1\right\}}
-\renewcommand{\leq}{\leqslant}
-\renewcommand{\geq}{\geqslant}
-\newcommand{\mat}[2]{\mathcal{M}_{#1}(#2)}
-
-\newcommand{\set}[1]{\ensuremath{\left\{ #1 \right\}}}
-\newcommand{\Tau}{\mathcal{T}}
-
-\newcommand{\norm}[1]{\ensuremath{\left|\left|#1\right|\right|}}
-\newcommand{\card}[1]{\ensuremath{\left|#1\right|}}
-
-\DeclareMathOperator{\mut}{mut}
-\DeclareMathOperator{\stab}{Stab}
-\DeclareMathOperator{\sg}{sg}
-\DeclareMathOperator*{\argmax}{argmax}
-\DeclareMathOperator*{\argmin}{argmin}
-\renewcommand{\time}{\textsc{Time}}
-\newcommand{\len}{\textsc{Length}}
-\newcommand{\call}[1]{\textsc{#1}}
-\newcommand{\bbrack}[1]{\left\llbracket#1\right\rrbracket}
-\newtheorem{proposition}{Proposition}
-\newtheorem{lemma}{Lemma}
-\newtheorem{thm}{Theorem}
-\newtheorem{definition}{Definition}
-\newtheorem{example}{Example}
-\DeclareMathOperator{\ucb}{UCB}
-\DeclareMathOperator{\lcb}{LCB}
-
-\newcommand{\tm}[1]{\todo[inline,color=orange!40]{{\textbf{TM:}~}#1}}
-\newcommand{\TM}[1]{{\color{orange!40!red}#1}}
-\newcommand{\tr}[1]{\todo[inline,color=blue!40]{{\textbf{TR:}~}#1}}
-\newcommand{\TR}[1]{{\color{lightblue!40!blue}#1}}
-\newcommand{\ar}[1]{\todo[inline,color=green!40]{{\textbf{AR:}~}#1}}
-\newcommand{\AR}[1]{{\color{lime!40!green}#1}}
+\input{subtex/commands.tex}
 
 \title{Clustering Multivariate Ordinal Data}
 
@@ -134,21 +64,35 @@
 \begin{document}
 \maketitle
 
-% \tableofcontents
+\tableofcontents
 
-% \input{intro.tex}
+\input{subtex/intro.tex}
 
-\input{bos_model_appendix.tex}
 
-% \input{god_model}
+\input{subtex/method_intro.tex}
 
-% \input{experiments.tex}
+\input{subtex/aecm.tex}
+
+\input{subtex/bos_model.tex}
+
+\input{subtex/bos_model_trichotomy.tex}
+
+\input{subtex/god_model.tex}
+
+\input{subtex/experiments.tex}
+
+\input{subtex/conclusion.tex}
+
+\bibliography{references}
+
+\appendix
+
+\input{subtex/experiments_appendix.tex}
 
 \section{GOD Model proofs}
 \label{appendix:god}
 
-% \input{god_model_appendix}
-
+\input{subtex/god_model_appendix}
 
 
 \end{document}

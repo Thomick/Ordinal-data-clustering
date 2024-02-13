@@ -1,0 +1,13 @@
+\paragraph{AECM algorithm.} Similarly to the EM algorithm, Alternating Expectation-Conditional Maximization (AECM) \citep{meng1997algorithm} is separated in two steps. However, in this case, we consider multivariate ordinal data with different possible distributions (clusters) priors for the data. This is done, just like for the Gaussian Mixture Model case, using latent variables $w_{ik}$ which describe whether the data $x_i$ belongs to the cluster $k$ or not, and parameters $(\alpha_k)_{k\in \{1, \ldots, p\}}$ which describe the probability of belonging to each cluster. 
+\begin{enumerate}
+    \item Expectation step: In this case, the expectation step consists in just computing the probability for every data point to belong to each cluster:
+    \begin{equation}
+        \mathbb{P}(w_{ik}=1|x_i, \alpha^{(t)}, \mu^{(t)}, \pi^{(t)}) = \frac{\alpha_k^{(t)}\mathbb{P}(x_i|w_{ik}=1, \mu_k^{(t)}, \pi_k^{(t)})}{\sum_{l=1}^p\alpha_l^{(t)}\mathbb{P}(x_i|w_{il}=1, \mu_l^{(t)}, \pi_l^{(t)})}.
+    \end{equation}
+    \item Maximization step: The parameters are updated using the new expected values for belonging to the different cluster. Since there are two groups of latent variables, the clusters variables $\alpha_k^{(t)}$ are updated first to maximize the log-likelihood:
+    \begin{equation}
+    \alpha_k^{(t+1)} = \frac{1}{n} \sum_{i=1}^n \mathbb{P}(w_{ik}=1|x_i, \alpha^{(t)}, \mu^{(t)}, \pi^{(t)}).
+    \end{equation}
+    And then the parameters $(\mu_k^{(t+1)}, \pi_k^{(t+1)})$ are updated after using an EM algorithm in the univariate case for every cluster $k$ and for every dimension of the multivariate variables independently using the data on the corresponding dimension.
+\end{enumerate}
+
