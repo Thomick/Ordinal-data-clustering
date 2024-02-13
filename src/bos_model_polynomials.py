@@ -1,89 +1,5 @@
-from functools import cache
 import numpy as np
 from numba import njit
-from scipy.interpolate import lagrange
-
-
-@njit
-def mul_add_polynomials_rec(a_1: float,
-                            a_0: float,
-                            p: np.ndarray,
-                            s: np.ndarray
-                            ) -> np.ndarray:
-    """
-    Compute s(X) = s(X) + (a_1 * x + a_0) * p(X)
-    where:
-
-    Args:
-        a_1, a_0: coefficients of the polynomial to add
-        p, np.ndarray of shape < h:
-            polynomial : p(X) = sum_{i=0}^{deg(p) - 1} p[i] * X^{deg(p) - 1 - i}
-        s, np.ndarray of shape h:
-            polynomial : s(X) = sum_{i=0}^{h - 1} s[i] * X^{h - 1 - i}
-    """
-    # assert p.shape[0] < s.shape[0], f"p.shape[0] = {p.shape[0]} >= s.shape[0] = {s.shape[0]}"
-    k = p.shape[0]
-    s[-k:] += a_0 * p
-    s[-k - 1: -1] += a_1 * p
-
-
-def compute_polynomials_recursive(m: int) -> np.ndarray:
-    """
-    Compute the polynomials coefficients u 
-    P(x | mu, pi) = sum_{d=0}^{m-1} u[mu, x, d] pi^(m - 1 - d)
-
-    Parameters
-    ----------
-    m : int
-        Number of categories
-    
-    Returns
-    -------
-    np.ndarray of shape (m, m, m)
-        Polynomials coefficients
-    """
-    @cache
-    def aux_compute_bos_polynomials(h: int,
-                                    x: int,
-                                    mu: int
-                                    ) -> np.ndarray:
-        """
-        Compute [ u_i, i in [[0, h[[ ] where
-        P(x | x in [[0, h[[, mu, pi) = sum_{i=0}^{h-1} u_i * pi^{h - 1 - i}
-
-        Args:
-            h, int:  
-                number of categories
-            x, int in [[0, h[[: 
-                observed value
-            mu, int in [[0, h[[:
-                true value
-        """
-        if h == 1:
-            return np.array([1])
-        elif x > h // 2:
-            return aux_compute_bos_polynomials(h=h, x=h - 1 - x, mu=h - 1 - mu)
-        else:
-            s = np.zeros(h)
-            for y in range(x):
-                p = aux_compute_bos_polynomials(h=h - y - 1, x=x - y - 1, mu=max(mu - y - 1, 0))
-                prop = (h - y - 1) / h
-                mul_add_polynomials_rec(a_1=(mu > y) - prop, a_0=prop, p=p, s=s)
-            good_choice = mu == x or (0 == x and mu <= x) or (h - 1 == x and  mu >= x)
-            #                           e_- == e_=                  e_+ == e_=
-            s[-2] += good_choice - 1 / h
-            s[-1] += 1 / h
-            for y in range(x + 1, h):
-                p = aux_compute_bos_polynomials(h=y, x=x, mu=min(mu, y - 1))
-                prop = y / h
-                mul_add_polynomials_rec(a_1=(mu < y) - prop, a_0=prop, p=p, s=s)
-            return s / h
-
-    u = np.zeros((m, m, m))
-    for mu in range(m):
-        for x in range(m):
-            u[mu, x, :] = aux_compute_bos_polynomials(h=m, x=x, mu=mu)
-    return u
 
 
 @njit
@@ -162,79 +78,6 @@ def compute_polynomials(m: int) -> np.ndarray:
     return u[-1]
 
 
-def probability_x_given_mu_pi_scratch(m: int,
-                                      x: int, 
-                                      mu: int, 
-                                      pi: float,
-                                    ) -> float:
-    """
-    Compute the likelihood P(x | mu, pi) using recursion
-
-    Parameters
-    ----------
-    m : int
-        Number of categories
-    x : int in [[1, m]]
-        Observation
-    mu : int in [[1, m]]
-        Position parameter
-    pi : float in [0, 1]
-        Precision parameter
-    
-    Returns
-    -------
-    float
-        P(x | mu, pi) with m categories
-
-    Complexity: O(m^3) (not tight)
-    """
-    @cache
-    def aux_probability_x_given_mu_pi_scratch(lower: int, upper: int) -> float:
-        """
-        Auxiliary function to compute the probability
-        Compute P(x | mu, pi) if e_1 = [[lower, upper[[
-        """
-        s = 0
-        for y in range(lower, x):
-            s += (pi * (mu > y) + (1 - pi) * (upper - (y + 1)) / (upper - lower)) \
-                * aux_probability_x_given_mu_pi_scratch(y + 1, upper)
-        good_choice = mu == x or (lower == x and mu <= x) or (upper == x + 1 and  mu >= x)
-        #                           e_- == e_=                  e_+ == e_=
-        s += pi * good_choice + (1 - pi) * 1 / (upper - lower)
-        for y in range(x + 1, upper):
-            s += (pi * (mu < y) + (1 - pi) * (y - lower) / (upper - lower)) \
-                * aux_probability_x_given_mu_pi_scratch(lower, y)
-        return s  / (upper - lower)
-    
-    return aux_probability_x_given_mu_pi_scratch(1, m + 1)
-
-
-def compute_polynomials_interpolate(m: int) -> np.ndarray:
-    """
-    Compute the polynomials coefficients u 
-    P(x | mu, pi) = sum_{d=0}^{m-1} u[mu, x, d] pi^(m - 1 - d)
-
-    Parameters
-    ----------
-    m : int
-        Number of categories
-    
-    Returns
-    -------
-    np.ndarray of shape (m, m, m)
-        Polynomials coefficients
-    """
-    pi_sample = np.arange(1, m + 1) / (m + 1)
-    u = np.zeros((m, m, m))
-    for mu in range(m):
-        for x in range(m):
-            for k, pi in enumerate(pi_sample):
-                u[mu, x, k] = probability_x_given_mu_pi_scratch(m=m, x=x + 1, mu=mu + 1, pi=pi)
-            poly = lagrange(pi_sample, u[mu, x]).coefficients
-            u[mu, x, -poly.shape[0]:] = poly
-    return u
-
-
 # Recursively compute the probabilities
 def compute_p_list(
     x: int,
@@ -255,7 +98,6 @@ def compute_p_list(
           (list of objects [(y, z, e), p])
         [(sum(z_i), P(c, x | mu, pi)) for all possible trajectories c]
     """
-    @cache
     def recursive_compute_p_list(
         cur_e_min: int,
         cur_e_max: int,
@@ -377,34 +219,6 @@ def sum_probability_zi(m: int, x: int, mu: int, pi: float) -> float:
     return s / p_tot
 
 
-def compute_polynomials_zi_interpolate(m: int) -> np.ndarray:
-    """
-    Compute the polynomials coefficients z
-    sum_{k= 1}^{m - 1} P(z_k = 1| x, mu, pi) = sum_{d=0}^{m-1} z[mu, x, d] pi^(m - 1 - d)
-
-    Parameters
-    ----------
-    m : int
-        Number of categories
-    
-    Returns
-    -------
-    np.ndarray of shape (m, m, m)
-        Polynomials coefficients
-    """
-    pi_sample = np.arange(1, m + 2) / (m + 2)
-    z = np.zeros((m, m, m + 1))
-    for mu in range(m):
-        for x in range(m):
-            for k, pi in enumerate(pi_sample):
-                z[mu, x, k] = sum_probability_zi(m=m, x=x + 1, mu=mu + 1, pi=pi)
-            poly = lagrange(pi_sample, z[mu, x]).coefficients
-            z[mu, x, -poly.shape[0]:] = poly
-    return z
-
-
 if __name__ == "__main__":
-    print("Version Recursive")
-    print(compute_polynomials_recursive(3))
     print("Version Iterative")
     print(compute_polynomials(3))

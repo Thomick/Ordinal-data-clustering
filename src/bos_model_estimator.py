@@ -2,11 +2,11 @@ from functools import cache
 from typing import Any, Optional
 import numpy as np
 try:
-    from .model_tools import estimate_mu_pi_trichotomy, trichotomy_maximization, group_sum, compute_log_likelihood
-    from .bos_model_polynomials import compute_polynomials, sum_probability_zi, compute_polynomials_zi_interpolate
+    from .model_tools import estimate_mu_pi_trichotomy, group_sum, compute_log_likelihood
+    from .bos_model_polynomials import compute_polynomials, sum_probability_zi
 except ImportError:
-    from model_tools import estimate_mu_pi_trichotomy, trichotomy_maximization, group_sum, compute_log_likelihood
-    from bos_model_polynomials import compute_polynomials, sum_probability_zi, compute_polynomials_zi_interpolate
+    from model_tools import estimate_mu_pi_trichotomy, group_sum, compute_log_likelihood
+    from bos_model_polynomials import compute_polynomials, sum_probability_zi
 
 
 # Use EM algorithm to find the parameters of BOS model of a single feature
@@ -86,89 +86,6 @@ def univariate_em_pi(
 
     # print(f"EM algorithm for {mu} converged after {iteration_index + 1} iterations")
     return pi_list, lls_list, [probability_x_given_mu_pi_using_u(m=m, x=x, mu=mu, pi=pi, u=u) for x in data]
-
-
-# Use EM algorithm to find the parameters of BOS model of a single feature
-def univariate_em_pi_poly(
-    data: list[int],
-    m: int,
-    mu: int,
-    n_iter: int = 100,
-    eps: float = 1e-3,
-    pi: float = 0.5,
-    weights=None,
-    u: Optional[np.ndarray] = None,
-    z: Optional[np.ndarray] = None,
-) -> tuple[list[float], list[float], list[float]]:
-    """
-    Use EM algorithm to find the parameter pi of BOS model
-    for a fixed mu
-
-    Parameters
-    ----------
-    data : list[int]
-        List of observations from a single feature
-    m : int
-        Number of categories
-    mu : int
-        Position parameter
-    n_iter : int, optional
-        Number of iterations, by default 100
-    eps : float, optional
-        Threshold on log-likelihood, by default 1e-3
-    pi : float, optional
-        Precision parameter, by default None
-    weights : list[float], optional
-        Weights of the observations, by default None
-
-
-    Returns
-    -------
-    list[float]
-        List of estimated precision parameters
-    list[float]
-        List of log-likelihoods
-    list[float]
-        List of p(x_i | mu, pi_q)
-    """
-    # print(f"univariate_em_pi, {data=}, {m=}, {mu=}, {n_iter=}, {eps=}, {pi=}, {weights=}")
-    assert m >= 1, "m must be >= 1"
-    if m == 1:
-        return [1], [0], [1]
-    
-    if np.array_equal(data, np.arange(1, m + 1)) and weights is not None:
-        pass
-    else:
-        if weights is None:
-            weights = np.ones(len(data))
-        weights = group_sum(m, data, weights=weights)
-    
-    # Initialization
-    if u is None:
-        u = compute_polynomials(m)
-    if z is None:
-        z = compute_polynomials_zi_interpolate(m)
-    z_poly = np.zeros(m + 1)
-    for i in range(m):
-        z_poly += z[mu - 1, i] * weights[i]
-    z_poly /= np.sum(weights) * (m - 1)
-
-    # print(f"Initialisation done")
-    
-    pi_list: list[float] = [pi]
-    for iteration_index in range(n_iter):
-        new_pi = min(1, np.polyval(z_poly, pi))  # why is it necessary to use min here?
-        assert new_pi >= 0 and new_pi <= 1, f"{new_pi=}"
-        pi_list.append(new_pi)
-
-        # print(f"Iteration {iteration_index + 1}: pi={new_pi:.6e}")
-
-        if abs(new_pi - pi) < eps:
-            break
-        pi = new_pi
-
-    # print(f"EM algorithm for {mu} converged after {iteration_index + 1} iterations")
-    return pi_list, [compute_log_likelihood(m=m, weights=weights, mu=mu, pi=pi, u=u, probability_x_given_mu_pi=probability_x_given_mu_pi_using_u)], [probability_x_given_mu_pi_using_u(m=m, x=x, mu=mu, pi=pi, u=u) for x in data]
 
 
 def univariate_em(
