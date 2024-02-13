@@ -604,5 +604,6 @@ class AECM_BOS_EM(AECM_BOS):
                                              weights=weights,
                                              n_iter=max_iter_bos,
                                              eps=epsilon_bos,
-                                             pi=pi_start)
+                                             pi=pi_start,
+                                             u=self.u[m])
         return mu, pi, probs
