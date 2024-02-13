@@ -44,7 +44,7 @@ def process_data(data_path):
     except Exception as e:
         print("Error reading the file: ", e)
         with open("demo_failure.txt", "w") as f:
-            f.write("Error reading the file: " + str(e))
+            f.write("Error while reading the file!")
         sys.exit(1)
     data = dataframe.values
 
