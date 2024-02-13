@@ -18,9 +18,9 @@ def process_data(data_path):
     """
     # Check if the file is a valid csv file
     if not data_path.endswith(".csv"):
-        print("Data file should be a csv file!")
+        print("Input file should be a csv file.")
         with open("demo_failure.txt", "w") as f:
-            f.write("Data file should be a csv file!")
+            f.write("Input file should be a csv file.")
         sys.exit(0)
 
     # Check if file has header
@@ -42,9 +42,13 @@ def process_data(data_path):
                 names=["Feature {}".format(i) for i in range(len(first_line))],
             )
     except Exception as e:
-        print("Error reading the file: ", e)
+        print(
+            "Invalid file format. Please provide a valid csv file. Check the input format guidelines."
+        )
         with open("demo_failure.txt", "w") as f:
-            f.write("Invalid file format!")
+            f.write(
+                "Invalid file format. Please provide a valid csv file. Check the input format guidelines."
+            )
         sys.exit(0)
     data = dataframe.values
 
@@ -84,7 +88,9 @@ if __name__ == "__main__":
         print("Data file does not exist!")
         print(args.data_path)
         with open("demo_failure.txt", "w") as f:
-            f.write("Data file can't be found!")
+            f.write(
+                "Error: Input file does not exist. Please check that you have provided a input file."
+            )
         sys.exit(1)
 
     data, n_cat, df = process_data(args.data_path)
