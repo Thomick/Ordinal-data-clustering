@@ -21,7 +21,7 @@ def process_data(data_path):
         print("Data file should be a csv file!")
         with open("demo_failure.txt", "w") as f:
             f.write("Data file should be a csv file!")
-        sys.exit(1)
+        sys.exit(0)
 
     # Check if file has header
     try:
@@ -45,7 +45,7 @@ def process_data(data_path):
         print("Error reading the file: ", e)
         with open("demo_failure.txt", "w") as f:
             f.write("Invalid file format!")
-        sys.exit(1)
+        sys.exit(0)
     data = dataframe.values
 
     ma, mi = np.max(data, axis=0), np.min(data, axis=0)
