@@ -180,23 +180,28 @@ if __name__ == "__main__":
     plt.show()"""
 
     n = 10000
-    p = 2
-    n_cat = [5, 5]
-    k = 2
-    alpha = [0.5, 0.5]
-    mu = [[2, 4], [4, 2]]
-    pi = [[0.4, 0.4], [0.4, 0.4]]
+    p = 5
+    n_cat = [10, 10, 5, 5, 5]
+    k = 4
+    alpha = [0.1, 0.2, 0.3, 0.4]
+    mu = [[2, 3, 2, 3, 2], [3, 10, 3, 2, 3], [10, 1, 4, 1, 4], [1, 4, 1, 4, 1]]
+    pi = [
+        [0.8, 0.7, 0.7, 0.6, 0.9],
+        [0.7, 0.8, 0.8, 0.7, 0.6],
+        [0.6, 0.9, 0.9, 0.8, 0.7],
+        [0.9, 0.6, 0.6, 0.9, 0.8],
+    ]
 
     output_file = "../data/synthetic.csv"
 
-    x, w = generate_data(n, p, n_cat, k, alpha, mu, pi, seed, model="bos")
+    x, w = generate_data(n, p, n_cat, k, alpha, mu, pi, seed, model="god")
     # save data
     df = pd.DataFrame(x)
     df.to_csv(
         os.path.join(os.path.dirname(__file__), output_file), index=False, header=False
     )
 
-    df["w"] = w
+"""    df["w"] = w
 
     # plot data
     sns.pairplot(
@@ -206,4 +211,4 @@ if __name__ == "__main__":
         plot_kws={"alpha": 0.6, "bins": n_cat},
         diag_kws={"bins": n_cat[0]},
     )
-    plt.show()
+    plt.show()"""
