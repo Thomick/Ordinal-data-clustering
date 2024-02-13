@@ -3,9 +3,9 @@ import numpy as np
 from scipy.special import comb
 from compute_u import compute_u
 from data_generator import bos_model
-from bos_model_polynomials import probability_x_given_mu_pi_scratch
+from bos_model_polynomials import  compute_polynomials
 from clustering import compute_p_list
-from bos_model_estimator import univariate_em, estimate_mu_pi_bos as estimate_mu_pi
+from bos_model_estimator import univariate_em, estimate_mu_pi_bos as estimate_mu_pi, probability_x_given_mu_pi_using_u
 
 
 def _probability_x_given_mu_pi(m: int, x: int, mu: int, pi: float) -> float:
@@ -54,12 +54,13 @@ class TestBosModel(TestCase):
 
     def test_probability_x_given_mu_pi(self):
         for m in range(1, 7):
+            u = compute_polynomials(m)
             for pi in [0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1]:
                 for x in range(1, m + 1):
                     for mu in range(1, m + 1):
                         print(f"m={m}, pi={pi}, x={x}, mu={mu}")
                         prob_old = _probability_x_given_mu_pi(m, x, mu, pi)
-                        prob = probability_x_given_mu_pi_scratch(m, x, mu, pi)
+                        prob = probability_x_given_mu_pi_using_u(m, x, mu, pi, u)
                         self.assertAlmostEqual(prob, prob_old)
 
 
