@@ -16,28 +16,41 @@ def process_data(data_path):
     """
     Process data from csv file
     """
-    # Check if file has header
-    first_line = open(data_path).readline().strip().split(",")
-    has_header = False
-    for i in range(len(first_line)):
-        try:
-            int(first_line[i])
-        except ValueError:
-            has_header = True
-            break
+    # Check if the file is a valid csv file
+    if not data_path.endswith(".csv"):
+        print("Data file should be a csv file!")
+        with open("demo_failure.txt", "w") as f:
+            f.write("Data file should be a csv file!")
+        sys.exit(1)
 
-    if has_header:
-        dataframe = pd.read_csv(data_path, header="infer")
-    else:
-        dataframe = pd.read_csv(
-            data_path, names=["Feature {}".format(i) for i in range(len(first_line))]
-        )
+    # Check if file has header
+    try:
+        first_line = open(data_path).readline().strip().split(",")
+        has_header = False
+        for i in range(len(first_line)):
+            try:
+                int(first_line[i])
+            except ValueError:
+                has_header = True
+                break
+
+        if has_header:
+            dataframe = pd.read_csv(data_path, header="infer")
+        else:
+            dataframe = pd.read_csv(
+                data_path,
+                names=["Feature {}".format(i) for i in range(len(first_line))],
+            )
+    except Exception as e:
+        print("Error reading the file: ", e)
+        with open("demo_failure.txt", "w") as f:
+            f.write("Error reading the file: " + str(e))
+        sys.exit(1)
     data = dataframe.values
 
     ma, mi = np.max(data, axis=0), np.min(data, axis=0)
     n_cat = ma - mi + 1
     shifted_data = data - mi[np.newaxis, :] + 1
-    # TODO decide if we want to handle missing values
     return shifted_data, n_cat, dataframe
 
 
@@ -53,7 +66,10 @@ if __name__ == "__main__":
         "--method", type=str, default="bos", help="method to use (bos or god)"
     )
     parser.add_argument(
-        "--init", type=str, default="random", help="initialization method"
+        "--init",
+        type=str,
+        default="random",
+        help="initialization method (random or kmeans)",
     )
     parser.add_argument("--n_clusters", type=int, default=3, help="number of clusters")
     parser.add_argument("--n_iter", type=int, default=100, help="number of iterations")
@@ -67,6 +83,8 @@ if __name__ == "__main__":
     if not os.path.exists(args.data_path):
         print("Data file does not exist!")
         print(args.data_path)
+        with open("demo_failure.txt", "w") as f:
+            f.write("Data file can't be found!")
         sys.exit(1)
 
     data, n_cat, df = process_data(args.data_path)
