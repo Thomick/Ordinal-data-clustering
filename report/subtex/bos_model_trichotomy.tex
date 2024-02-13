@@ -91,5 +91,6 @@ We can now prove that $\forall x \in \bbrack{0, h - 1}, \forall \mu \in \bbrack{
     \Pr(z_k = 1 | x \in e_k, \mu, \pi) 
     &= \sum_{e_{k+1} \subset e_k} \Pr(z_k = 1, e_{k+1} | x \in e_k, \mu, \pi) \\
     &= \sum_{e_{k+1} \subset e_k; \mu, x \in e_{k+1}}  \Pr(z_k = 1, e_{k+1} | x \in e_k, \mu, \pi) \\
-    &= \sum_{e_{k+1} \subset e_k; \mu, x \in e_{k+1}}  \Pr(z_k = 1 | x \in e_{k+1}, \mu, \pi) \Pr(e_{k+1} | x \in e_k, \mu, \pi)
+    &= \sum_{e_{k+1} \subset e_k; \mu, x \in e_{k+1}}  \Pr(z_k = 1 | x \in e_{k+1}, \mu, \pi) \Pr(e_{k+1} | x \in e_k, \mu, \pi) \\
+    &= \sum_{e_{k+1} \subset e_k; \mu, x \in e_{k+1}}  \frac{\Pr(e_{k + 1} | z_k = 1, \mu, \pi) \Pr(z_k = 1 | \mu, \pi)  }{\Pr(e_{k + 1})} \Pr(e_{k+1} | x \in e_k, \mu, \pi)
 \end{align}

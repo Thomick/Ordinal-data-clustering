@@ -1,0 +1,13 @@
+\section{Method}
+The approach taken in this report follows the one proposed by \cite{biernacki2016model}. It involves defining a probabilistic model based on the observation of categorical data. More precisely, the authors introduce a Stochastic Binary Search process that leads to the selection of a category. 
+
+For this particular model, we need to make the assumption that:
+\begin{itemize}
+    \item The categories must be well-ordered (ordinal data): The categories are linearly ordered, and each non-empty subset contains the least element. This implies that any element can be compared to any other, and we can enumerate all the categories in increasing order.
+    \item The set of categories is finite. This simplifies the previous assumption to the existence of a linear ordering. This assumption is necessary to ensure that the stochastic search terminates after a fixed number of steps, implying a finite number of possible runs of the search.
+\end{itemize}
+We will first define the binary ordinal search (BOS) model in the univariate case. The multivariate variant can be deduced by applying a similar search to each of the features independently. Then, we will discuss how to estimate the parameters of the model from a set of samples following the general method of the Expectation-Maximization algorithm (EM). Finally, we will show how the original authors extend EM to cluster ordinal data.
+
+\subsection{Probabilistic model}
+
+
