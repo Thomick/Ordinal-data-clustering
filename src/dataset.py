@@ -578,11 +578,16 @@ class BaseDataset:
         axmds[0].set_title("True labels")
         figmds.suptitle(f"MDS ({runtype})")
         plt.show()
+        
+    def save_dataset(self, path):
+        self.X = pd.DataFrame(self.X, columns=self.columns)
+        self.X.to_csv(path, index=False)
 
 
 class Animals(BaseDataset):
     def __init__(self, path, target_path, n_iter=100, eps=1e-1, silent=False, seed=0):
         super().__init__(path, n_iter=n_iter, eps=eps, silent=silent, seed=seed)
+        self.path = path
         self.data = pd.read_csv(path)
         self.data_target = pd.read_csv(target_path)
         self.compute_Xy()
@@ -616,15 +621,15 @@ class Animals(BaseDataset):
         self.y = self.data_processed["class_type"].values
         self.X = self.data_processed.drop(
             ["animal_name", "class_type"], axis=1
-        ).values.astype(int)
+        )
+        self.columns = self.X.columns
+        self.X = self.X.values.astype(int)
         self.n_clusters = len(np.unique(y))
 
     def compute_n_cat(self):
         X = self.X
-        m = np.array([len(np.unique(X[:, i])) for i in range(X.shape[1])])
-        cols_under_5 = np.where(m < 6)[0]
-        self.X = self.X[:, cols_under_5]
-        self.m = m[cols_under_5]
+        self.m = np.array([len(np.unique(X[:, i])) for i in range(X.shape[1])])
+    
 
 
 class CarEvaluation(BaseDataset):
@@ -640,6 +645,7 @@ class CarEvaluation(BaseDataset):
             "car_acceptability",
         ]
         self.data = pd.read_csv(path, names=columns)
+        self.path = path
         self.compute_Xy()
 
     def compute_Xy(self, n=None):
@@ -652,15 +658,6 @@ class CarEvaluation(BaseDataset):
             "safety_rating": {"low": 1, "med": 2, "high": 3},
             "car_acceptability": {"unacc": 1, "acc": 2, "good": 3, "vgood": 4},
         }
-        # categories = {
-        #     "buying_price": {"low": 1, "med": 2, "high": 3, "vhigh": 3},
-        #     "maintenance_price": {"low": 1, "med": 2, "high": 3, "vhigh": 3},
-        #     "number_of_doors": {"2": 1, "3": 2, "4": 3, "5more": 3},
-        #     "number_of_seats": {"2": 1, "4": 2, "more": 3},
-        #     "luggage_boot_size": {"small": 1, "med": 2, "big": 3},
-        #     "safety_rating": {"low": 1, "med": 2, "high": 3},
-        #     "car_acceptability": {"unacc": 1, "acc": 2, "good": 3, "vgood": 4},
-        # }
 
         self.target_decoder_inv = categories["car_acceptability"]
         self.target_decoder = {v: k for k, v in self.target_decoder_inv.items()}
@@ -672,6 +669,8 @@ class CarEvaluation(BaseDataset):
 
         X = self.data_processed.drop(columns=["car_acceptability"])
         y = self.data_processed["car_acceptability"]
+
+        self.columns = X.columns
 
         if n is None:
             n = len(X)
@@ -692,6 +691,7 @@ class CarEvaluation(BaseDataset):
 class HayesRoth(BaseDataset):
     def __init__(self, path, n_iter=100, eps=1e-1, silent=False, seed=0):
         super().__init__(path, n_iter=n_iter, eps=eps, silent=silent, seed=seed)
+        self.path = path
         self.data = pd.read_csv(path)
         self.data = self.data.drop(columns=["name"])
         self.compute_n_cat()
@@ -701,6 +701,8 @@ class HayesRoth(BaseDataset):
         X = self.data.drop(columns=["class"]).astype(int)
         y = self.data["class"]
         self.target = "class"
+
+        self.columns = X.columns
 
         self.target_decoder = {v: k for k, v in enumerate(y.unique(), 1)}
         self.target_decoder_inv = {k: v for k, v in enumerate(y.unique(), 1)}
@@ -714,6 +716,7 @@ class HayesRoth(BaseDataset):
 class Caesarian(BaseDataset):
     def __init__(self, path, n_iter=100, eps=1e-1, silent=False, seed=0):
         super().__init__(path, n_iter=n_iter, eps=eps, silent=silent, seed=seed)
+        self.path = path
         self.data = pd.read_csv(path)
         self.compute_Xy()
 
@@ -736,6 +739,8 @@ class Caesarian(BaseDataset):
         X = self.data_processed.drop(columns=["Caesarian"]).astype(int)
         y = self.data_processed["Caesarian"]
         self.target = "Caesarian"
+
+        self.columns = X.columns
 
         self.target_decoder = {v: k for k, v in enumerate(y.unique(), 1)}
         self.target_decoder_inv = {k: v for k, v in enumerate(y.unique(), 1)}
