@@ -7,6 +7,7 @@ mu <- 2
 pi <- 0.5
 n_cat = 4
 x <- bos_model(n_cat, mu, pi)
+set.seed(0)
 
 n <- 1000
 p <- 2
@@ -94,7 +95,7 @@ run_univariate <- function(n_cat, n, k, p){
 
 n <- 1000
 p <- 2
-k <- 2
+k <- 3
 m <-4
 n_cat <- matrix(p)
 for (j in 1:p) {
