@@ -1,4 +1,7 @@
-\paragraph{AECM algorithm.} Similarly to the EM algorithm, Alternating Expectation-Conditional Maximization (AECM) \citep{meng1997algorithm} is separated in two steps. However, in this case, we consider multivariate ordinal data with different possible distributions (clusters) priors for the data. This is done, just like for the Gaussian Mixture Model case, using latent variables $w_{ik}$ which describe whether the data $x_i$ belongs to the cluster $k$ or not, and parameters $(\alpha_k)_{k\in \{1, \ldots, p\}}$ which describe the probability of belonging to each cluster. 
+\subsection{AECM algorithm.} 
+\label{sec:aecm}
+
+Similarly to the EM algorithm, Alternating Expectation-Conditional Maximization (AECM) \citep{meng1997algorithm} is separated in two steps. However, in this case, we consider multivariate ordinal data with different possible distributions (clusters) priors for the data. This is done, just like for the Gaussian Mixture Model case, using latent variables $w_{ik}$ which describe whether the data $x_i$ belongs to the cluster $k$ or not, and parameters $(\alpha_k)_{k\in \{1, \ldots, p\}}$ which describe the probability of belonging to each cluster. 
 \begin{enumerate}
     \item Expectation step: In this case, the expectation step consists in just computing the probability for every data point to belong to each cluster:
     \begin{equation}
