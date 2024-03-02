@@ -415,9 +415,12 @@ class BaseDataset:
                         int(clusters_histograms[i, j]),
                         ha="center",
                         va="center",
-                        color="w"
-                        if clusters_histograms[i, j] < clusters_histograms.max() / 2.0
-                        else "black",
+                        color=(
+                            "w"
+                            if clusters_histograms[i, j]
+                            < clusters_histograms.max() / 2.0
+                            else "black"
+                        ),
                     )
             if show:
                 plt.show()
@@ -442,9 +445,12 @@ class BaseDataset:
                         int(clusters_histograms[i, j]),
                         ha="center",
                         va="center",
-                        color="w"
-                        if clusters_histograms[i, j] < clusters_histograms.max() / 2.0
-                        else "black",
+                        color=(
+                            "w"
+                            if clusters_histograms[i, j]
+                            < clusters_histograms.max() / 2.0
+                            else "black"
+                        ),
                     )
             return ax
 
@@ -578,7 +584,7 @@ class BaseDataset:
         axmds[0].set_title("True labels")
         figmds.suptitle(f"MDS ({runtype})")
         plt.show()
-        
+
     def save_dataset(self, path):
         self.X = pd.DataFrame(self.X, columns=self.columns)
         self.X.to_csv(path, index=False)
@@ -619,9 +625,7 @@ class Animals(BaseDataset):
             )
 
         self.y = self.data_processed["class_type"].values
-        self.X = self.data_processed.drop(
-            ["animal_name", "class_type"], axis=1
-        )
+        self.X = self.data_processed.drop(["animal_name", "class_type"], axis=1)
         self.columns = self.X.columns
         self.X = self.X.values.astype(int)
         self.n_clusters = len(np.unique(y))
@@ -629,7 +633,6 @@ class Animals(BaseDataset):
     def compute_n_cat(self):
         X = self.X
         self.m = np.array([len(np.unique(X[:, i])) for i in range(X.shape[1])])
-    
 
 
 class CarEvaluation(BaseDataset):
@@ -749,3 +752,66 @@ class Caesarian(BaseDataset):
         self.n_clusters = y.nunique()
 
         self.X, self.y = X.to_numpy().astype(int), y.to_numpy()
+
+
+class NurserySchool(BaseDataset):
+    def __init__(self, path, n_iter=100, eps=1e-1, silent=False, seed=0):
+        super().__init__(path, n_iter=n_iter, eps=eps, silent=silent, seed=seed)
+        self.path = path
+        self.data = pd.read_csv(path)
+        self.categories = {
+            "parents": ["usual", "pretentious", "great_pret"],
+            "has_nurs": ["proper", "less_proper", "improper", "critical", "very_crit"],
+            "form": ["complete", "completed", "incomplete", "foster"],
+            "children": ["1", "2", "3", "more"],
+            "housing": ["convenient", "less_conv", "critical"],
+            "finance": ["convenient", "inconv"],
+            "social": ["nonprob", "slightly_prob", "problematic"],
+            "health": ["recommended", "priority", "not_recom"],
+            "target": [
+                "not_recom",
+                "recommend",
+                "very_recom",
+                "priority",
+                "spec_prior",
+            ],
+        }
+
+        self.compute_Xy()
+
+    def compute_Xy(self):
+        df_nursery = self.data
+
+        y = df_nursery["target"]
+        df_X = df_nursery.drop("target", axis=1)
+
+        categories_dict = {
+            k: {v: i + 1 for i, v in enumerate(self.categories[k])}
+            for k in self.categories
+            if k != "target"
+        }
+
+        X = df_X.replace(categories_dict)
+        self.target_decoder = {
+            i + 1: val for i, val in enumerate(self.categories["target"])
+        }
+        self.target_decoder_inv = {
+            val: i + 1 for i, val in enumerate(self.categories["target"])
+        }
+        y = y.replace(self.target_decoder_inv)
+
+        self.columns = df_X.columns
+
+        n = len(df_X)
+
+        self.m = np.array([len(np.unique(X[col])) for col in X.columns])
+        self.n_clusters = y.unique().shape[0]
+
+        self.n_clusters = y.nunique()
+        self.X, self.y = X.to_numpy()[n:], y.to_numpy()[n:]
+
+        self.m = np.array([len(X[col].unique()) for col in X.columns])
+
+        self.X, self.y = X.to_numpy(), y.to_numpy()
+        permutation = np.random.permutation(len(self.X))
+        self.X, self.y = self.X[permutation], self.y[permutation]
