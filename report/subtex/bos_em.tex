@@ -1,0 +1,65 @@
+\subsection{Parameter estimation}
+
+\paragraph{EM algorithm.} In the univariate case, the underlying BOS distribution of a data sample $(x_1, \ldots, x_n)$ can be estimated using the Expectation-Maximization (EM) algorithm. The main idea behind EM is to iteratively compute the parameters $(\mu, \pi)$ of the distribution to maximize the log-likelihood until convergence when the model is explained by latent variables that are not observed with the data as it is the case with the BOS distribution \citep{biernacki2016model}.
+\begin{enumerate}
+    \item Initialization: The parameters of the distribution are initialized using a pre-defined heuristic. In our case, we initialize $(\mu^{(0)}, \pi^{(0)})$ randomly in their respective range.
+    \item Expectation step: The latent variables $(c_i)_{i \in \{1, \ldots, n\}}$ are estimated using the current approximation of the parameters $(\mu^{(t)}, \pi^{(t)})$. This consists in computing the posterior probability of every latent variable using the conditional probability formula for all $i\in \{1, \ldots, ..., n\}$
+    \begin{equation}
+        \mathbb{P}(c_i | x_i, \mu^{(t)}, \pi^{(t)}) = \frac{\mathbb{P}(c_i, x_i| \mu^{(t)}, \pi^{(t)})}{\mathbb{P}(x_i| \mu^{(t)}, \pi^{(t)})}
+    .\end{equation}
+    This can be computed recursively for the different latent variables using their prior distribution (BOS model):
+    \begin{equation}
+        \mathbb{P}(e_{j+1}| \mu^{(t)}, \pi^{(t)}) = \sum_{e\in \mathcal{P}(\{1, \ldots, m\})} \mathbb{P}(e_{j+1}|e_j=e,  \mu^{(t)}, \pi^{(t)}) \mathbb{P}(e_j=e| \mu^{(t)}, \pi^{(t)})
+    .\end{equation}
+    The intermediate conditional probability is obtained by conditioning on the different values that can be taken by $y_j$ and $z_j$ when $e_j=e$:
+    \begin{align}
+    \mathbb{P}(e_{j+1}|e_j=e, \mu^{(t)}, \pi^{(t)}) &= \sum_{y_j \in e} \mathbb{P}(e_{j+1}|e_j=e, y_j, \mu^{(t)}, \pi^{(t)})\mathbb{P}(y_j|e_j=e) \\
+    &\begin{aligned}
+        = &\sum_{y_j \in e} (\pi^{(t)}\mathbb{P}(e_{j+1}|e_j, y_j, z_j=1, \mu^{(t)}, \pi^{(t)}) \\ 
+        & + (1-\pi^{(t)})\mathbb{P}(e_{j+1}|e_j, y_j, z_j=0, \mu^{(t)}, \pi^{(t)}))\mathbb{P}(y_j|e_j=e)
+    .\end{aligned}
+    \end{align}
+    The components of the sum can be more easily computed by distinguishing between the cases where $z_j=0$ and $z_j=1$ with closed-forms expressions from the prior. \\
+    Moreover, for $y_j$, the posterior distribution can also be obtained using the following expression where we also condition on $e_j$:
+    \begin{equation}
+    \mathbb{P}(y_j| \mu^{(t)}, \pi^{(t)}) = \sum_{e\in \mathcal{P}(\{1, \ldots, m\}} \mathbb{P}(y_j|e_j=e, \mu^{(t)}, \pi^{(t)})\mathbb{P}(e_j=e| \mu^{(t)}, \pi^{(t)})
+    .\end{equation}
+    For $z_j$, $\mathbb{P}(z_j| \mu^{(t)}, \pi^{(t)})$ is a Bernoulli variable of probability $\pi^{(t)}$ so it can easily be expressed:
+    \begin{equation}
+    \mathbb{P}(z_j| \mu^{(t)}, \pi^{(t)}) = \begin{cases}
+        \pi^{(t)}\quad &\text{if } z_j = 1\\
+        1 - \pi^{(t)}\quad &\text{if } z_j = 0
+        \end{cases}
+    .\end{equation}
+    %\ar{How does this allow to derive $\mathbb{P}(c_{ij}, x_i| \mu, \pi)?$. Ok}
+    Note that since in the BOS model $e_m$ is identified with $x_i$, we get the following joint distribution for all the latent variables $c_i$ with the observation $x_i$: 
+    \begin{equation}
+       \mathbb{P}(c_i,x_i| \mu^{(t)}, \pi^{(t)}) = \mathbb{P}(e_m|c_i, \mu^{(t)}, \pi^{(t)})\mathbb{P}(c_i| \mu^{(t)}, \pi^{(t)})
+    .\end{equation}
+    \item Maximization step: During this step, the next iteration of the parameters $(\mu^{(t+1)}, \pi^{(t+1)})$ that maximizes the log-likelihood of observing the data taking into account the latent-variables probabilities computed during the Expectation step. As proposed by \citet{biernacki2016model}, only $\pi$ is updated and $\mu$ is fixed during the entire algorithm. This is done for every possible value of $\mu$ and the value that maximizes the log-likelihood is chosen. \\
+    The new value of $\pi$ is given after computing the maximizer of the expectation of the log-likelihood in $\pi$:
+    \begin{equation}
+    \pi^{(t+1)} = \frac{\sum_{i=1}^N \sum_{j=1}^{m-1} \mathbb{P}(z_{ij}=1|x_i, \mu^{(t)}, \pi^{(t)})}{n(m-1)}
+    .\end{equation}
+    % \begin{proof}
+    % \ar{Add the proof for this formula?}
+    % \tm{Yes. I need to check it but not sure there is much to it. Théo opinion ?}
+    % \end{proof}
+    \footnote{The authors of the paper did not mention how they computed this formula. We computed it by marginalizing on every possible run of the binary search algorithm, leading to high computational cost.
+
+    We use the following expression:
+    \begin{align}
+        \Pr(z_{ij}=1|x_i, \mu, \pi) &= \sum_{c_i} \Pr(z_{ij}=1, c_i|x_i, \mu, \pi) \\
+        &= \sum_{c_i} \Pr(z_{ij}=1|c_i, x_i, \mu, \pi)\Pr(c_i|x_i, \mu, \pi) \\
+        &= \sum_{c_i} \Pr(z_{ij}=1|c_i) \frac{\Pr(c_i, x_i|\mu, \pi)}{\Pr(x_i|\mu, \pi)} \\
+        &= \frac{1}{\Pr(x_i|\mu, \pi)} \sum_{c_i} \Pr(z_{ij}=1|c_i) \Pr(c_i, x_i|\mu, \pi) 
+    \end{align}
+    And then:
+    \begin{align}
+        \sum_{j=1}^{m-1} \Pr(z_{ij}=1|x_i, \mu, \pi) &= \sum_{j=1}^{m-1} \frac{1}{\Pr(x_i|\mu, \pi)}  \sum_{c_i} \Pr(z_{ij}=1|c_i) \Pr(c_i, x_i|\mu, \pi) \\
+        &= \frac{1}{\Pr(x_i|\mu, \pi)} \sum_{c_i} \Pr(c_i, x_i|\mu, \pi)  \sum_{j=1}^{m-1} \Pr(z_{ij}=1|c_i)
+    \end{align}
+    }
+
+\end{enumerate}
+
