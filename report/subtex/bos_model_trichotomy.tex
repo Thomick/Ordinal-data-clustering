@@ -1,5 +1,69 @@
 \subsection{BOS Model}
 
+\begin{definition}
+    We define $\correct{\mu}{e}{y}{f}$ as the indicator function that $f$ is the correct subset to choose in case of a perfect comparison \textit{i.e.} if $\mu \in f$ or by default the closest to $\mu$.
+\end{definition}
+\begin{proof}
+    
+    
+\end{proof}
+
+
+We now suppose 
+\begin{lemma}[$e_j$ transition]
+    $\forall m \in \NN^*, \forall x \in \bbrack{1, m}, \forall \mu \in \bbrack{1, m}, \pi \in [0, 1], \forall e \subset \bbrack{1, m}, \forall f \subset e$:
+    \[ \Pr(f | x \in e, e, \mu, \pi) =  \frac{1}{\card{e}} \sum_{y \in e} \left[ \correct{\mu}{e}{y}{f} \pi + \frac{\card{f}}{\card{e}} (1 - \pi) \right] \]
+\end{lemma}
+\begin{proof}
+    We have that, by marginalization over the breakpoint $y$:
+    \begin{align}
+        \Pr(f | x \in e, e, \mu, \pi) 
+        &= \sum_{y \in e} \Pr(f, y | x \in e, e, \mu, \pi) \\
+        &= \sum_{y \in e} \Pr(f | y, x \in e, e, \mu, \pi) \Pr(y | x \in e, e, \mu, \pi) \\
+        &= \sum_{y \in e} \Pr(f | y, x \in e, e, \mu, \pi) \frac{1}{\card{e}} \\
+        &= \frac{1}{\card{e}} \sum_{y \in e} \Pr(f | y, x \in e, e, \mu, \pi)
+    \end{align}
+
+    Then by marginalization over the accuracy indicator $z$:
+    \begin{align}
+        \Pr(f | x \in e, e, \mu, \pi) 
+        &= \frac{1}{\card{e}} \sum_{y \in e} \sum_{z \in \set{0, 1}} \Pr(f | y, x \in e, e, \mu, \pi, z) \Pr(z | y, x \in e, e, \mu, \pi) \\
+        &= \frac{1}{\card{e}} \sum_{y \in e} \left[ \Pr(f | y, x \in e, e, \mu, \pi, z=1) \pi + \Pr(f | y, x \in e, e, \mu, \pi, z=0) (1 - \pi) \right] \\
+        &= \frac{1}{\card{e}} \sum_{y \in e} \left[ \correct{\mu}{e}{y}{f} \pi + \frac{\card{f}}{\card{e}} (1 - \pi) \right]
+    \end{align}
+
+\end{proof}
+
+
+\begin{thm}[likelihood is polynomial]
+    \label{thm:likelihood_bos_is_polynomial}
+    $\forall m \in \NN^*, \forall x \in \bbrack{1, m}, \forall \mu \in \bbrack{1, m}$,:
+    \[ \pi \mapsto \Pr(x | \mu, \pi) \]
+    is a polynomial function of degree at most $m - 1$.  
+\end{thm}
+\begin{proof}
+    Le $m \in \NN^*$, $x \in \bbrack{1, m}$ and $\mu \in \bbrack{1, m}$. 
+
+    First we can introduce redondant knowledge as we start necessarily with the full set of categories, we can add its value as known. We have that $\Pr(x | \mu, \pi) = \Pr(x | e_1, \mu, \pi)$. We also now that $x \in e_1$ therefore $\Pr(x | \mu, \pi) = \Pr(x | x \in e_1, e_1, \mu, \pi)$.
+
+    We now prove the following $\forall e \subset \bbrack{1, m}, \pi \mapsto \Pr(x | x \in e_j, e_j, \mu, \pi)$ is a polynomial function of degree at most $\card{e_j} - 1$ by induction on $\card{e_j}$.
+
+    Initialization: $\card{e_j} = 1$:
+    \[ \Pr(x | x \in \set{x}, \set{x}, \mu, \pi) = 1 \] which is a polynomial function of degree $0$.
+
+    Induction: Suppose the theorem holds for $\card{e_j} - 1$ and let us prove it for $\card{e_j}$.
+
+    We have that:
+    \begin{align}
+        \Pr(x | x \in e_j, e_j, \mu, \pi) 
+        &= \sum_{e_{j+1} \subset e_j} \Pr(x, e_{j+1} | x \in e_j, e_j, \mu, \pi) \\
+        &= \sum_{e_{j+1} \subset e_j} \Pr(x | e_{j+1}, x \in e_j, e_j, \mu, \pi) \Pr(e_{j+1} | x \in e_j, e_j, \mu, \pi)
+    \end{align}
+
+    As $\Pr(e_{j+1} | x \in e_j, e_j, \mu, \pi)$ is a polynomial function of degree at most $1$ by induction hypothesis and $\Pr(x | e_{j+1}, x \in e_j, e_j, \mu, \pi)$ is a polynomial function of degree at most $\card{e_{j+1}} - 1 \leq \card{e_j} - 1$ by induction hypothesis, we have that $\Pr(x | x \in e_j, e_j, \mu, \pi)$ is a polynomial function of degree at most $\card{e_j} - 1$. 
+\end{proof}
+
+
 \begin{align}
     \Pr(x | x \in e_j, \mu, \pi) 
     &= \sum_{e_{j+1} \subset e_j} \Pr(x, e_{j+1} | x \in e_j, \mu, \pi) \\

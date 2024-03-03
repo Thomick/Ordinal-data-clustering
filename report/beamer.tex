@@ -192,6 +192,45 @@
     It uses the same principle as EM but adds an estimation step of each univariate probabilistic model parameters in the maximization.
 \end{frame}
 
+
+\begin{frame}
+    \begin{figure}[htbp]
+        \centering
+        \begin{adjustbox}{width=0.8\textwidth}
+            \begin{tikzpicture}
+                \node[obs]                               (xi) {$x_i$};
+                \node[latent, left=of xi]               (em) {$e_m$};
+                \node[latent, below=of em, yshift=0.5cm]               (zm1) {$z_{m-1}$};
+                \node[latent, left=of em]               (ym1) {$y_{m-1}$};
+                \node[const, left=of ym1]               (dots) {$\quad\ldots\quad$};
+                \node[latent, left=of dots]               (e2) {$e_2$};
+                \node[latent, below=of e2, yshift=0.5cm]               (z1) {$z_1$};
+                \node[latent, left=of e2]               (y1) {$y_1$};
+                \node[latent, left=of y1]               (e1) {$e_1$};
+                \node[const, above=of dots]    (mu) {$\mu$};
+                \node[const, below=of dots, yshift=-1.6cm]  (pi) {$\pi$};
+
+                \edge{e1}{y1};
+                \edge{y1}{e2};
+                \edge{z1}{e2};
+                \edge{e2}{dots};
+                \edge{dots}{ym1};
+                \edge{ym1}{em};
+                \edge{zm1}{em};
+                \edge{em}{xi};
+                \edge{mu}{e2};
+                \edge{mu}{em};
+                \edge{pi}{z1};
+                \edge{pi}{zm1};
+
+                \plate[inner sep=.25cm] {} {(xi)(e1)(zm1)(z1)} {$i=1, \ldots, n$};
+            \end{tikzpicture}
+        \end{adjustbox}
+        \caption*{Graphical model of the stochastic Binary Ordinal Search.}
+        \label{fig:graphical_model}
+    \end{figure}
+\end{frame}
+
 \begin{frame}{Experiments}
     \begin{itemize}
         \item We compare the runtime of our implementation of the BOS model with the original R package (\textit{ordinalClust}) provided by the authors of the paper.

@@ -2,17 +2,17 @@
 \label{sec:univariate}
 
 We now wan't a random process to model univariate ordinal data among a finite numbers of categories.
-As we suppose that we only care for the order of the categories we can can without loss of generality consider our categories as $[[1, m]]$ (when there is $m$ categories). Therefore if we have $\theta$ the parameters of our model, a model is gives $\forall i \in [[1, m]], P(X = i | \theta)$ if $X$ was generated from our random process. 
+As we suppose that we only care for the order of the categories we can can without loss of generality consider our categories as $\bbrack{1, m}$ (when there is $m$ categories). Therefore if we have $\theta$ the parameters of our model, a model is gives $\forall i \in \bbrack{1, m}, P(X = i | \theta)$ if $X$ was generated from our random process. 
 
-As we should represent data have having a common source we can suppose that there is an underlying true category $\mu \in [[1, m]]$ and put it as a parameter. In addition it is natural to add a precision parameter $\pi$. This is the case for the BOS model and the GOD model. 
+As we should represent data have having a common source we can suppose that there is an underlying true category $\mu \in \bbrack{1, m}$ and put it as a parameter. In addition it is natural to add a precision parameter $\pi$. This is the case for the BOS model and the GOD model. 
 
 In the following sections we present how to estimate those parameters for a generic law, then we present the BOS model and how to apply this estimation technique then we do the same with the GOD model.
 
 
 \subsubsection{Notations and goal}
 
-Let suppose that we have a set of $n$ independant observations $X = (x_i)_{i \in [n]}$, wehre $x_i \in [[1, m]]$ follow a distribution $P$ with parameters $\mu, \pi$ with $\mu \in [[1, m]]$ and $\pi \in [[a, b]]$. We want to estimate $\mu$ and $\pi$. We choose the estimate that maximize the likelihood of the data.
-$$(\mu, \pi) = \argmax_{(\mu, \pi) \in [[1, m]] \times [[a, b]]} P(X | \mu, \pi)$$
+Let suppose that we have a set of $n$ independant observations $X = (x_i)_{i \in [n]}$, wehre $x_i \in \bbrack{1, m}$ follow a distribution $P$ with parameters $\mu, \pi$ with $\mu \in \bbrack{1, m}$ and $\pi \in [[a, b]]$. We want to estimate $\mu$ and $\pi$. We choose the estimate that maximize the likelihood of the data.
+$$(\mu, \pi) = \argmax_{(\mu, \pi) \in \bbrack{1, m} \times [a, b]} P(X | \mu, \pi)$$
 
 As the data are independant, we have:
 $$P(X | \mu, \pi) = \prod_{i=1}^n P(x_i | \mu, \pi)$$
@@ -52,7 +52,7 @@ Then we have, $\pi \mapsto L_W(\mu, \pi)$ is stricly concave as positive linear 
 
 \paragraph{Ternary search algorithm}
 
-\todo{TODO} 
+\tr{TODO} 
 %(see https://en.wikipedia.org/wiki/Ternary_search)
 
 \paragraph{Evaluating the likelihood}
