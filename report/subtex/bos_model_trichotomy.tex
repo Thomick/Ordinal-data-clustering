@@ -164,62 +164,160 @@ We can now prove that $\forall x \in \bbrack{0, h - 1}, \forall \mu \in \bbrack{
 
 
 \begin{thm}[Log concavity of the BOS model]
-    $\forall x \in \bbrack{0, h - 1}, \forall \mu \in \bbrack{0, h - 1}, f: \pi \mapsto \Pr(x | x \in \bbrack{0, h - 1}, \mu, \pi)$ is $\log$-concave on $[0, 1]$ and a postive (for $\pi \in [0, 1]$) polynomial of degree less than $h - 1$.
+    $\forall m \in \NN^*, \forall x \in \bbrack{1, m}, \forall \mu \in \bbrack{1, m}$:
+    \[\pi \mapsto \Pr(x | x \in \bbrack{1, m}, \mu, \pi) \] 
+    is $\log$-concave on $[0, 1]$.
 \end{thm}
 \begin{proof}
-    We proceed by induction on $h$:
-
-    Initialization: $h = 1$: 
-    \[ \forall x \in \bbrack{0, h - 1}, \forall \mu \in \bbrack{0, h - 1}, \Pr(x | x \in \bbrack{0, h - 1}, \mu, \pi) = 1\] which is $\log$-concave and a positive polynomial of degree $0$.
-
-    Induction: Suppose the theorem holds for $h - 1$ and let us prove it for $h$.
-
-    Using the previous formula we have that $f$ is a sum of positive affine function in $\pi$ times $\Pr(x | x \in \bbrack{0, y - 1}, \mu, \pi)$ which is $\log$-concave by induction hypothesis and a positive polynomial of degree $y - 1$. We immediately deduce that $f$ is postive and polynomial of degree less than $h - 1$. Moreover using the previous lemma~\ref{lemma:concavity_log_polynomial_times_affine} we have that $f$ is $\log$-concave.
-
-    Hence the theorem holds for $h$.
+    We just have to apply the lemma~\ref{lemma:log_concavity_bos_model} to the case where $e = \bbrack{1, m}$.
 \end{proof}
 
 
+\begin{lemma}[Symetries the likelihood]
+    \label{lemma:symetries_bos}
+    $\forall m \in \NN^*, \forall x \in \bbrack{1, m}, \forall \mu \in \bbrack{1, m}, \pi \in [0, 1], \forall e = \bbrack{l, u} \subset \bbrack{1, m}$:
+    
+    \[ \Pr(x | x \in \bbrack{l, u}, e = \bbrack{l, u}, \mu, \pi) = \Pr(x - l | x - l \in \bbrack{0, u - l}, e= \bbrack{0, u - l}, \max(0, \mu - l), \pi) \]
+\end{lemma}
+\begin{proof}
+    \tr{To be done}
+\end{proof}
 
-\begin{align}
-    \Pr(x | x \in e_j, \mu, \pi) 
-    &= \sum_{e_{j+1} \subset e_j} \Pr(x, e_{j+1} | x \in e_j, \mu, \pi) \\
-    &= \sum_{e_{j+1} \subset e_j} \Pr(x | e_{j+1}, x \in e_j, \mu, \pi) \Pr(e_{j+1} | e_j, \mu, \pi) \\
-    &= \sum_{e_{j+1} \subset e_j ; x\in e_{j+1}} \Pr(x | x \in e_{j+1}, \mu, \pi) \Pr(e_{j+1} | e_j, \mu, \pi)
-\end{align}
+\begin{definition}
+    As justified by the lemma~\ref{lemma:symetries_bos}, we can define the following notation:
+    \[ \bosl{x}{\mu}{h} := \Pr(x | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi) \]
+\end{definition}
 
-We now suppose $e_j = \bbrack{l, h - 1}$:
+\begin{thm}[Computing the likelihood]
+    \label{thm:computing_likelihood_bos}
+    $\forall m \in \NN^*, \forall x \in \bbrack{1, m}, \forall \mu \in \bbrack{1, m}, \forall \pi \in [0, 1]$:
 
-\begin{align}
-    &\Pr(x | x \in \bbrack{l, h-1}, \mu, \pi) =\\
-    &\begin{aligned}
-        &\sum_{y=x + 1}^{h-1} \Pr(\bbrack{l, y - 1} | \bbrack{l, h-1}, \mu, \pi) \Pr(x | x \in \bbrack{l, y - 1}, \mu, \pi) \\
-        &+ \Pr(\set{x} | \bbrack{l, h-1}, \mu, \pi) \Pr(x | x \in \set{x}, \mu, \pi) \\
-        &+ \sum_{y=l}^{x - 1} \Pr(\bbrack{y + 1, h-1} | \bbrack{l, h-1}, \mu, \pi) \Pr(x | x \in \bbrack{y + 1, h-1}, \mu, \pi)
-    \end{aligned} \\
-    &= \begin{aligned}
-        &\frac{1}{h - l} \sum_{y=x + 1}^{h-1} \left[ \pi \indickronecker{\mu < y} + (1-\pi) \frac{y - l}{h - l} \right] \Pr(x | x \in \bbrack{l, y - 1}, \mu, \pi) \\
-        &+\frac{1}{h - l} \left[ \pi \indickronecker{\mu = x \lor (x = l \land \mu \leq x) \lor (x = h - 1 \land \mu \geq x)} + (1 - \pi) \frac{1}{h-l} \right] \\
-        &\Pr(x | x \in \set{x}, \mu, \pi) \\
-        &+\frac{1}{h - l} \sum_{y=l}^{x - 1} \left[ \pi \indickronecker{\mu > y} + (1-\pi) \frac{h - y - 1}{h - l} \right] \Pr(x | x \in \bbrack{y + 1, h-1}, \mu, \pi)
-    \end{aligned}
-\end{align}
-
-As $\Pr(x | x \in \set{x}, \mu, \pi) = 1$ this allows to compute the probability of $x$ being in the interval $\bbrack{l, h-1}$ recursively.
-
-As:
 \begin{equation}
-    \Pr(x | x \in \bbrack{l, y - 1}, \mu, \pi) = \Pr(x - l | x - l \in \bbrack{0, y - l - 1}, \max(0, \mu - l), \pi)
+    \begin{aligned}
+        \bosl{x}{\mu}{h}
+        &=\frac{1}{h} \sum_{y = 0}^{x - 1} \bosl{x}{\mu}{y} \left[ \left( \indickronecker{\mu < y} - \frac{y}{h} \right) \pi + \frac{y}{h} \right] \\
+        &+\frac{1}{h} \ \qquad \left[ \left( \indickronecker{\mu = x \lor (x = 0 \land \mu \leq x) \lor (x = h - 1 \land \mu \geq x)} - 1 \right) \pi +  \frac{1}{h} \right] \\
+        &+\frac{1}{h} \sum_{y = x + 1}^{h - 1}\bosl{x - y}{\max(0, \mu - y)}{h - y}    \left[ \left( \indickronecker{\mu > y} - \frac{h - y - 1}{h} \right) \pi + \frac{h - y - 1}{h} \right]
+    \end{aligned} \\
 \end{equation}
+\end{thm}
 
-We can rewrite the previous equation as:
+\begin{proof}
 
+First we marginalize over the breakpoint $y$:
 \begin{align}
-    h\Pr(x | x \in \bbrack{0, h - 1})
-    &= \sum_{y = x + 1}^{h - 1} \left[ \pi \indickronecker{\mu < y} + (1-\pi) \frac{y}{h} \right] \Pr(x | x \in \bbrack{0, y - 1}, \mu, \pi) \\
-    &+ \pi \indickronecker{\mu = x \lor (x = 0 \land \mu \leq x) \lor (x = h - 1 \land \mu \geq x)} + (1 - \pi) \frac{1}{h} \\
-    &+ \sum_{y = 0}^{x - 1} \left[ \pi \indickronecker{\mu > y} + (1-\pi) \frac{h - y - 1}{h} \right] \Pr(x - y - 1 | x - y - 1 \in \bbrack{0, h - y - 2}, \max(0, \mu - y - 1), \pi)
+    \bosl{x}{\mu}{h}
+    &= \Pr(x | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi) \\
+    &
+    \begin{aligned}
+        &= \sum_{y = 0}^{h - 1} \Pr(x, f=e^{-, y} | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi)\\
+        &+ \sum_{y = 0}^{h - 1} \Pr(x, f=e^{=, y} | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi)\\
+        &+ \sum_{y = 0}^{h - 1} \Pr(x, f=e^{+, y} | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi)
+    \end{aligned} \\
 \end{align}
 
+Then we use the Bayes rule ($P(A, B) = P(A | B) P(B)$) to get likelihoods of $x$:
 
+\begin{align}
+    &
+    \begin{aligned}
+        &=\sum_{y = 0}^{h - 1} \Pr(x | x \in \bbrack{0, h - 1}, f = e^{-, y}, \mu, \pi) \Pr(e^{-, y} | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi)\\
+        &+ \sum_{y = 0}^{h - 1} \Pr(x | x \in \bbrack{0, h - 1}, f = e^{=, y}, \mu, \pi) \Pr(e^{=, y} | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi)\\
+        &+ \sum_{y = 0}^{h - 1} \Pr(x | x \in \bbrack{0, h - 1}, f = e^{+, y}, \mu, \pi) \Pr(e^{+, y} | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi)
+    \end{aligned} \\
+\end{align}
+
+Then we can get rid of the case where $x \notin f$ as it is $0$: 
+\begin{align}
+    &
+    \begin{aligned}
+        &=\sum_{y = 0}^{x - 1} \Pr(x | x \in \bbrack{0, y - 1}, f = \bbrack{0, y - 1} , \mu, \pi) \Pr(\bbrack{0, y - 1} | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi)\\
+        &+\ \qquad \Pr(x | x \in \set{x}, f = \set{x}, \mu, \pi) \Pr(\set{x} | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi)\\
+        &+ \sum_{y = x + 1}^{h - 1} \Pr(x | x \in \bbrack{y + 1, h - 1}, f = \bbrack{y + 1, h - 1}, \mu, \pi) \\
+        &\qquad \Pr(\bbrack{y + 1, h - 1} | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi)
+    \end{aligned} \\
+\end{align}
+
+We can apply the lemma~\ref{lemma:symetries_bos} to the third term:
+\begin{align}
+    &
+    \begin{aligned}
+        &=\sum_{y = 0}^{x - 1} \Pr(x | x \in \bbrack{0, y - 1}, f = \bbrack{0, y - 1} , \mu, \pi) \Pr(\bbrack{0, y- 1} | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi)\\
+        &+\ \qquad \Pr(x | x \in \set{x}, f = \set{x}, \mu, \pi) \Pr(\set{x} | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi)\\
+        &+ \sum_{y = x + 1}^{h - 1} \Pr(x - y - 1 | x - y - 1\in \bbrack{0, h - 1 - y - 1}, f = \bbrack{0, h - 1 - y - 1}, \max(0, \mu - y - 1), \pi) \\
+        &\qquad \Pr(\bbrack{y + 1, h - 1} | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi)
+    \end{aligned} \\
+    &
+    \begin{aligned}
+        &=\sum_{y = 0}^{x - 1} \bosl{x}{\mu}{y - 1} \Pr(\bbrack{0, y-1} | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi)\\
+        &+\ \qquad \bosl{x}{\mu}{1} \Pr(\set{x} | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi)\\
+        &+ \sum_{y = x + 1}^{h - 1}\bosl{x - y - 1}{\max(0, \mu - y - 1)}{h - y - 1} \Pr(\bbrack{y + 1, h - 1} | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi)
+    \end{aligned} \\
+\end{align}
+
+First we have $\bosl{x}{\mu}{1} = 1$.
+Moreover, we can now use the lemma~\ref{lemma:bos_transition} to get replace the transition probabilities. In our case as we already selected the only possible interval for each breakpoint we have the only term of the sum where $\indickronecker{x \in \nextes{e}{y}} = 1$ and the sum is reduced to a single term:
+
+\begin{align}
+    \begin{aligned}
+        &=\sum_{y = 0}^{x - 1} \bosl{x}{\mu}{y - 1} \frac{1}{h} \left[ \left( \correct{\mu}{\bbrack{0, h - 1}}{y - 1}{\bbrack{0, y - 1}} - \frac{y}{h} \right) \pi + \frac{y}{h} \right] \\
+        &+\ \qquad \frac{1}{h} \left[ \left(\correct{\mu}{\bbrack{0, h - 1}}{x}{\set{x}} - \frac{1}{h} \right) \pi + \frac{1}{h} \right] \\
+        &+ \sum_{y = x + 1}^{h - 1}\bosl{x - y}{\max(0, \mu - y)}{h - y} \frac{1}{h}  \\
+        &\qquad \left[ \left( \correct{\mu - y - 1}{\bbrack{0, h - 1 - y - 1}}{h - y - 1}{\bbrack{y, h - 1}} - \frac{h - y - 1}{h} \right) \pi + \frac{h - y - 1}{h} \right]
+    \end{aligned} \\ 
+\end{align}
+
+We can then replace $\correct{\mu}{\bbrack{0, h - 1}}{\bullet}{\bullet}$ by a logical expression. (We must take into account the special case of the first and last breakpoint):
+
+\begin{align}
+    \begin{aligned}
+        &=\frac{1}{h} \sum_{y = 0}^{x - 1} \bosl{x}{\mu}{y} \left[ \left( \indickronecker{\mu < y} - \frac{y}{h} \right) \pi + \frac{y}{h} \right] \\
+        &+\frac{1}{h} \ \qquad \left[ \left( \indickronecker{\mu = x \lor (x = 0 \land \mu \leq x) \lor (x = h - 1 \land \mu \geq x)} - 1 \right) \pi +  \frac{1}{h} \right] \\
+        &+\frac{1}{h} \sum_{y = x + 1}^{h - 1}\bosl{x - y}{\max(0, \mu - y)}{h - y}    \left[ \left( \indickronecker{\mu > y} - \frac{h - y - 1}{h} \right) \pi + \frac{h - y - 1}{h} \right]
+    \end{aligned} \\
+\end{align}
+\end{proof}
+
+
+% \begin{align}
+%     \Pr(x | x \in e_j, \mu, \pi) 
+%     &= \sum_{e_{j+1} \subset e_j} \Pr(x, e_{j+1} | x \in e_j, \mu, \pi) \\
+%     &= \sum_{e_{j+1} \subset e_j} \Pr(x | e_{j+1}, x \in e_j, \mu, \pi) \Pr(e_{j+1} | e_j, \mu, \pi) \\
+%     &= \sum_{e_{j+1} \subset e_j ; x\in e_{j+1}} \Pr(x | x \in e_{j+1}, \mu, \pi) \Pr(e_{j+1} | e_j, \mu, \pi)
+% \end{align}
+% 
+% We now suppose $e_j = \bbrack{l, h - 1}$:
+% 
+% \begin{align}
+%     &\Pr(x | x \in \bbrack{l, h-1}, \mu, \pi) =\\
+%     &\begin{aligned}
+%         &\sum_{y=x + 1}^{h-1} \Pr(\bbrack{l, y - 1} | \bbrack{l, h-1}, \mu, \pi) \Pr(x | x \in \bbrack{l, y - 1}, \mu, \pi) \\
+%         &+ \Pr(\set{x} | \bbrack{l, h-1}, \mu, \pi) \Pr(x | x \in \set{x}, \mu, \pi) \\
+%         &+ \sum_{y=l}^{x - 1} \Pr(\bbrack{y + 1, h-1} | \bbrack{l, h-1}, \mu, \pi) \Pr(x | x \in \bbrack{y + 1, h-1}, \mu, \pi)
+%     \end{aligned} \\
+%     &= \begin{aligned}
+%         &\frac{1}{h - l} \sum_{y=x + 1}^{h-1} \left[ \pi \indickronecker{\mu < y} + (1-\pi) \frac{y - l}{h - l} \right] \Pr(x | x \in \bbrack{l, y - 1}, \mu, \pi) \\
+%         &+\frac{1}{h - l} \left[ \pi \indickronecker{\mu = x \lor (x = l \land \mu \leq x) \lor (x = h - 1 \land \mu \geq x)} + (1 - \pi) \frac{1}{h-l} \right] \\
+%         &\Pr(x | x \in \set{x}, \mu, \pi) \\
+%         &+\frac{1}{h - l} \sum_{y=l}^{x - 1} \left[ \pi \indickronecker{\mu > y} + (1-\pi) \frac{h - y - 1}{h - l} \right] \Pr(x | x \in \bbrack{y + 1, h-1}, \mu, \pi)
+%     \end{aligned}
+% \end{align}
+% 
+% As $\Pr(x | x \in \set{x}, \mu, \pi) = 1$ this allows to compute the probability of $x$ being in the interval $\bbrack{l, h-1}$ recursively.
+% 
+% As:
+% \begin{equation}
+%     \Pr(x | x \in \bbrack{l, y - 1}, \mu, \pi) = \Pr(x - l | x - l \in \bbrack{0, y - l - 1}, \max(0, \mu - l), \pi)
+% \end{equation}
+% 
+% We can rewrite the previous equation as:
+% 
+% \begin{align}
+%     h\Pr(x | x \in \bbrack{0, h - 1})
+%     &= \sum_{y = x + 1}^{h - 1} \left[ \pi \indickronecker{\mu < y} + (1-\pi) \frac{y}{h} \right] \Pr(x | x \in \bbrack{0, y - 1}, \mu, \pi) \\
+%     &+ \pi \indickronecker{\mu = x \lor (x = 0 \land \mu \leq x) \lor (x = h - 1 \land \mu \geq x)} + (1 - \pi) \frac{1}{h} \\
+%     &+ \sum_{y = 0}^{x - 1} \left[ \pi \indickronecker{\mu > y} + (1-\pi) \frac{h - y - 1}{h} \right] \Pr(x - y - 1 | x - y - 1 \in \bbrack{0, h - y - 2}, \max(0, \mu - y - 1), \pi)
+% \end{align}
+% 
+% 
 
