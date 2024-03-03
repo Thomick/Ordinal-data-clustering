@@ -12,7 +12,7 @@ We now suppose
 \begin{lemma}[$e_j$ transition]
     \label{lemma:bos_transition}
     $\forall m \in \NN^*, \forall x \in \bbrack{1, m}, \forall \mu \in \bbrack{1, m}, \pi \in [0, 1], \forall e \subset \bbrack{1, m}, \forall f \subset e$:
-    \[ \Pr(f | x \in e, e, \mu, \pi) =  \frac{1}{\card{e}} \sum_{y \in e} \left[ \correct{\mu}{e}{y}{f} \pi + \frac{\card{f}}{\card{e}} (1 - \pi) \right] \indickronecker{x \in \nextes{e}{y}} \]
+    \[ \Pr(f | x \in e, e, \mu, \pi) =  \frac{1}{\card{e}}  \sum_{y \in e} \left[ \left( \correct{\mu}{e}{y}{f} - \frac{\card{f}}{\card{e}} \right) \pi + \frac{\card{f}}{\card{e}} \right]  \indickronecker{x \in \nextes{e}{y}} \]
 \end{lemma}
 \begin{proof}
     We have that, by marginalization over the breakpoint $y$:
@@ -29,7 +29,8 @@ We now suppose
         \Pr(f | x \in e, e, \mu, \pi) 
         &= \frac{1}{\card{e}} \sum_{y \in e} \sum_{z \in \set{0, 1}} \Pr(f | y, x \in e, e, \mu, \pi, z) \Pr(z | y, x \in e, e, \mu, \pi) \\
         &= \frac{1}{\card{e}} \sum_{y \in e} \left[ \Pr(f | y, x \in e, e, \mu, \pi, z=1) \pi + \Pr(f | y, x \in e, e, \mu, \pi, z=0) (1 - \pi) \right] \\
-        &= \frac{1}{\card{e}}  \sum_{y \in e} \left[ \correct{\mu}{e}{y}{f} \pi + \frac{\card{f}}{\card{e}} (1 - \pi) \right]  \indickronecker{x \in \nextes{e}{y}}
+        &= \frac{1}{\card{e}}  \sum_{y \in e} \left[ \correct{\mu}{e}{y}{f} \pi + \frac{\card{f}}{\card{e}} (1 - \pi) \right]  \indickronecker{x \in \nextes{e}{y}} \\
+        &= \frac{1}{\card{e}}  \sum_{y \in e} \left[ \left( \correct{\mu}{e}{y}{f} - \frac{\card{f}}{\card{e}} \right) \pi + \frac{\card{f}}{\card{e}} \right]  \indickronecker{x \in \nextes{e}{y}}
     \end{align}
 
     Note that $\indickronecker{x \in \nextes{e}{y}} = 1$ only for one value of $y$ and $0$ for all the others.
@@ -92,44 +93,50 @@ We can now prove that $\forall x \in \bbrack{0, h - 1}, \forall \mu \in \bbrack{
 
 \begin{lemma}[Log concavity affine times polynomial]
     \label{lemma:concavity_log_polynomial_times_affine}
-    Let $P$ be a strictly $\log$-concave polynomial positive function on $I$ a real interval and $a, b \in \RR$ with $a \neq 0$ and $\forall x  \in I, ax + b \neq 0$. Then $f: x \mapsto (ax + b)P(x)$ is $\log$-concave on $I$.
+    For $I$ a real interval.
+
+    Let $P$ be a strictly $\log$-concave function or without zeros on $I$ and $a, b \in \RR$ with $a \neq 0$ and $\forall t  \in I, at + b \neq 0$. Then $f: t \mapsto (at + b)P(t)$ is $\log$-concave on $I$.
 
     Moreover, if we just have that $P$ is $\log$-concave on $I$ without the assumption on $a$ and $b$, we have that $f$ is $\log$-concave on $I$.
 \end{lemma}
 \begin{proof}
-    Using the lemma~\ref{lemma:concavity_log_composed_functions} we have that $P'(x)^2 - P(x)P''(x) > 0$.
+    Let $t \in I$.
 
     We have that:
     \begin{align}
-        f'(x) &= aP(x) + (ax + b)P'(x) \\
-        f''(x) &= 2 aP'(x) + (ax + b)P''(x) \\
-        f'(x)^2 &= a^2P(x)^2 + 2a(ax + b)P(x)P'(x) + (ax + b)^2P'(x)^2 \\
-        f(x)f''(x) &= 2a(ax + b) P(x)P'(x) + (ax + b)^2P(x)P''(x)
+        f'(t) &= aP(t) + (at + b)P'(t) \\
+        f''(t) &= 2 aP'(t) + (at + b)P''(t) \\
+        f'(t)^2 &= a^2P(t)^2 + 2a(at + b)P(t)P'(t) + (at + b)^2P'(t)^2 \\
+        f(t)f''(t) &= 2a(at + b) P(t)P'(t) + (at + b)^2P(t)P''(t)
     \end{align}
 
     Hence:
-    \[f'(x)^2 - f(x) f''(x) = a^2 P(x)^2 + (ax + b)^2 \left[ P'(x)^2 - P(x)P''(x) \right] \]
+    \[f'(t)^2 - f(t) f''(t) = a^2 P(t)^2 + (at + b)^2 \left[ P'(t)^2 - P(t)P''(t) \right] \]
 
-    As all the terms are strictly positive, we have that $\forall x \in I, f'(x)^2 - f(x) f''(x) > 0$ and using the lemma~\ref{lemma:concavity_log_composed_functions} we have that $f$ is strictly $\log$-concave on $I$.
+    If $P$ is strictly $\log$-concave on $I$, using the lemma~\ref{lemma:concavity_log_composed_functions} we have that $P'(t)^2 - P(t)P''(t) > 0$.
+    If $P$ is without zeros on $I$, we have that $\forall t \in I, P(t) > 0$. 
 
-    If we just have that $P$ is $\log$-concave on $I$ without the assumption on $a$ and $b$, we have that $\forall x \in I, f'(x)^2 - f(x) f''(x) \geq 0$ and using the lemma~\ref{lemma:concavity_log_composed_functions} we have that $f$ is $\log$-concave on $I$.
+    As all the terms are $\geq 0$ and one of the two is strictly positive, hence we have that $\forall t \in I, f'(t)^2 - f(t) f''(t) > 0$ and using the lemma~\ref{lemma:concavity_log_composed_functions} we have that $f$ is strictly $\log$-concave on $I$.
+
+    If we just have that $P$ is $\log$-concave on $I$ without the assumption on $a$ and $b$, we have that $\forall t \in I, f'(t)^2 - f(t) f''(t) \geq 0$ and using the lemma~\ref{lemma:concavity_log_composed_functions} we have that $f$ is $\log$-concave on $I$.
 \end{proof}
 
 \begin{lemma}[Log concavity of the BOS model]
     \label{lemma:log_concavity_bos_model}
     $\forall m \in \NN^*, \forall x \in \bbrack{1, m}, \forall \mu \in \bbrack{1, m},, \forall e \subset \bbrack{1, m}$:
     \[ \pi \mapsto \Pr(x | x \in e, e, \mu, \pi) \]
-    is $\log$-concave on $[0, 1]$ and strictly $\log$-concave on $]0, 1[$.
+    If $\card{e} > 2$, this function is $\log$-concave on $[0, 1]$ and strictly $\log$-concave on $]0, 1[$. 
+    If $\card{e} \leq 2$ this function is affine on $[0, 1]$ if $\card{e} \leq 2$.
 \end{lemma}
 \begin{proof}
     Let $m \in \NN^*$, $x \in \bbrack{1, m}$ and $\mu \in \bbrack{1, m}$.
     We proceed by induction on $\card{e}$.
 
     \begin{itemize}
-        \item Initialization: $\card{e} = 1$:
-        \[ \Pr(x | x \in e, e, \mu, \pi) = \indickronecker{e = \set{x}} \] which is constant and $\log$-concave.
+        \item Initialization: $\card{e} \leq 2$:
+        \[\pi \mapsto \Pr(x | x \in e, e, \mu, \pi) \] is a polynomial function of degree at most $1$ by lemma~\ref{lemma:bos_polynomial} and is therefore affine on $[0, 1]$.
 
-        \item Induction: Suppose the result holds for all $f \subset \bbrack{1, m}$ of size less or equal than $\card{e} - 1$ and let us prove it for $\card{e}$.
+        \item Induction: Suppose that $\card{e} > 2$ and that the result holds for all $f \subset \bbrack{1, m}$ of size less or equal than $\card{e} - 1$ and let us prove it for $\card{e}$.
         
         Using the lemma~\ref{lemma:bos_polynomial}, we have:
         \begin{align}
@@ -137,7 +144,20 @@ We can now prove that $\forall x \in \bbrack{0, h - 1}, \forall \mu \in \bbrack{
             &= \sum_{f \subset e ; x \in f} \Pr(x | x \in f, f, \mu, \pi) \Pr(f | x \in e, e, \mu, \pi)
         \end{align}
 
-        \tr{Need to finish the proof.}
+        We have a sum of function. We now have to check that each function is $\log$-concave on $[0, 1]$ and at least one is strictly $\log$-concave on $]0, 1[$. We will use the lemma~\ref{lemma:concavity_log_polynomial_times_affine}. We first focus on $\Pr(f | x \in e, e, \mu, \pi)$.
+        
+        Using the lemma~\ref{lemma:bos_transition}, we have that  $\Pr(f | x \in e, e, \mu, \pi)$ is an affine function of $\pi$ times of the form $a_f \pi + b_f$ where $a_f = 1 - \frac{\card{f}}{\card{e}} \neq 0$ (as $\card{f} < \card{e}$) or $a_f = - \frac{\card{f}}{\card{e}} \neq 0$ and $b_f = \frac{\card{f}}{\card{e}}$.
+
+        Let $t \in ]0, 1[$. We check that $a_f t + b_f \neq 0$. If $a_f = 1 - \frac{\card{f}}{\card{e}}$, we have that $a_f > 0, t > 0$ and $b_f > 0$ and therefore $a_f t + b_f > 0$. If $a_f = - \frac{\card{f}}{\card{e}}$, we have that $a_f t + b_f = \frac{\card{f}}{\card{e}} (1 - t) > 0$.
+        
+        Each $\pi \mapsto \Pr(x | x \in f, f, \mu, \pi)$ is $\log$-concave on $[0, 1]$ by induction hypothesis. Using the lemma~\ref{lemma:concavity_log_polynomial_times_affine}, we have that each $\pi \mapsto \Pr(x | x \in f, f, \mu, \pi) \Pr(f | x \in e, e, \mu, \pi)$ is $\log$-concave on $[0, 1]$. 
+        
+        We now need to check that at least one is strictly $\log$-concave on $]0, 1[$.
+        Using the lemma~\ref{lemma:concavity_log_polynomial_times_affine}, we have that to prove that at least one of the $\pi \mapsto \Pr(x | x \in f, f, \mu, \pi)$ has no zeros on $]0, 1[$. As by induction hypothesis, each $\pi \mapsto \Pr(x | x \in f, f, \mu, \pi)$ is $\log$-concave on $[0, 1]$ it has no zeros on $]0, 1[$ or is constant equal to $0$ on $[0, 1]$. As $\Pr(x | x \in e, e, \mu, \pi) > 0$ we have that at least one of the $\pi \mapsto \Pr(x | x \in f, f, \mu, \pi)$ is not constant equal to $0$ on $[0, 1]$ and therefore has no zeros on $]0, 1[$. Hence at least one of the $\pi \mapsto \Pr(x | x \in f, f, \mu, \pi) \Pr(f | x \in e, e, \mu, \pi)$ is strictly $\log$-concave on $]0, 1[$.
+
+        We can conclude that the sum is strictly $\log$-concave on $]0, 1[$.
+
+        \tr{Need to check why this does not work for |e| = 2}
     \end{itemize}
 
 \end{proof}
