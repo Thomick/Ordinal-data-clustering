@@ -46,7 +46,7 @@ We can now prove that $\forall x \in \bbrack{0, h - 1}, \forall \mu \in \bbrack{
 
 \begin{lemma}[Log concavity affine times polynomial]
     \label{lemma:concavity_log_polynomial_times_affine}
-    Let $P$ a $\log$-concave polynomial postive polynomail (for all $x$ considered) and $a, b \in \RR$ with $ax + b \geq 0$. Then $f: x \mapsto (ax + b)P(x)$ is $\log$-concave.
+    Let $P$ be a $\log$-concave polynomial positive polynomail (for all $x$ considered) and $a, b \in \RR$ with $ax + b \geq 0$. Then $f: x \mapsto (ax + b)P(x)$ is $\log$-concave.
 \end{lemma}
 \begin{proof}
     Using the lemma~\ref{lemma:concavity_log_composed_functions} we have that $P'(x)^2 - P(x)P''(x) \geq 0$.
@@ -68,7 +68,7 @@ We can now prove that $\forall x \in \bbrack{0, h - 1}, \forall \mu \in \bbrack{
 
     Induction: Suppose the theorem holds for $h - 1$ and let us prove it for $h$.
 
-    Using the previous formula we have that $f$ is a sum of psotive affine function in $\pi$ times $\Pr(x | x \in \bbrack{0, y - 1}, \mu, \pi)$ which is $\log$-concave by induction hypothesis and a positive polynomial of degree $y - 1$. We immediately deduce that $f$ is postive and polynomial of degree less than $h - 1$. Moreover using the previous lemma~\ref{lemma:concavity_log_polynomial_times_affine} we have that $f$ is $\log$-concave.
+    Using the previous formula we have that $f$ is a sum of positive affine function in $\pi$ times $\Pr(x | x \in \bbrack{0, y - 1}, \mu, \pi)$ which is $\log$-concave by induction hypothesis and a positive polynomial of degree $y - 1$. We immediately deduce that $f$ is postive and polynomial of degree less than $h - 1$. Moreover using the previous lemma~\ref{lemma:concavity_log_polynomial_times_affine} we have that $f$ is $\log$-concave.
 
     Hence the theorem holds for $h$.
 \end{proof}
