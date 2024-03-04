@@ -31,25 +31,24 @@ The worst case complexity of our implementation is plotted (with $300$ iteration
     \label{fig:runtime_epsilon}
 \end{figure}
 For all the experiments, the runtimes are measured on the same machine for all the tests and over 10 runs.
-\ar{Plot with m going very high but just for our implementation?}
-
+% \ar{Plot with m going very high but just for our implementation?}
 
 \paragraph{Evaluating the estimation error.}
 We generate data from the BOS and the GOD model with different parameters and with both a random initialization of the parameters and an initialization of the parameters using the K-Means algorithm and then run the AECM algorithm on the generated data to estimate the parameters. We then compare the estimated parameters with the true parameters using the $L_1$ distance between the two vectors similarly to \cite{biernacki2016model}. We repeat this process multiple times for different parameters and average the results to obtain the metrics presented in Table~\ref{tab:results_bos} and Table~\ref{tab:results_god} in Appendix \ref{appendix:metrics_synth}. Runtimes are also measured on the same machine for all the algorithms to evaluate their efficiency.
- \\ \\
-\ar{add discusssion on the results}
+The results show that on average, the parameter estimation is better with a random initialization than with a KMeans initialization. This is likely due to the fact that the KMeans initialization is not adapted to the ordinal nature of the data, and converges to local minima that are further from the ones from the initial distribution. Both the BOS and the GOD model parameters are being estimated with comparable accuracy.
 
 \paragraph{Clustering performance.}
 We also generate data with multiple clusters from different distributions and then run the AECM algorithm on the generated data to estimate the clusters. The goal of this experiment is to check the ability of the models to correctly cluster the data and to check whether the models are able to generalize to different distributions.
 The distributions used are the BOS model, the GOD model and discretized blobs.
-The following clustering algorithms are used for comparison: K-Means, Gaussian Mixture Models and the BOS and GOD models. The ARI score (section~\ref{sec:evaluation_method}) is used to measure the clustering performance. The results are presented in Table~\ref{tab:results_synth_clustering} of Appendix \ref{appendix:metrics_synth}. \\ \\
-\ar{Need to add ordinal clustering algorithms that are different?}
-\ar{Discussion}
+The following clustering algorithms are used for comparison: K-Means, Gaussian Mixture Models and the BOS and GOD models. The ARI score (section~\ref{sec:evaluation_method}) is used to measure the clustering performance. The results are presented in Table~\ref{tab:results_synth_clustering} of Appendix \ref{appendix:metrics_synth}.
+% \ar{Need to add ordinal clustering algorithms that are different?}
+% \ar{Discussion}
 
 \paragraph{Visualizing the clusters.}
 In order to get a better idea of the differences between the clustering methods, t-SNE visualizations \citep{van2008visualizing} are plotted for different disitributions and clustering methods. The visualizations project the categorical datapoints in a continuous space and allow to check whether the estimated clusters are coherent with the true clusters. Since categorical data is used, it is more difficult to separate the clusters with smaller dimensionnal data and when the number of categories is small. Multiple datasets are generated with different parameters in order to highlight these differences. Moreover, as seen in the previous paragraph, it is also easier to cluster the data when the number of categories or features are high.
-The results are presented in Figure~\ref{fig:tsne_comparative_analysis} of Appendix \ref{appendix:metrics_synth}. \\ \\
-\ar{Discussion}
+The results are presented in Figure~\ref{fig:tsne_comparative_analysis} of Appendix \ref{appendix:metrics_synth}. While the KMeans slgorithm identifies clusters that are well separated visually, 
+it fails to identify the true clusters in the case of the BOS and GOD models, especially when the number of categories is small. Moreover, even in the case where even 4 features are used, we also notice that categorical clusters are not easy to separate as shown by the obtained ARI scores. This highlights the difficulty of clustering categorical data even with specific algorithms designed to do so for small number of features or small number of categories.
+% \ar{Discussion}
 
 \subsection{Real-life datasets}
 \subsubsection{Datasets} One of the main goal of the experiments is to test the ability of the models to generalize to real-life datasets. We therefore propose to test the illustrated methods on real world datasets to check the usefulness of the models on different real-life situations. Since the algorithm is specifically designed for ordinal observations, the datasets need to be adapted for the task. One way to apply to obtain real-life datasets is to quantize continuous datasets of observations that can be categorized (e.g. movies, store products, species...) \citep{skubacz2000quantization}. Another interesting approach could be to test the models on tasks that they were not specifically designed for. This could allow seeing how they can generalize and whether they are applicable to a broader class of problems. We therefore propose to test the ability to cluster observations of binary features into different animal species.
@@ -95,12 +94,10 @@ where $n_{i, j}$ is the number of samples that are in the predicted cluster $i$ 
 
 \subsubsection{Experiments with real-life datasets}
 To do so, we also use simple clustering algorithms to compare the performance of the BOS model on data that is adapted (ordinal) with algorithms that are not specifically designed for this kind of data such as K-Means \citep{macqueen1967some} and Gaussian Mixture Models \citep{reynolds2009gaussian}.
-The results are presented in Table~\ref{tab:results_real} in the appendix \ref{appendix:metrics_real}.
+The results are presented in Table~\ref{tab:results_real} in the appendix \ref{appendix:metrics_real}. One interesting observation is that our implementation of the clustering methods scale well with the number of samples when comparaed to a Gaussian Mixture Model for example. 
+During the experiments, the final results were very  sensitive to the initial parameters used, most notably the proportion of each clusters, and initializations are likely to get stuck on a local minimum because of the nature of AECM.
 % We notice that although K-Means allows to significantly reduce the runtime of both the BOS and the GOD models estimations, it does not necessarily increase the clustering score and the classification score. The BOS model, because of its complexity, is also the longest to run but seems to be competitive with the other models on most datasets.
-
-In order to get a better idea of the differences between the clustering methods, we also plot t-SNE visualizations \citep{van2008visualizing} for different datasets and the multiple models. Figures \ref{fig:tsne_zoo} of appendix \ref{sec:appendix_tsne} shows the plots of all the features and the associated true labels and clusters.
-
-Histograms and assignment matrices of some datasets are provided in appendix~\ref{sec:appendix_hist} and appendix~\ref{sec:appendix_assign} in order to get a better understanding of the different assignments obtained in these settings for different models.
+In order to get a better idea of the differences between the clustering methods, we also plot t-SNE visualizations \citep{van2008visualizing} for different datasets and the multiple models in Appendix~\ref{sec:appendix_assign}. The histogram and assignment matrix of the Zoo dataset are provided in Appendix~\ref{sec:appendix_hist} in order to get a better understanding of the different assignments obtained in these settings for different models.
 
 % \subsection{"experiment with a modification of the method"}
 
