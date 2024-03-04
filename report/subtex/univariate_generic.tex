@@ -77,22 +77,29 @@ Then we have, $\pi \mapsto L_W(\mu, \pi)$ is stricly concave as positive linear 
     \end{algorithmic}
     \end{algorithm}
 
-\tr{TODO} 
+\tr{TODO: ref} 
 %(see https://en.wikipedia.org/wiki/Ternary_search)
 
-The ternary search algorithm is a divide and conquer algorithm that can be used to find the argmax of a unimodal function on a given interval. The algorithm find the argmax of any concave function on a given interval with a precision of $\epsilon$ in $\Theta(\log \frac{b - a}{\epsilon})$ evaluations of the function. We will use this algorithm to estimate $\pi$ for a given $\mu$.
+The ternary search algorithm can be used to find the argmax of a unimodal  concave function on a given interval with a precision of $\epsilon$ in $\Theta(\log \frac{b - a}{\epsilon})$ evaluations of the function. More precisely in our case ($b - a \leq 1$) it will require approximately $100$ evaluations of the function for a precision of $10^{-10}$.
+We will use this algorithm to estimate $\pi$ for a given $\mu$.
 
 \begin{thm}
     Let $f$ be a concave function on $[A, B]$. The ternary search algorithm returns a value $y$ such that $\exists x \in \argmax_{[A, B]} f$, $|y - x| < \epsilon$.
 \end{thm}
 \begin{proof}
-    The algorithm stops when the length of the interval is less than $\epsilon$. At each iteration, the length of the interval is divided by $3$. Hence the algorithm terminates and require $\Theta(\log \frac{b - a}{\epsilon})$ iterations.
+    The algorithm stops when the length of the interval is less than $\epsilon$. At each iteration, the length of the interval is multiplied by $\frac{2}{3}$. Hence the algorithm terminates and require $\Theta(\log \frac{b - a}{\epsilon})$ iterations.
 
-    Indeed after iteration $k$, the length of the interval is $\frac{b - a}{3^k}$.
+    \tr{TODO: clean this} 
+    Indeed after iteration $k$, the length of the interval is $\left(\frac{2}{3}\right)^k(b - a)$~\footnote{$\lg=\log_2$}:
     \begin{align}
-        \frac{b - a}{3^k} < \epsilon &\Leftrightarrow 3^k > \frac{b - a}{\epsilon} \\
-        &\Leftrightarrow k > \log_3 \frac{b - a}{\epsilon}
-    \end{align}
+        \left(\frac{2}{3}\right)^k(b - a) < \epsilon &\Leftrightarrow \left(\frac{2}{3}\right)^k < \frac{\epsilon}{b - a} \\
+        &\Leftrightarrow k (\lg 2 - \lg 3) < \lg \frac{\epsilon}{b - a} \\
+        &\Leftrightarrow k > \frac{1}{\lg 3 - 1} \lg \frac{b - a}{\epsilon}
+        \end{align}
+    which for $\epsilon = 2^{-p}$ and $b - a \leq 1$ gives:
+    \begin{equation}
+        k > \frac{1}{\lg 3 - 1} p \approx 1.7095 p
+    \end{equation}
 
     We note $[a, b]$ the interval on which the algorithm is called and $[A, B]$ the initial interval.
     We prove the following invariant: at each iteration of the algorithm, the interval $[a, b]$ is such that $\exists x \in \argmax_{[a, b]} f, a \leq x \leq b$.
