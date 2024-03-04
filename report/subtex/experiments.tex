@@ -10,6 +10,30 @@ All of the experiments and table are reproducible using the provided code and da
 \paragraph{Experimental setup.}
 In this section, we propose to test the AECM algorithm for the BOS and the GOD model on synthetic data in order to check the ability of our proposed estimation methods to correctly estimate the parameters of the dataand to cluster the datasets. 
 
+\paragraph{Runtimes.}
+The runtimes of the AECM algorithm implementation with exponential complexity from \citet{biernacki2016model} 
+are compared to our implementation of the AECM algorithm with polynomial complexity. Figure~\ref{fig:runtime_epsilon}  compare both complexities for multiple runtimes for both univariate and multivariate AECM runs. The runtimes are reported with different number of categories in the dataset $m$. While the original implementation struggles to go further than $m=6$, our implementation can easily reach higher number of categories. The implementation ordinalClust \cite{selosse2021ordinalclust} is used for fair comparison and it is allowed to converge with a predefined $\epsilon$ parameter (internal to the authors package that we cannot modify). 
+The worst case complexity of our implementation is plotted (with $300$ iterations without allowing it to terminate when converged) is plotted to highlight the time gains.The runtimes in the case where our implementation is stopped at convergence with an $\epsilon$ parameter, taken small enough for the comparison are also plotted.
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth}
+    \includegraphics[width=1\textwidth]{python_figures/run_time_comparison_univariate_epsilon.png}
+        \caption{Univariate case}
+    \label{fig:runtime_univariate_epsilon}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+    \includegraphics[width=1\textwidth]{python_figures/run_time_comparison_multivariate_epsilon.png}
+        \caption{Multivariate case}
+    \label{fig:runtime_multivariate_epsilon}
+    \end{subfigure}
+    \caption{Runtime comparison of the AECM algorithm for the BOS estimation on multivariate datasets as a function of the number of categories. For the ordinalClust package \cite{selosse2021ordinalclust}, nbSEM = 300, nbSEMburn = 200 and for our implementation, we run the model for $300$ iterations in the first curve (worst case) and set $\epsilon = 10^{-3}$ in the second curve. For every measurement, 10 datasets were generated and the average runtime is reported.}
+    \label{fig:runtime_epsilon}
+\end{figure}
+For all the experiments, the runtimes are measured on the same machine for all the tests and over 10 runs.
+\ar{Plot with m going very high but just for our implementation?}
+
+
 \paragraph{Evaluating the estimation error.}
 We generate data from the BOS and the GOD model with different parameters and with both a random initialization of the parameters and an initialization of the parameters using the K-Means algorithm and then run the AECM algorithm on the generated data to estimate the parameters. We then compare the estimated parameters with the true parameters using the $L_1$ distance between the two vectors similarly to \cite{biernacki2016model}. We repeat this process multiple times for different parameters and average the results to obtain the metrics presented in Table~\ref{tab:results_bos} and Table~\ref{tab:results_god} in Appendix \ref{appendix:metrics_synth}. Runtimes are also measured on the same machine for all the algorithms to evaluate their efficiency.
  \\ \\
@@ -18,16 +42,14 @@ We generate data from the BOS and the GOD model with different parameters and wi
 \paragraph{Clustering performance.}
 We also generate data with multiple clusters from different distributions and then run the AECM algorithm on the generated data to estimate the clusters. The goal of this experiment is to check the ability of the models to correctly cluster the data and to check whether the models are able to generalize to different distributions.
 The distributions used are the BOS model, the GOD model and discretized blobs.
-The following clustering algorithms are used for comparison: K-Means, Gaussian Mixture Models and the BOS and GOD models. The ARI score (section~\ref{sec:evaluation_method}) is used to measure the clustering performance. The results are presented in Table~\ref{tab:ari_synthetic} in Appendix \ref{appendix:metrics_synth}. \\ \\
+The following clustering algorithms are used for comparison: K-Means, Gaussian Mixture Models and the BOS and GOD models. The ARI score (section~\ref{sec:evaluation_method}) is used to measure the clustering performance. The results are presented in Table~\ref{tab:results_synth_clustering} of Appendix \ref{appendix:metrics_synth}. \\ \\
 \ar{Need to add ordinal clustering algorithms that are different?}
 \ar{Discussion}
 
 \paragraph{Visualizing the clusters.}
 In order to get a better idea of the differences between the clustering methods, t-SNE visualizations \citep{van2008visualizing} are plotted for different disitributions and clustering methods. The visualizations project the categorical datapoints in a continuous space and allow to check whether the estimated clusters are coherent with the true clusters. Since categorical data is used, it is more difficult to separate the clusters with smaller dimensionnal data and when the number of categories is small. Multiple datasets are generated with different parameters in order to highlight these differences. Moreover, as seen in the previous paragraph, it is also easier to cluster the data when the number of categories or features are high.
-The results are presented in Figure~\ref{fig:tsne_synthetic} in Appendix \ref{appendix:metrics_synth}. \\ \\
+The results are presented in Figure~\ref{fig:tsne_comparative_analysis} of Appendix \ref{appendix:metrics_synth}. \\ \\
 \ar{Discussion}
-
-\paragraph{Parameters of the experiment}
 
 \subsection{Real-life datasets}
 \subsubsection{Datasets} One of the main goal of the experiments is to test the ability of the models to generalize to real-life datasets. We therefore propose to test the illustrated methods on real world datasets to check the usefulness of the models on different real-life situations. Since the algorithm is specifically designed for ordinal observations, the datasets need to be adapted for the task. One way to apply to obtain real-life datasets is to quantize continuous datasets of observations that can be categorized (e.g. movies, store products, species...) \citep{skubacz2000quantization}. Another interesting approach could be to test the models on tasks that they were not specifically designed for. This could allow seeing how they can generalize and whether they are applicable to a broader class of problems. We therefore propose to test the ability to cluster observations of binary features into different animal species.
@@ -52,7 +74,7 @@ In order to do so, we propose two methods:
     
 \item The second method consists in solving the Assignment Problem \citep{kuhn1955hungarian} with the cost matrix being the distance between the histograms of the predicted clusters and the true clusters. This method takes into account the distribution of the real clusters according to the true labels for the matching. We can easily solve it using any Optimal Transport algorithm (or by defining the Linear Programming problem and solving it using an LP solver).
 \end{itemize}
-Figure \ref{fig:assignment_methods} in appendix \ref{appendix:metrics_real} shows that the optimal matching when considering the assignment matrix is a better choice in the case of the Zoo dataset for example and that the classes in the predicted distribution are assigned to the correct true class with respect to their proportions.
+Figure \ref{fig:assignment_methods} of appendix \ref{appendix:metrics_real} shows that the optimal matching when considering the assignment matrix is a better choice in the case of the Zoo dataset for example and that the classes in the predicted distribution are assigned to the correct true class with respect to their proportions.
 
 
 The evaluation metrics used to compare the different models are the F1-score, and the Accuracy score in the cases where the datasets are suited for classification and the Wasserstein distance and the Adjusted Rand Index (ARI).
@@ -76,7 +98,7 @@ To do so, we also use simple clustering algorithms to compare the performance of
 The results are presented in Table~\ref{tab:results_real} in the appendix \ref{appendix:metrics_real}.
 % We notice that although K-Means allows to significantly reduce the runtime of both the BOS and the GOD models estimations, it does not necessarily increase the clustering score and the classification score. The BOS model, because of its complexity, is also the longest to run but seems to be competitive with the other models on most datasets.
 
-In order to get a better idea of the differences between the clustering methods, we also plot t-SNE visualizations \citep{van2008visualizing} for different datasets and the multiple models. Figures \ref{fig:tsne_zoo} in appendix \ref{sec:appendix_tsne} shows the plots of all the features and the associated true labels and clusters.
+In order to get a better idea of the differences between the clustering methods, we also plot t-SNE visualizations \citep{van2008visualizing} for different datasets and the multiple models. Figures \ref{fig:tsne_zoo} of appendix \ref{sec:appendix_tsne} shows the plots of all the features and the associated true labels and clusters.
 
 Histograms and assignment matrices of some datasets are provided in appendix~\ref{sec:appendix_hist} and appendix~\ref{sec:appendix_assign} in order to get a better understanding of the different assignments obtained in these settings for different models.
 

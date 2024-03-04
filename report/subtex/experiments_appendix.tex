@@ -1,23 +1,7 @@
 \section{Synthetic data}
 \label{appendix:metrics_synth}
 
-\subsection{Runtime comparison}
-\label{appendix:runtime}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{python_figures/run_time_comparison_univariate_epsilon.png}
-    \caption{Runtime comparison of the AECM algorithm for the BOS estimation on univariate datasets as a function of the number of categories. For the ordinalClust package \cite{selosse2021ordinalclust}, nbSEM = 300, nbSEMburn = 200 and for our implementation, we run the model for $300$ iterations in the first curve (worst case) and set $\epsilon = 10^{-3}$ in the second curve. For every measurement, 10 datasets were generated and the average runtime is reported.}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{python_figures/run_time_comparison_multivariate_epsilon.png}
-    \caption{Runtime comparison of the AECM algorithm for the BOS estimation on multivariate datasets as a function of the number of categories. For the ordinalClust package \cite{selosse2021ordinalclust}, nbSEM = 300, nbSEMburn = 200 and for our implementation, we run the model for $300$ iterations in the first curve (worst case) and set $\epsilon = 10^{-3}$ in the second curve. For every measurement, 10 datasets were generated and the average runtime is reported.}
-\end{figure}
-
-
-\subsection{AECM estimation for BOS and GOD distributions}
+\subsection*{AECM estimation for BOS and GOD distributions}
 \begin{table}[H]
 \centering
 \begin{minipage}{.48\columnwidth}
@@ -144,7 +128,60 @@ Init. & $n$ & $n_{clusters}$ & $d$ & $n_{cats}$ &  &  &  &  \\
 \end{minipage}
 \end{table}
 
-\subsection{t-SNE plots for the synthetic data}
+\subsection*{Synthetic data clustering}
+\label{sec:appendix_synth_clustering}
+
+\begin{table}[H]
+    \begin{minipage}{.48\columnwidth}
+    \begin{adjustbox}{width=\columnwidth}
+    \begin{tabular}{lllllrrrr}
+     &  &  &  &  & ARI BOS & ARI GOD & ARI KMeans & ARI GMM \\
+    Data model & n & k & d & m &  &  &  &  \\
+    \cline{1-9}
+    \multirow[t]{3}{*}{BOS} & \multirow[t]{3}{*}{10000} & \multirow[t]{3}{*}{4} & 4 & 4 & 0.389 & 0.367 & 0.189 & 0.192 \\
+    \cline{4-9}
+     &  &  & 7 & 7 & 0.855 & 0.840 & 0.395 & 0.450 \\
+    \cline{4-9}
+     &  &  & 10 & 10 & 0.972 & 0.963 & 0.691 & 0.580 \\
+    \end{tabular}
+    \end{adjustbox}
+    \end{minipage} \hspace{.02\columnwidth}%
+    \begin{minipage}{.48\columnwidth}
+    \begin{adjustbox}{width=\columnwidth}
+    \begin{tabular}{lllllrrrr}
+     &  &  &  &  & ARI BOS & ARI GOD & ARI KMeans & ARI GMM \\
+    Data model & n & k & d & m &  &  &  &  \\
+    \cline{1-9}
+    \multirow[t]{3}{*}{GOD} & \multirow[t]{3}{*}{10000} & \multirow[t]{3}{*}{4} & 4 & 4 & 0.260 & 0.494 & 0.308 & 0.308 \\
+    \cline{4-9}
+     &  &  & 7 & 7 & 0.548 & 0.828 & 0.481 & 0.499 \\
+    \cline{4-9}
+     &  &  & 10 & 10 & 0.707 & 0.829 & 0.649 & 0.614 \\
+    \end{tabular}
+    \end{adjustbox}
+    \end{minipage}
+
+    \begin{minipage}{\textwidth}
+    \centering
+    \begin{adjustbox}{width=.48\textwidth, center}
+    \begin{tabular}{lllllrrrr}
+     &  &  &  &  & ARI BOS & ARI GOD & ARI KMeans & ARI GMM \\
+    Data model & n & k & d & m &  &  &  &  \\
+    \cline{1-9}
+    \multirow[t]{3}{*}{Blobs} & \multirow[t]{3}{*}{10000} & \multirow[t]{3}{*}{4} & 4 & 4 & 0.747 & 0.928 & 0.988 & 0.988 \\
+    \cline{4-9}
+     &  &  & 7 & 7 & 0.719 & 0.875 & 0.993 & 0.993 \\
+    \cline{4-9}
+     &  &  & 10 & 10 & 0.976 & 0.246 & 1.000 & 1.000 \\
+    \end{tabular}
+    \end{adjustbox}
+    \end{minipage}
+
+\caption{Results of the clustering experiments on synthetic data. The metrics are the Adjusted Rand Index (ARI) for the different methods. The best results for each dataset and metric are highlighted in bold italic and underlined.}
+    \label{tab:results_synth_clustering}
+\end{table}
+
+\subsection*{t-SNE plots for the synthetic data}
 \label{sec:appendix_tsne_synth}
 
 \begin{figure}[H]
@@ -253,7 +290,7 @@ The runtime is also reported. The best results for each dataset and metric are h
 
 %\tm{Penser à mettre en avant les bons résultats. Eventuellement ajouter les temps de calcul}
 
-\subsection{t-SNE plots}
+\subsection*{t-SNE plots}
 \label{sec:appendix_tsne}
 
 \begin{figure}[H]
@@ -284,7 +321,7 @@ The runtime is also reported. The best results for each dataset and metric are h
 %     \label{fig:tsne_caesarian}
 % \end{figure}
 
-\subsection{Assignment Matrices}
+\subsection*{Assignment Matrices}
 \label{sec:appendix_assign}
 
 \begin{figure}[H]
@@ -301,7 +338,7 @@ The runtime is also reported. The best results for each dataset and metric are h
     \label{fig:assign_hr}
 \end{figure}
 
-\subsection{Histograms of the different clustering}
+\subsection*{Histograms of the different clustering}
 \label{sec:appendix_hist}
 
 \begin{figure}[H]
