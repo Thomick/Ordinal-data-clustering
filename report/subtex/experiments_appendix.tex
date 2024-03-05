@@ -62,7 +62,7 @@ Init. & $n$ & $n_{clusters}$ & $d$ & $n_{cats}$ &  &  &  &  \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
-\caption{Results of the experiments for the AECM algorithm no synthethic data with the GOD model. The parameters are the number of samples $n$, the number of clusters $n_{clusters}$, the dimension $d$ and the number of categories $n_{cats}$. The deltas are the average of the $L_1$ distances between the true and estimated parameters after applying optimal transport to find the correct clusters. 10 different runs were made for each configuration and the average scores are reported for statistical significance.}
+\caption{Results of the experiments for the AECM algorithm on synthethic data with the GOD model. The parameters are the number of samples $n$, the number of clusters $n_{clusters}$, the dimension $d$ and the number of categories $n_{cats}$. The deltas are the average of the $L_1$ distances between the true and estimated parameters after applying optimal transport to find the correct clusters. 10 different runs were made for each configuration and the average scores are reported for statistical significance.}
 \label{tab:results_god}
 \end{minipage} \hspace{.02\columnwidth}%
 \begin{minipage}{.48\columnwidth}
@@ -131,18 +131,18 @@ Init. & $n$ & $n_{clusters}$ & $d$ & $n_{cats}$ &  &  &  &  \\
 \subsection*{Synthetic data clustering}
 \label{sec:appendix_synth_clustering}
 
-\begin{table}[H]
+ \begin{table}[H]
     \begin{minipage}{.48\columnwidth}
     \begin{adjustbox}{width=\columnwidth}
     \begin{tabular}{lllllrrrr}
      &  &  &  &  & ARI BOS & ARI GOD & ARI KMeans & ARI GMM \\
     Data model & n & k & d & m &  &  &  &  \\
     \cline{1-9}
-    \multirow[t]{3}{*}{BOS} & \multirow[t]{3}{*}{10000} & \multirow[t]{3}{*}{4} & 4 & 4 & 0.389 & 0.367 & 0.189 & 0.192 \\
+    \multirow[t]{3}{*}{BOS} & \multirow[t]{3}{*}{10000} & \multirow[t]{3}{*}{4} & 4 & 4 & \textbf{\underline{0.389}} & 0.367 & 0.189 & 0.192 \\
     \cline{4-9}
-     &  &  & 7 & 7 & 0.855 & 0.840 & 0.395 & 0.450 \\
+     &  &  & 7 & 7 & \textbf{\underline{0.855}} & 0.840 & 0.395 & 0.450 \\
     \cline{4-9}
-     &  &  & 10 & 10 & 0.972 & 0.963 & 0.691 & 0.580 \\
+     &  &  & 10 & 10 & \textbf{\underline{0.972}} & 0.963 & 0.691 & 0.580 \\
     \end{tabular}
     \end{adjustbox}
     \end{minipage} \hspace{.02\columnwidth}%
@@ -152,11 +152,11 @@ Init. & $n$ & $n_{clusters}$ & $d$ & $n_{cats}$ &  &  &  &  \\
      &  &  &  &  & ARI BOS & ARI GOD & ARI KMeans & ARI GMM \\
     Data model & n & k & d & m &  &  &  &  \\
     \cline{1-9}
-    \multirow[t]{3}{*}{GOD} & \multirow[t]{3}{*}{10000} & \multirow[t]{3}{*}{4} & 4 & 4 & 0.260 & 0.494 & 0.308 & 0.308 \\
+    \multirow[t]{3}{*}{GOD} & \multirow[t]{3}{*}{10000} & \multirow[t]{3}{*}{4} & 4 & 4 & 0.260 & \textbf{\underline{0.494}} & 0.308 & 0.308 \\
     \cline{4-9}
-     &  &  & 7 & 7 & 0.548 & 0.828 & 0.481 & 0.499 \\
+     &  &  & 7 & 7 & 0.548 & \textbf{\underline{0.828}} & 0.481 & 0.499 \\
     \cline{4-9}
-     &  &  & 10 & 10 & 0.707 & 0.829 & 0.649 & 0.614 \\
+     &  &  & 10 & 10 & 0.707 & \textbf{\underline{0.829}} & 0.649 & 0.614 \\
     \end{tabular}
     \end{adjustbox}
     \end{minipage}
@@ -168,17 +168,16 @@ Init. & $n$ & $n_{clusters}$ & $d$ & $n_{cats}$ &  &  &  &  \\
      &  &  &  &  & ARI BOS & ARI GOD & ARI KMeans & ARI GMM \\
     Data model & n & k & d & m &  &  &  &  \\
     \cline{1-9}
-    \multirow[t]{3}{*}{Blobs} & \multirow[t]{3}{*}{10000} & \multirow[t]{3}{*}{4} & 4 & 4 & 0.747 & 0.928 & 0.988 & 0.988 \\
+        \multirow[t]{3}{*}{Blobs} & \multirow[t]{3}{*}{10000} & \multirow[t]{3}{*}{4} & 4 & 4 & 0.747 & 0.928 & \textbf{\underline{0.988}} & \textbf{\underline{0.988}} \\
     \cline{4-9}
-     &  &  & 7 & 7 & 0.719 & 0.875 & 0.993 & 0.993 \\
+        &  &  & 7 & 7 & 0.719 & 0.875 & \textbf{\underline{0.993}} & \textbf{\underline{0.993}} \\
     \cline{4-9}
-     &  &  & 10 & 10 & 0.976 & 0.246 & 1.000 & 1.000 \\
+        &  &  & 10 & 10 & 0.976 & 0.246\footnote{likely stuck in a bad local minima} & \textbf{\underline{1.000}} & \textbf{\underline{1.000}} \\
     \end{tabular}
     \end{adjustbox}
     \end{minipage}
-
-\caption{Results of the clustering experiments on synthetic data. The metrics are the Adjusted Rand Index (ARI) for the different methods. The best results for each dataset and metric are highlighted in bold italic and underlined.}
-    \label{tab:results_synth_clustering}
+    \caption{Results of the clustering experiments on synthetic data. The metrics are the Adjusted Rand Index (ARI) for the different methods. The best results for each dataset and metric are highlighted in bold.}
+     \label{tab:results_synth_clustering}
 \end{table}
 
 \subsection*{t-SNE plots for the synthetic data}
@@ -245,37 +244,37 @@ Dataset & Method &  &  &  &  &  \\
 \midrule
 \multirow[t]{6}{*}{\textbf{Zoo}} & \textbf{BOS Random} & 0.93 & 0.89 & 0.89 & 0.20 & 0.85 \\
 \textbf{} & \textbf{BOS K-Means} & 0.40 & 0.81 & 0.80 & 0.28 & 0.83 \\
-\textbf{} & \textbf{GOD Random} & 0.63 & 0.90 & 0.90 & 0.08 & 0.91 \\
+\textbf{} & \textbf{GOD Random} & 0.63 & \textbf{\underline{0.90}} & \textbf{\underline{0.90}} & \textbf{\underline{0.08}} & \textbf{\underline{0.91}} \\
 \textbf{} & \textbf{GOD K-Means} & 0.25 & 0.81 & 0.80 & 0.28 & 0.83 \\
-\textbf{} & \textbf{K-Means} & 0.01 & 0.84 & 0.85 & 0.20 & 0.83 \\
+\textbf{} & \textbf{K-Means} & \textbf{\underline{0.01}} & 0.84 & 0.85 & 0.20 & 0.83 \\
 \textbf{} & \textbf{Gaussian} & 0.52 & 0.77 & 0.74 & 0.55 & 0.66 \\
 \cline{1-7}
-\multirow[t]{6}{*}{\textbf{Car Evaluation}} & \textbf{BOS Random} & 0.20 & 0.46 & 0.38 & 0.72 & 0.01 \\
-\textbf{} & \textbf{BOS K-Means} & 0.52 & 0.45 & 0.38 & 1.01 & 0.04 \\
-\textbf{} & \textbf{GOD Random} & 0.18 & 0.48 & 0.42 & 0.74 & -0.00 \\
+    \multirow[t]{6}{*}{\textbf{Car Evaluation}} & \textbf{BOS Random} & 0.20 & 0.46 & 0.38 & \textbf{\underline{0.72}} & 0.01 \\
+    \textbf{} & \textbf{BOS K-Means} & 0.52 & 0.45 & 0.38 & 1.01 & \textbf{\underline{0.04}} \\
+\textbf{} & \textbf{GOD Random} & 0.18 & \textbf{\underline{0.48}} & \textbf{\underline{0.42}} & 0.74 & -0.00 \\
 \textbf{} & \textbf{GOD K-Means} & 0.60 & 0.39 & 0.31 & 1.03 & -0.00 \\
-\textbf{} & \textbf{K-Means} & 0.01 & 0.35 & 0.29 & 1.11 & 0.00 \\
+    \textbf{} & \textbf{K-Means} & \textbf{\underline{0.01}} & 0.35 & 0.29 & 1.11 & 0.00 \\
 \textbf{} & \textbf{Gaussian} & 0.04 & 0.41 & 0.33 & 1.24 & 0.01 \\
 \cline{1-7}
-\multirow[t]{6}{*}{\textbf{Hayes-Roth}} & \textbf{BOS Random} & 0.09 & 0.45 & 0.46 & 0.14 & 0.02 \\
+    \multirow[t]{6}{*}{\textbf{Hayes-Roth}} & \textbf{BOS Random} & 0.09 & \textbf{\underline{0.45}} & \textbf{\underline{0.46}} & 0.14 & 0.02 \\
 \textbf{} & \textbf{BOS K-Means} & 0.09 & 0.34 & 0.33 & 0.16 & -0.01 \\
 \textbf{} & \textbf{GOD Random} & 0.26 & 0.40 & 0.41 & 0.34 & 0.01 \\
 \textbf{} & \textbf{GOD K-Means} & 0.06 & 0.36 & 0.36 & 0.22 & -0.01 \\
-\textbf{} & \textbf{K-Means} & 0.00 & 0.34 & 0.33 & 0.16 & -0.01 \\
-\textbf{} & \textbf{Gaussian} & 0.03 & 0.45 & 0.45 & 0.11 & 0.07 \\
+\textbf{} & \textbf{K-Means} & \textbf{\underline{0.00}} & 0.34 & 0.33 & 0.16 & -0.01 \\
+\textbf{} & \textbf{Gaussian} & 0.03 & \textbf{\underline{0.45}} & 0.45 & \textbf{\underline{0.11}} & \textbf{\underline{0.07}} \\
 \cline{1-7}
-\multirow[t]{6}{*}{\textbf{Caesarian}} & \textbf{BOS Random} & 0.26 & 0.61 & 0.64 & 0.21 & 0.06 \\
+    \multirow[t]{6}{*}{\textbf{Caesarian}} & \textbf{BOS Random} & 0.26 & \textbf{\underline{0.61}} & \textbf{\underline{0.64}} & 0.21 & \textbf{\underline{0.06}} \\
 \textbf{} & \textbf{BOS K-Means} & 0.15 & 0.54 & 0.54 & 0.09 & -0.01 \\
 \textbf{} & \textbf{GOD Random} & 0.24 & 0.57 & 0.57 & 0.23 & 0.01 \\
 \textbf{} & \textbf{GOD K-Means} & 0.12 & 0.56 & 0.56 & 0.06 & 0.00 \\
-\textbf{} & \textbf{K-Means} & 0.00 & 0.56 & 0.56 & 0.09 & 0.00 \\
-\textbf{} & \textbf{Gaussian} & 0.02 & 0.59 & 0.59 & 0.04 & 0.02 \\
+    \textbf{} & \textbf{K-Means} & \textbf{\underline{0.00}} & 0.56 & 0.56 & 0.09 & 0.00 \\
+    \textbf{} & \textbf{Gaussian} & 0.02 & 0.59 & 0.59 &\textbf{\underline{0.04}} & 0.02 \\
 \cline{1-7}
-\multirow[t]{6}{*}{\textbf{Nursery}} & \textbf{BOS Random} & 0.91 & 0.40 & 0.42 & 0.84 & 0.04 \\
+    \multirow[t]{6}{*}{\textbf{Nursery}} & \textbf{BOS Random} & \textbf{\underline{0.91}} & \textbf{\underline{0.40}} & \textbf{\underline{0.42}} & 0.84 & 0.04 \\
 \textbf{} & \textbf{BOS K-Means} & 1.30 & 0.32 & 0.29 & 0.30 & 0.01 \\
-\textbf{} & \textbf{GOD Random} & 5.31 & 0.40 & 0.39 & 0.26 & 0.03 \\
+    \textbf{} & \textbf{GOD Random} & 5.31 & 0.40 & 0.39 & \textbf{\underline{0.26}} & 0.03 \\
 \textbf{} & \textbf{GOD K-Means} & 3.97 & 0.31 & 0.28 & 0.71 & 0.01 \\
-\textbf{} & \textbf{K-Means} & 1.42 & 0.36 & 0.31 & 0.47 & 0.07 \\
+    \textbf{} & \textbf{K-Means} & 1.42 & 0.36 & 0.31 & 0.47 & \textbf{\underline{0.07}} \\
 \textbf{} & \textbf{Gaussian} & 33.32 & 0.34 & 0.29 & 0.54 & 0.05 \\
 \cline{1-7}
 \bottomrule
@@ -314,6 +313,13 @@ The runtime is also reported. The best results for each dataset and metric are h
     \label{fig:tsne_hr}
 \end{figure}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{python_figures/tsne_nursery.png}
+    \caption{t-SNE visualization of the Nursery School dataset with the true labels and the predicted clusters for the BOS model with random initialization, the GOD model with random initialization, the K-Means algorithm and the Gaussian Mixture Models. While continuous clustering algorithms separate the circle as expected, categorical algorithms are a little more subtle and adapted.}
+    \label{fig:tsne_hr}
+\end{figure}
+
 % \begin{figure}[H]
 %     \centering
 %     \includegraphics[width=\textwidth]{python_figures/tsne_caesarian.png}
@@ -321,7 +327,7 @@ The runtime is also reported. The best results for each dataset and metric are h
 %     \label{fig:tsne_caesarian}
 % \end{figure}
 
-\subsection*{Assignment Matrices}
+\subsection*{Assignment matrix and histograms}
 \label{sec:appendix_assign}
 
 \begin{figure}[H]
@@ -333,24 +339,7 @@ The runtime is also reported. The best results for each dataset and metric are h
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\linewidth]{python_figures/assignment_matrix_hayes-roth.png}
-    \caption{Assignment matrix for the Hayes-Roth dataset with different methods.}
-    \label{fig:assign_hr}
-\end{figure}
-
-\subsection*{Histograms of the different clustering}
-\label{sec:appendix_hist}
-
-\begin{figure}[H]
-    \centering
     \includegraphics[width=\linewidth]{python_figures/histograms_zoo.png}
     \caption{Histograms for the Zoo dataset with different methods.}
     \label{fig:hist_zoo}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\linewidth]{python_figures/histograms_hayes-roth.png}
-    \caption{Histograms for the Hayes-Roth dataset with different methods.}
-    \label{fig:hist_hr}
 \end{figure}
