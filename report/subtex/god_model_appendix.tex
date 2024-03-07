@@ -134,15 +134,26 @@ As $\pi > \frac{1}{2}$, we conclude that:
 \end{lemma} 
 \begin{proof}
     We have that:
-    \[ c_d'(x) = -d x^{-2} \left(\frac{1 - x}{x}\right)^{d - 1} \]
+    For $d \geq 1$:
+    \begin{align}
+        c_d'(x) &= -d x^{-2} \left(\frac{1 - x}{x}\right)^{d - 1}\\
+        &= -d x^{-2} c_{d - 1}(x)
+    \end{align}
+    For $d \geq 2$:
     \begin{align}
         c_d''(x) 
         &= 2d x^{-3} \left(\frac{1 - x}{x}\right)^{d - 1} +  d(d-1) x^{-4} \left(\frac{1 - x}{x}\right)^{d - 2} \\
         &= d x^{-4} \left(\frac{1 - x}{x}\right)^{d - 2} \left(2 x\left(\frac{1 - x}{x}\right) + (d - 1)\right) \\
-        &= d x^{-4} \left(\frac{1 - x}{x}\right)^{d - 2} \left(1 - 2x + d\right)
+        &= d x^{-4} c_{d - 2}(x) \left(1 - 2x + d\right)
     \end{align}
 
     Therefore, we have that:
+    For $d < 2$:
+    \begin{equation}
+        c_d'(x)^2 - c_d(x) c_d''(x) = c_d'(x)^2 \geq 0
+    \end{equation}
+
+    For $d \geq 2$:
     \begin{align}
         c_d'(x)^2 - c_d(x) c_d''(x) 
         &= d^2 x^{-4} \left(\frac{1 - x}{x}\right)^{2d - 2} - d x^{-4} \left(\frac{1 - x}{x}\right)^{2d - 2} \left(1 - 2x + d\right)\\
