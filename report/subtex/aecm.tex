@@ -2,17 +2,17 @@
 \label{sec:aecm}
 
 \tm{Introduce all the requrired notation in a clear manner (maybe in the previous section), so it is easy to find the signification of each letter}
-Similarly to the EM algorithm, Alternating Expectation-Conditional Maximization (AECM) \citep{meng1997algorithm} is separated in two steps. However, in this case, we consider multivariate ordinal data with different possible distributions (clusters) priors for the data. Similar to the Gaussian Mixture Model case, the algorithm use latent variables $w_{ik}$ which describe whether the data $x_i$ belongs to the cluster $k$ or not, and parameters $(\alpha_k)_{k\in \{1, \ldots, p\}}$ which describe the probability of belonging to each of the $p$ cluster. 
+Similarly to the EM algorithm, Alternating Expectation-Conditional Maximization (AECM) \citep{meng1997algorithm} is separated in two steps. However, in this case, we consider multivariate ordinal data with different possible distributions (clusters) priors for the data. Similar to the Gaussian Mixture Model case, the algorithm use latent variables $w_{ik}$ which describe whether the data $x_i$ belongs to the cluster $k$ or not, and parameters $(\alpha_k)_{k\in \{1, \ldots, p\}}$ which describe the probability of belonging to each of the $p$ cluster. We also note $\theta_k^{(t)}$ the parameters of the $k$-th cluster at the $t$-th iteration.
 \begin{enumerate}
     \item Expectation step: The expectation step consists in computing the probability for every data point to belong to each cluster:
     \begin{equation}
-        \mathbb{P}(w_{ik}=1|x_i, \alpha^{(t)}, \mu^{(t)}, \pi^{(t)}) = \frac{\alpha_k^{(t)}\mathbb{P}(x_i|w_{ik}=1, \mu_k^{(t)}, \pi_k^{(t)})}{\sum_{l=1}^p\alpha_l^{(t)}\mathbb{P}(x_i|w_{il}=1, \mu_l^{(t)}, \pi_l^{(t)})}.
+        \mathbb{P}(w_{ik}=1|x_i, \alpha^{(t)}, \theta^{(t)}) = \frac{\alpha_k^{(t)}\mathbb{P}(x_i|w_{ik}=1, \theta_k^{(t)})}{\sum_{l=1}^p\alpha_l^{(t)}\mathbb{P}(x_i|w_{il}=1, \theta_l^{(t)})}.
     \end{equation}
     \item Maximization step: The parameters are updated using the new expected values for belonging to each cluster. Since there are two groups of latent parameters, the clusters weights $\alpha_k^{(t)}$ are updated first to maximize the log-likelihood:
     \begin{equation}
-    \alpha_k^{(t+1)} = \frac{1}{n} \sum_{i=1}^n \mathbb{P}(w_{ik}=1|x_i, \alpha^{(t)}, \mu^{(t)}, \pi^{(t)}).
+    \alpha_k^{(t+1)} = \frac{1}{n} \sum_{i=1}^n \mathbb{P}(w_{ik}=1|x_i, \alpha^{(t)}, \theta^{(t)}).
     \end{equation}
-    And then the parameters $(\mu_k^{(t+1)}, \pi_k^{(t+1)})$ are updated after using the EM algorithm for every cluster $k$.
+    And then the parameters $(\theta_k^{(t + 1)})$ are updated after using the internal parameters estimation for each cluster unsing the observations weighted by the probability of belonging to the cluster.
 
 \tm {Modify algorithm below to be more specific (use the model of ternary search algorithm)}
 \begin{algorithm}
