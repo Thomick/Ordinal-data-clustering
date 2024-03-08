@@ -93,11 +93,24 @@ As $\pi > \frac{1}{2}$, we conclude that:
 
 \subsection{Likelihood expression}
 
+We recall the definition of $\mathcal{C}_x$ and $u(x, \mu, d)$:
+\begin{definition}
+    We define for $x \in \bbrack{1, m}$,:
+\[ \mathcal{C}_x := \set{c \in \set{0, 1}^{m-1} | x \in \argmin_{k \in \bbrack{1, m}} \norm{c - E_k}_1 }\]
+\end{definition}
+
+\begin{definition}
+    We define for $x \in \bbrack{1, m}, \mu \in \bbrack{1, m}, d \in \bbrack{0, m-1}$:
+    \[ u(\mu, x, d) := \sum_{c \in \mathcal{C}_x / \norm{c - E_{\mu}}_1 = d}  \card{\argmin_{k \in \bbrack{1, m}} \norm{c - E_k}_1}^{-1}\]
+\end{definition}
+
+
+
 \begin{lemma}
     \label{lemma:p_x_c_knowing_pi_mu_appendix}
     \[\Pr(x, c | \pi, \mu) = \indic{}_{\mathcal{C}_x}(c) \pi^{m-1}  \frac{\left(\frac{1 - \pi}{\pi}\right)^{\norm{c - E_{\mu}}_1}}{\card{\argmin_{k \in \bbrack{1, m}} \norm{c - E_k}_1}} \]
 \end{lemma}
-\tm {dire c'est qui $C_x$}
+
 \begin{proof}
     Using Bayes' theorem, then Lemma~\ref{lemma:p_c_mu} and the fact that $\mu$ is uniformly distributed over the set defined by the $\argmin$, we have:
     \begin{align}
@@ -112,9 +125,9 @@ As $\pi > \frac{1}{2}$, we conclude that:
 
 \begin{thm}[Observation likelihood]
     \label{thm:p_x_knowing_pi_mu}
-    \[\Pr(x | \pi, \mu) = \pi^{m-1} \sum_{d = 0}^{m-1} \left(\frac{1 - \pi}{\pi}\right)^d u(x, \mu, d)\]
+    \[\Pr(x | \pi, \mu) = \pi^{m-1} \sum_{d = 0}^{m-1} \left(\frac{1 - \pi}{\pi}\right)^d u(\mu, x, d)\]
 \end{thm}
-\tm {dire c'est quoi $u(x, \mu, d)$}
+
 \begin{proof}
     By marginalizing over $c$ and then using the previous lemma, we have:
 
