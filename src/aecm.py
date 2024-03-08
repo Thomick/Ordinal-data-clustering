@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn.cluster import KMeans
 try:
-    from src.compute_u import compute_u
+    from src.compute_u import compute_u as compute_u
     from src.god_model_estimator import estimate_mu_pi_god as estimate_mu_pi_god, probability_x_given_mu_pi as probability_x_given_mu_pi_god
     from src.bos_model_polynomials import compute_polynomials as compute_polynomials_bos
     from src.bos_model_estimator import (
@@ -9,7 +9,7 @@ try:
         probability_x_given_mu_pi_using_u as probability_x_given_mu_pi_bos,
         univariate_em as univariate_em_bos)
 except ImportError:
-    from compute_u import compute_u
+    from compute_u import compute_u as compute_u
     from god_model_estimator import estimate_mu_pi_god as estimate_mu_pi_god, probability_x_given_mu_pi as probability_x_given_mu_pi_god
     from bos_model_polynomials import compute_polynomials as compute_polynomials_bos
     from bos_model_estimator import (
@@ -145,7 +145,6 @@ class AECM:
         self.alphas = np.ones(self.nb_clusters) / self.nb_clusters
         self.mus = np.random.randint(1, self.ms + 1, (self.nb_clusters, self.nb_features))
         self.pis = np.random.random((self.nb_clusters, self.nb_features))
-        
 
     def univariate_mu_pi_estimation(self,
                                     m: int, 
@@ -315,10 +314,10 @@ class AECM:
             print(f"Initial pi: {self.pis}")
             print(f"Initial log likelihood: {self.log_likelihood}")
             print(f"Likelihoods: {log_likelihoods}")
-            # print("p(w_ik = 1 | x_i, mu, pi) = self.pwik")
-            # print(self.pwik)
-            # print("p(x_i | w_ik = 1, mu, pi) = self.px_knowing_w")
-            # print(self.px_knowing_w)
+            # print("p(w_ik = 1 | x_i, mu, pi) = self.pwik")
+            # print(self.pwik)
+            # print("p(x_i | w_ik = 1, mu, pi) = self.px_knowing_w")
+            # print(self.px_knowing_w)
             print("=" * 20)
 
         i = 0

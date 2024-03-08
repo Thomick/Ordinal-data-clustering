@@ -45,7 +45,8 @@ def get_all_errors(m: int) -> np.ndarray:
 
 def compute_u(m: int) -> np.ndarray:
     """
-    Compute u(mu, x, d) for all mu in [[1, m]], x in [[1, m]] and d in [[0, m - 1]]
+    Compute u(mu, x, d) of GOD model for 
+    all mu in [[1, m]], x in [[1, m]] and d in [[0, m - 1]]
 
     Complexity: O(m^2 2^m) in all generality
     but O(m 2^m) as the if condition is only true on average less than 2 times
