@@ -1,0 +1,36 @@
+\subsubsection{Algorithm}
+
+We present here our algorithm to compute the coefficients $u$ of the polynomial expansion of the likelihood of the GOD model. 
+
+
+\begin{algorithm}[H]
+    \caption{GOD polynomial computation}
+    \begin{algorithmic}[1]
+    \Require $m \in \NN$
+    \Ensure $u[m -1, \mu - 1, x - 1] = \Pr(x | \mu, \pi)$ where we consider it as a polynomial equality  
+        
+    \State $u \leftarrow \text{array of size } m \times m \times m$ initialised to $0$
+    \State $u[0] \leftarrow 1$
+    \For{$h \in \bbrack{2, m}$}
+        \For{$\mu \in \bbrack{0, h - 1}$}
+            \For{$x \in \bbrack{0, h - 1}$}
+                \State $s = u[h - 1, \mu, x]$
+                \For{$y \in \bbrack{0, x - 1}$}
+                    \State $p \leftarrow u[h - y - 2, \max(0, \mu - y - 1), x - y - 1]$
+                    \State $a \leftarrow \frac{h - y - 1}{h}$
+                    \State $s \leftarrow s +_P p \times_P \left[ \left( \indickronecker{\mu > y} - a \right) \pi +_P a \right]$
+                \EndFor
+                \State $c \leftarrow \indickronecker{\mu = x \lor (x = 0 \land \mu \leq x) \lor (x = h - 1 \land \mu \geq x)}$
+                \State $a \leftarrow \frac{1}{h}$
+                \State $s \leftarrow s +_P (c - a) \pi +_P a$
+                \For{$y \in \bbrack{x + 1, h - 1}$}
+                    \State $p \leftarrow u[y - 1, \min(\mu, y - 1), x]$
+                    \State $a \leftarrow \frac{y}{h}$
+                    \State $s \leftarrow s +_P p \times_P \left[ \left( \indickronecker{\mu < y} - a \right) \pi +_P  a \right]$
+                \EndFor
+                \State $u[h, \mu, x] = s / h$
+            \EndFor
+        \EndFor
+    \EndFor    
+\end{algorithmic}
+\end{algorithm}

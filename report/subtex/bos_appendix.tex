@@ -97,88 +97,89 @@ For the whole section we will consider that $e$ is a subset of $\bbrack{1, m}$ a
 
 \subsection{Concavity}
 
-We can now prove that $\forall x \in \bbrack{0, h - 1}, \forall \mu \in \bbrack{0, h - 1}, \pi \mapsto \Pr(x | x \in \bbrack{0, h - 1}, \mu, \pi)$ is concave on $[0, 1]$
-
-
-\begin{lemma}[Log concavity affine times polynomial]
-    \label{lemma:concavity_log_polynomial_times_affine}
-    For $I$ a real interval.
-
-    Let $P$ be a $\log$-concave function on $I$ and $a, b \in \RR$ with $\forall t  \in I, at + b \geq 0$. Then $f: t \mapsto (at + b)P(t)$ is $\log$-concave on $I$.
-\end{lemma}
-\begin{proof}
-    Let $t \in I$.
-
-    As $at + b \geq 0$, we have that $f(t) \geq 0$. We can therefore consider its logarithm (with that $\log(0) = -\infty$).
-
-    We have that:
-    \begin{align}
-        f'(t) &= aP(t) + (at + b)P'(t) \\
-        f''(t) &= 2 aP'(t) + (at + b)P''(t) \\
-        f'(t)^2 &= a^2P(t)^2 + 2a(at + b)P(t)P'(t) + (at + b)^2P'(t)^2 \\
-        f(t)f''(t) &= 2a(at + b) P(t)P'(t) + (at + b)^2P(t)P''(t)
-    \end{align}
-
-    Hence:
-    \[f'(t)^2 - f(t) f''(t) = a^2 P(t)^2 + (at + b)^2 \left[ P'(t)^2 - P(t)P''(t) \right] \]
-
-    As $P$ is $\log$-concave on $I$, using the lemma~\ref{lemma:concavity_log_composed_functions} we have that $P'(t)^2 - P(t)P''(t) > 0$.
-    
-    As all the terms are $\geq 0$ we have that $\forall t \in I, f'(t)^2 - f(t) f''(t) \geq 0$ and using the lemma~\ref{lemma:concavity_log_composed_functions} we have that $f$ is $\log$-concave on $I$.
-\end{proof}
-
-\begin{lemma}[Log concavity of the BOS model]
-    \label{lemma:log_concavity_bos_model}
-    $\forall m \in \NN^*, \forall x \in \bbrack{1, m}, \forall \mu \in \bbrack{1, m},, \forall e \subset \bbrack{1, m}$:
-    \[ \pi \mapsto \Pr(x | x \in e, e, \mu, \pi) \]
-    is $\log$-concave on $[0, 1]$.
-\end{lemma}
-\begin{proof}
-    Let $m \in \NN^*$, $x \in \bbrack{1, m}$ and $\mu \in \bbrack{1, m}$.
-    We proceed by induction on $\card{e}$:
-
-    \[ P_n : \forall e \subset \bbrack{1, m}, |e| \leq n \Rightarrow \pi \mapsto \Pr(x | x \in e, e, \mu, \pi) \text{ is } \log\text{-concave on } [0, 1] \]
-
-    \begin{itemize}
-        \item Initialization: $\card{e} = 1$:
-        \[\pi \mapsto \Pr(x | x \in e, e, \mu, \pi) = \indickronecker{e = \set{x}} \] which is $\log$-concave on $[0, 1]$.
-        Thus $P_1$ holds.
-
-        \item Induction: Suppose $P_n$, the result holds for all $f \subset \bbrack{1, m}$ of size less or equal than $n$ and let us prove it for $n+1$.
-        
-        Let $e \subset \bbrack{1, m}$ such that $\card{e} = n + 1$.
-
-        Using the lemma~\ref{lemma:bos_polynomial}, we have:
-        \begin{align}
-            \Pr(x | x \in e, e, \mu, \pi) 
-            &= \sum_{f \subset e ; x \in f} \Pr(x | x \in f, f, \mu, \pi) \Pr(f | x \in e, e, \mu, \pi)
-        \end{align}
-
-        We have a sum of function. We now have to check that each function is $\log$-concave on $[0, 1]$. We will use the lemma~\ref{lemma:concavity_log_polynomial_times_affine}. 
-        
-        We first focus on $\Pr(f | x \in e, e, \mu, \pi)$.
-        Using the lemma~\ref{lemma:bos_transition}, we have that  $\Pr(f | x \in e, e, \mu, \pi)$ is an affine function of $\pi$ and a probability therefore it is of the form $a \pi + b$ with $\forall \pi \in [0, 1], a \pi + b \geq 0$. 
-        
-        Using $P_n$ we have that $\pi \mapsto \Pr(x | x \in f, f, \mu, \pi)$ is $\log$-concave. Hence, using the lemma~\ref{lemma:concavity_log_polynomial_times_affine}, we have that each $\pi \mapsto \Pr(x | x \in f, f, \mu, \pi) \Pr(f | x \in e, e, \mu, \pi)$ is $\log$-concave on $[0, 1]$.
-        
-        This gives us that $\Pr(x | x \in e, e, \mu, \pi)$ is a sum of $\log$-concave functions and is therefore $\log$-concave on $[0, 1]$.
-
-        This is true for any $e$ of size $n + 1$ and therefore $P_{n+1}$ holds.
-        
-    \end{itemize}
-
-\end{proof}
-
+% We can now prove that $\forall x \in \bbrack{0, h - 1}, \forall \mu \in \bbrack{0, h - 1}, \pi \mapsto \Pr(x | x \in \bbrack{0, h - 1}, \mu, \pi)$ is concave on $[0, 1]$
+% 
+% 
+% \begin{lemma}[Log concavity affine times polynomial]
+%     \label{lemma:concavity_log_polynomial_times_affine}
+%     For $I$ a real interval.
+% 
+%     Let $P$ be a $\log$-concave function on $I$ and $a, b \in \RR$ with $\forall t  \in I, at + b \geq 0$. Then $f: t \mapsto (at + b)P(t)$ is $\log$-concave on $I$.
+% \end{lemma}
+% \begin{proof}
+%     Let $t \in I$.
+% 
+%     As $at + b \geq 0$, we have that $f(t) \geq 0$. We can therefore consider its logarithm (with that $\log(0) = -\infty$).
+% 
+%     We have that:
+%     \begin{align}
+%         f'(t) &= aP(t) + (at + b)P'(t) \\
+%         f''(t) &= 2 aP'(t) + (at + b)P''(t) \\
+%         f'(t)^2 &= a^2P(t)^2 + 2a(at + b)P(t)P'(t) + (at + b)^2P'(t)^2 \\
+%         f(t)f''(t) &= 2a(at + b) P(t)P'(t) + (at + b)^2P(t)P''(t)
+%     \end{align}
+% 
+%     Hence:
+%     \[f'(t)^2 - f(t) f''(t) = a^2 P(t)^2 + (at + b)^2 \left[ P'(t)^2 - P(t)P''(t) \right] \]
+% 
+%     As $P$ is $\log$-concave on $I$, using the lemma~\ref{lemma:concavity_log_composed_functions} we have that $P'(t)^2 - P(t)P''(t) > 0$.
+%     
+%     As all the terms are $\geq 0$ we have that $\forall t \in I, f'(t)^2 - f(t) f''(t) \geq 0$ and using the lemma~\ref{lemma:concavity_log_composed_functions} we have that $f$ is $\log$-concave on $I$.
+% \end{proof}
+% 
+% \begin{lemma}[Log concavity of the BOS model]
+%     \label{lemma:log_concavity_bos_model}
+%     $\forall m \in \NN^*, \forall x \in \bbrack{1, m}, \forall \mu \in \bbrack{1, m},, \forall e \subset \bbrack{1, m}$:
+%     \[ \pi \mapsto \Pr(x | x \in e, e, \mu, \pi) \]
+%     is $\log$-concave on $[0, 1]$.
+% \end{lemma}
+% \begin{proof}
+%     Let $m \in \NN^*$, $x \in \bbrack{1, m}$ and $\mu \in \bbrack{1, m}$.
+%     We proceed by induction on $\card{e}$:
+% 
+%     \[ P_n : \forall e \subset \bbrack{1, m}, |e| \leq n \Rightarrow \pi \mapsto \Pr(x | x \in e, e, \mu, \pi) \text{ is } \log\text{-concave on } [0, 1] \]
+% 
+%     \begin{itemize}
+%         \item Initialization: $\card{e} = 1$:
+%         \[\pi \mapsto \Pr(x | x \in e, e, \mu, \pi) = \indickronecker{e = \set{x}} \] which is $\log$-concave on $[0, 1]$.
+%         Thus $P_1$ holds.
+% 
+%         \item Induction: Suppose $P_n$, the result holds for all $f \subset \bbrack{1, m}$ of size less or equal than $n$ and let us prove it for $n+1$.
+%         
+%         Let $e \subset \bbrack{1, m}$ such that $\card{e} = n + 1$.
+% 
+%         Using the lemma~\ref{lemma:bos_polynomial}, we have:
+%         \begin{align}
+%             \Pr(x | x \in e, e, \mu, \pi) 
+%             &= \sum_{f \subset e ; x \in f} \Pr(x | x \in f, f, \mu, \pi) \Pr(f | x \in e, e, \mu, \pi)
+%         \end{align}
+% 
+%         We have a sum of function. We now have to check that each function is $\log$-concave on $[0, 1]$. We will use the lemma~\ref{lemma:concavity_log_polynomial_times_affine}. 
+%         
+%         We first focus on $\Pr(f | x \in e, e, \mu, \pi)$.
+%         Using the lemma~\ref{lemma:bos_transition}, we have that  $\Pr(f | x \in e, e, \mu, \pi)$ is an affine function of $\pi$ and a probability therefore it is of the form $a \pi + b$ with $\forall \pi \in [0, 1], a \pi + b \geq 0$. 
+%         
+%         Using $P_n$ we have that $\pi \mapsto \Pr(x | x \in f, f, \mu, \pi)$ is $\log$-concave. Hence, using the lemma~\ref{lemma:concavity_log_polynomial_times_affine}, we have that each $\pi \mapsto \Pr(x | x \in f, f, \mu, \pi) \Pr(f | x \in e, e, \mu, \pi)$ is $\log$-concave on $[0, 1]$.
+%         
+%         This gives us that $\Pr(x | x \in e, e, \mu, \pi)$ is a sum of $\log$-concave functions and is therefore $\log$-concave on $[0, 1]$.
+% 
+%         This is true for any $e$ of size $n + 1$ and therefore $P_{n+1}$ holds.
+%         
+%     \end{itemize}
+% 
+% \end{proof}
+% 
 
 \begin{thm}[Log concavity of the BOS model]
     $\forall m \in \NN^*, \forall x \in \bbrack{1, m}, \forall \mu \in \bbrack{1, m}$:
     \[\pi \mapsto \Pr(x | x, \mu, \pi) \] 
     is $\log$-concave on $[0, 1]$.
 \end{thm}
-\begin{proof}
-    We just have to apply the lemma~\ref{lemma:log_concavity_bos_model} to the case where $e = \bbrack{1, m}$.
-\end{proof}
+% \begin{proof}
+%     We just have to apply the lemma~\ref{lemma:log_concavity_bos_model} to the case where $e = \bbrack{1, m}$.
+% \end{proof}
 
+Unfornately, we were not able to prove this theorem yet. However we were able to test it numerically for every polynomial up to $m = 100$ we did not find any counter example. To do this we formally computed the second derivative of the log-derivative and checked that it was always negative on $10\ 000$ points of the interval $[0, 1]$.
 
 \subsection{Efficient computation of the likelihood}
 
