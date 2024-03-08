@@ -67,3 +67,17 @@ The datasets used in the notebooks are located in the `data` folder. Here the da
 
 Moreover, the estimation algorithms are tested on synthetic datasets generated specifically for the respective distributions (BOS distribution and GOD distribution).
 
+
+## License
+
+The authors of this project are Théo Rudkiewicz, Ali Ramlaoui and Thomas Michel.
+
+This project is licensed under the GPL-3.0 License - see the LICENSE file for details.
+This include all the code and the report but not the datasets used for the experiments.
+
+- `data/car_evaluation.csv`: Car Evaluation Database created by Marko Bohanec (https://archive.ics.uci.edu/dataset/19/car+evaluation)
+- `data/hayes-roth.csv`: Hayes-Roth Database created by Barbara Hayes-Roth and Frederick Hayes-Roth (https://archive.ics.uci.edu/dataset/44/hayes+roth)
+- `data/zoo.csv`: Zoo Database created by Richard Forsyth (https://archive.ics.uci.edu/dataset/111/zoo)
+- `data/nursery.csv`: Nursery Database created by Vladislav Rajkovic (https://archive.ics.uci.edu/dataset/76/nursery)
+- `data/caesarian.csv`: Caesarian Database created by Muhammad Amin and Amir Ali (https://archive.ics.uci.edu/dataset/472/caesarian+section+classification+dataset)
+- `data/aeres.csv`: Aeres Database created by Biernacki et al. (2015)
