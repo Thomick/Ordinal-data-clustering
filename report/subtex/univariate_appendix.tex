@@ -1,0 +1,76 @@
+\section{Generic proofs}
+
+\subsection{Ternary search algorithm}
+\label{sec:ternary_search_algorithm}
+
+\begin{algorithm}[H]
+    \caption{Ternary search}
+    \begin{algorithmic}[1]
+    \Require $f$ concave on $[a, b]$, $\epsilon > 0$
+    \Ensure For $y$ the returned value, $\exists x \in \argmax_{[a, b]} f$, $|y - x| < \epsilon$
+    
+    \Function{TernarySearch}{$f$, $a$, $b$, $\epsilon$}
+
+    \If {$b - a < \epsilon$}
+        \State \Return $\frac{a + b}{2}$
+    \EndIf
+    
+    \State $c \leftarrow a + \frac{b - a}{3}$
+    \State $d \leftarrow a + \frac{2(b - a)}{3}$
+    
+    \If {$f(c) \geq f(d)$}
+        \State \Return \Call{TernarySearch}{$f$, $a$, $d$, $\epsilon$}
+    \Else
+        \State \Return \Call{TernarySearch}{$f$, $c$, $b$, $\epsilon$}
+    \EndIf
+    \EndFunction
+    
+    \end{algorithmic}
+\end{algorithm}
+
+
+\begin{thm}
+    Let $f$ be a concave function on $[A, B]$. The ternary search algorithm returns a value $y$ such that $\exists x \in \argmax_{[A, B]} f$, $|y - x| < \epsilon$.
+\end{thm}
+\begin{proof}
+    The algorithm stops when the length of the interval is less than $\epsilon$. At each iteration, the length of the interval is multiplied by $\frac{2}{3}$. Hence the algorithm terminates and require $\Theta(\log \frac{b - a}{\epsilon})$ iterations.
+
+    \tr{TODO: clean this} 
+    Indeed after iteration $k$, the length of the interval is $\left(\frac{2}{3}\right)^k(b - a)$~\footnote{$\lg=\log_2$}:
+    \begin{align}
+        \left(\frac{2}{3}\right)^k(b - a) < \epsilon &\Leftrightarrow \left(\frac{2}{3}\right)^k < \frac{\epsilon}{b - a} \\
+        &\Leftrightarrow k (\lg 2 - \lg 3) < \lg \frac{\epsilon}{b - a} \\
+        &\Leftrightarrow k > \frac{1}{\lg 3 - 1} \lg \frac{b - a}{\epsilon}
+        \end{align}
+    which for $\epsilon = 2^{-p}$ and $b - a \leq 1$ gives:
+    \begin{equation}
+        k > \frac{1}{\lg 3 - 1} p \approx 1.7095 p
+    \end{equation}
+
+    We note $[a, b]$ the interval on which the algorithm is called and $[A, B]$ the initial interval.
+    We prove the following invariant: at each iteration of the algorithm, the interval $[a, b]$ is such that $\exists x \in \argmax_{[a, b]} f, a \leq x \leq b$.
+    \begin{itemize}
+        \item At the beginning of the algorithm, we have $a = A$ and $b = B$. The invariant is true.
+        \item We now suppose that $f(c) \geq f(d)$. We want to prove that the invariant is true for the interval $[a, d]$. We just have to prove that for any $g \in ]d, b]$, $f(g) \leq f(c)$ (\text{i.e.} $g$ is not an argmax or if so $c$ is alos one). As $d \in [c, g]$, we have $\lambda \in ]0, 1]$ such that $g = (1 - \lambda)c + \lambda d$. As $f$ is concave, we have $f(d) \geq (1 - \lambda)f(c) + \lambda f(g)$. As $f(c) \geq f(d)$, we have $f(c) - (1 - \lambda)f(c) \geq \lambda f(g)$ which gives $f(c) \geq f(g)$. Hence the invariant is true for the interval $[a, d]$.
+        
+        We can do the same reasoning for the case $f(c) < f(d)$ and the interval $[c, b]$.
+    \end{itemize}
+\end{proof}
+
+
+\subsection{Concavity}
+
+\begin{lemma}[Concavity of log composed functions]
+    \label{lemma:concavity_log_composed_functions}
+    For $f: I \rightarrow \RR_+^*$ be a twice-differentiable function, we have that:
+    \[ \ln \circ f \text{ is concave } \iff  f'^2 - f f'' \geq 0 \]
+\end{lemma}
+\begin{proof}
+    We have that:
+    \begin{align}
+        (\ln \circ f)' &= \frac{f'}{f}\\
+        (\ln \circ f)'' &= \frac{f''f - f'^2}{f^2}
+    \end{align}
+    
+    Therefore, $\ln \circ f$ is concave if and only if $f'^2 - f f'' \geq 0$.
+\end{proof}

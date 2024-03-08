@@ -3,7 +3,7 @@
 
 \subsection{Notations}
 
-For the 
+For the whole section we will consider that $e$ is a subset of $\bbrack{1, m}$ and that supposing that we know $e$ means that we look a the random process where the starting set of categories is $e$. We will also note $e^{-,y}$, $e^{=,y}$ and $e^{+,y}$ the sets of categories that are respectively less than, equal to and greater than $y$ in $e$ and $f$ any next set of categories considered in the BOS process. For example,  $\Pr(f | e)$ is the probability of having as next set of categories $f$ knowing that the current set of categories is $e$ (you could imagine that we have $j$ such that $e_j = e$ and $e_{j+1} = f$).
 
 \begin{definition}
     We define $\correct{\mu}{e}{y}{f}$ as the indicator function that $f$ is the correct subset to choose in case of a perfect comparison \textit{i.e.} if $\mu \in f$ or by default the closest to $\mu$.
@@ -13,8 +13,10 @@ For the
     We define $\nextes{e}{y}$ as the set of intervals that can be chosen after a comparison at breakpoint $y$ in the interval $e$ \textit{i.e.} $\nextes{e}{y} = \set{e^{-,y}, e^{=,y}, e^{+,y}}$ with $e = \bbrack{l, u - 1}$ and $y \in \bbrack{l, u - 1}$: $e^{-,y} = \bbrack{l, y - 1}$, $e^{=,y} = \set{y}$ and $e^{+,y} = \bbrack{y + 1, u - 1}$.
 \end{definition}
 
-We now suppose 
-\begin{lemma}[$e_j$ transition]
+
+\subsection{Polynomiality}
+
+\begin{lemma}[Transition probability]
     \label{lemma:bos_transition}
     $\forall m \in \NN^*, \forall x \in \bbrack{1, m}, \forall \mu \in \bbrack{1, m}, \pi \in [0, 1], \forall e \subset \bbrack{1, m}, \forall f \subset e$:
     \[ \Pr(f | x \in e, e, \mu, \pi) =  \frac{1}{\card{e}}  \sum_{y \in e} \left[ \left( \correct{\mu}{e}{y}{f} - \frac{\card{f}}{\card{e}} \right) \pi + \frac{\card{f}}{\card{e}} \right]  \indickronecker{x \in \nextes{e}{y}} \]
@@ -92,6 +94,8 @@ We now suppose
     We can now use the previous lemma~\ref{lemma:bos_polynomial} to conclude that $\Pr(x | \mu, \pi)$ is a polynomial function of degree at most $m - 1$.
 \end{proof}
 
+
+\subsection{Concavity}
 
 We can now prove that $\forall x \in \bbrack{0, h - 1}, \forall \mu \in \bbrack{0, h - 1}, \pi \mapsto \Pr(x | x \in \bbrack{0, h - 1}, \mu, \pi)$ is concave on $[0, 1]$
 
@@ -175,6 +179,8 @@ We can now prove that $\forall x \in \bbrack{0, h - 1}, \forall \mu \in \bbrack{
     We just have to apply the lemma~\ref{lemma:log_concavity_bos_model} to the case where $e = \bbrack{1, m}$.
 \end{proof}
 
+
+\subsection{Efficient computation of the likelihood}
 
 \begin{lemma}[Symetries the likelihood]
     \label{lemma:symetries_bos}
