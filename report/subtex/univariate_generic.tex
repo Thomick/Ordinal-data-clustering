@@ -1,26 +1,26 @@
 \subsection{Univariate model}
 \label{sec:univariate}
 
-We now want a random process to model univariate ordinal data among a finite numbers of categories.
-As we suppose that we only care for the order of the categories we can can, without loss of generality, consider our categories as $\bbrack{1, m}$ (when there is $m$ categories). Therefore if we have $\theta$ the parameters of our model, a model is gives $\forall i \in \bbrack{1, m}, P(X = i | \theta)$ if $X$ was generated from our random process. 
+We now seek a random process to model univariate ordinal data among a finite number of categories. Assuming that we only concern ourselves with the order of the categories, we can, without loss of generality, consider our categories as $\bbrack{1, m}$ (when there are $m$ categories), as long as the model does not utilize the distance between the numbers associated with two categories. Therefore, for the parameters $\theta$ of our model, the model gives $\forall i \in \bbrack{1, m}, P(X = i | \theta)$ if $X$ was generated from our random process.
 
-As the goal is to represent data having a common distribution, we can suppose that there is an underlying true category $\mu \in \bbrack{1, m}$ and put it as a parameter. In addition it is natural to add a precision parameter $\pi$. This is the case for the BOS model and the GOD model. 
+As the goal is to represent data having a common distribution, we can suppose that there is an underlying true category $\mu \in \bbrack{1, m}$ and treat it as a parameter. Additionally, it is natural to include a precision parameter $\pi$, which correspond to how much noise is involved in the selection of a category. This holds true for both the BOS model and the GOD model.
 
-In the following sections we present how to estimate those parameters for a generic law, then we present the BOS model and how to apply this estimation technique. Similarly, we present these techniques with the GOD model.
+In the following sections, we demonstrate how to estimate those parameters for a generic law. Later, we introduce the BOS model and explain how to apply this estimation technique. Likewise, we present how these techniques can be adapted in the context of the GOD model.
 
 
 \subsubsection{Notations and goal}
 
-Let's suppose that we have a set of $n$ independant observations $X = (x_i)_{i \in [n]}$, where $x_i \in \bbrack{1, m}$ follow a distribution $P$ with parameters $\mu, \pi$ with $\mu \in \bbrack{1, m}$ and $\pi \in [[a, b]]$. We want to estimate $\mu$ and $\pi$. We choose the estimates that maximize the likelihood of the data.
+Let's suppose we have a set of $n$ independent observations $X = (x_i)_{i \in [n]}$, where $x_i \in \bbrack{1, m}$ follows a distribution $P$ with parameters $\mu, \pi$, where $\mu \in \bbrack{1, m}$ and $\pi \in [[a, b]]$. Our goal is to estimate $\mu$ and $\pi$ by selecting the estimates that maximize the likelihood of the data.
 $$(\mu, \pi) = \argmax_{(\mu, \pi) \in \bbrack{1, m} \times [a, b]} P(X | \mu, \pi)$$
 
-As the data points are independant, we have:
+As the data points are independent, we have:
 $$P(X | \mu, \pi) = \prod_{i=1}^n P(x_i | \mu, \pi)$$
 
-As the number of possible values for $x$ is finite, we can group the data by values and count the number of occurences of each value. Let $n_i$ be the number of occurences of $i$ in the data. We have:
-$$P(X | \mu, \pi) = \prod_{i=1}^m P(i | \mu, \pi)^{n_i}$$
+Since the number of possible values for $x$ is finite, we can group the data by values and tally the occurrences of each value. Let $n_i$ represent the number of occurrences of $i$ in the data. We can write the likelihood as:
+$$P(X | \mu, \pi) = \prod_{i=1}^m P(x_i | \mu, \pi)^{n_i}$$
 
-In the AECM algorithm, each data point has a weight $w_i$. As previously, we can suppose without loss of generality that we have only one observation of each value with a specific weight (we can always group the data by values and sum the weights of the observations). With the weights $W \in \mathbb{R}_+^n$ where $w_i$ is the weight of the value $i$, we can write the weighted likelihood as:
+In the AECM algorithm, each data point is assigned a weight $w_i$. As before, we can assume without loss of generality that we have only one observation of each value with a specific weight (we can always group the data by values and sum the weights of the observations). With the weights $W \in \mathbb{R}_+^n$, where $w_i$ is the weight of the value $i$, we can express the weighted likelihood as:
+
 
 $$P(W | \mu, \pi) = \prod_{i=1}^m P(i | \mu, \pi)^{w_i}$$
 
@@ -32,51 +32,46 @@ $$L_W(\mu, \pi) := \log P(W | \mu, \pi) = \sum_{i=1}^m w_i \log P(i | \mu, \pi)$
 \subsubsection{Optimization}
 \label{sec:univariate_generic_estimation}
 
-To estimate $\mu$ and $\pi$, the idea proposed for the BOS-model in \cite{biernacki2016model} is to use the Expectation-Maximization algorithm. However they note that it is easier to first estimate $\pi$ for every possible value of $\mu$ and then to estimate $\mu$ using the estimated $\pi$. The derived formulas are:
+To estimate $\mu$ and $\pi$, the approach suggested for the BOS model in \cite{biernacki2016model} is to employ the Expectation-Maximization algorithm. However, they highlight that it is simpler to initially estimate $\pi$ for every possible value of $\mu$ and then estimate $\mu$ using the obtained $\pi$. The corresponding formulas are
 
 
-$$\hat{\pi_{\mu}} = \argmax_{\pi \in [a, b]} P(W | \mu, \pi)$$
-$$\hat{\mu} = \argmax_{\mu \in \bbrack{1, m}} \max_{\pi \in [a, b]} P(W | \mu, \pi) = \argmax_{\mu \in \bbrack{1, m}} P(W | \mu, \hat{\pi_{\mu}})$$
+$$\hat{\pi}_{\mu} = \argmax_{\pi \in [a, b]} P(W | \mu, \pi)$$
+$$\hat{\mu} = \argmax_{\mu \in \bbrack{1, m}} \max_{\pi \in [a, b]} P(W | \mu, \pi) = \argmax_{\mu \in \bbrack{1, m}} P(W | \mu, \hat{\pi}_{\mu}).$$
 
-Once we have the estimates $\hat{\pi_{\mu}}$ for every possible value of $\mu$, it is easy to estimate $\mu$ by choosing the value of $\mu$ that maximize the weighted likelihood as it requires only to compute the likelihood for every possible value of $\mu$ and to choose the maximum.
-
-Estimating $\pi$ for a given $\mu$ is a one-dimensional optimization problem. We can use the EM algorithm to solve it but it is possible to use a direct optimization algorithm as we will show. For example if the function $\pi \mapsto L_W(\mu, \pi)$ is stricly concave (or constant), we can use the ternary search algorithm (or trisection algorithm) to find the maximum.
+Estimating $\pi$ for a given $\mu$ is a one-dimensional optimization problem. We can utilize the EM algorithm for solving it, but it is also possible to employ a direct optimization algorithm, as we will demonstrate. For instance, if the function $\pi \mapsto L_W(\mu, \pi)$ is concave, we can use the ternary search algorithm to find the maximum.
 
 \paragraph{Concavity of the weighted likelihood}
 
 Suppose we have:
 
-$$\forall x \in \bbrack{1, m}, \pi \mapsto P(x | \mu, \pi) \text{ is strictly $\log$-concave}$$
+$$\forall x \in \bbrack{1, m}, \pi \mapsto P(x | \mu, \pi) \text{ is $\log$-concave}$$
 
-Then we have, $\pi \mapsto L_W(\mu, \pi)$ is stricly concave as a positive linear combination of concave functions is concave.
+Then, $\pi \mapsto L_W(\mu, \pi)$ is  concave since a positive linear combination of concave functions is concave.
 
 \paragraph{Ternary search algorithm}
 
 
-The ternary search algorithm\footnote{\url{https://en.wikipedia.org/wiki/Ternary_search}} can be used to find the argmax of a unimodal concave function on a given interval with a precision of $\epsilon$ in $\Theta(\log \frac{b - a}{\epsilon})$ evaluations of the function. More precisely in our case ($b - a \leq 1$) it will require approximately $100$ evaluations of the function for a precision of $10^{-10}$.
-We will use this algorithm to estimate $\pi$ for a given $\mu$.
+The ternary search algorithm\footnote{\url{https://en.wikipedia.org/wiki/Ternary_search}} can be employed to find the argmax of a unimodal or concave function within a given interval with a precision of $\epsilon$ in $\Theta(\log \frac{b - a}{\epsilon})$ function evaluations. More precisely, in our case ($b - a \leq 1$), it will require approximately $100$ evaluations of the function for a precision of $10^{-10}$. We will use this algorithm to estimate $\pi$ for a given $\mu$.
 
 
 
 \paragraph{Evaluating the likelihood}
 
-To run the ternary search algorithm, we need to be able to evaluate the log-likelihood for a given value of $\pi$ efficiently.
-The log-likelihood is the sum of $m$ log of the likelihoods of individual values.
-Hence the complexity will be $\Theta(m C_E(m))$ where $C_E(m)$ is the complexity of computing the likelihood for a single value of $x$.
+To execute the ternary search algorithm, we must efficiently evaluate the log-likelihood for a given $\pi$ value. The log-likelihood is the sum of the logarithms of individual values' likelihoods, Therefore, the complexity of this task is $\Theta(m C_E(m))$ where $C_E(m)$ represents the complexity of calculating the likelihood for a single value of $x$.
 
-In the case of the BOS model, we can notice that $\forall x \in \bbrack{1, m}, \pi \mapsto P(x | \mu, \pi)$ is polynomial of degree $\Theta(m)$ with coefficients that depend on $m$, $i$ and $\mu$. This is almost also the case for the GOD mdoel in the sense that the following reasoning holds. As the function is polynomial, we can precompute these coefficients and then evaluate the likelihood of one value in $\Theta(m)$ operations. This gives a complexity of $\Theta(m^2)$ to evaluate the total likelihood of $W$ for a given $\mu$ and $\pi$. 
+For the BOS model, we observe that $\forall x \in \bbrack{1, m}, \pi \mapsto P(x | \mu, \pi)$ is a polynomial of degree $\Theta(m)$ with coefficients depending on $m$, $i$, and $\mu$. This observation is almost applicable to the GOD model as well. Since the function is polynomial, we can precompute these coefficients and then evaluate the likelihood of one value in $\Theta(m)$ operations. This results in a complexity of $\Theta(m^2)$ for evaluating the total likelihood of $W$ for a given $\mu$ and $\pi$.
 
-An important point is we excluded the cost of the precomputations of the coefficients. This cost is not necessary negligible but contrary to the evaluation of the likelihood, it is only done once for one $m$ and can then be used for all iterations of the AECM algorithm and the ternary search algorithm.
+An essential consideration is that we've omitted the cost of precomputing the coefficients. While this cost is not necessarily negligible, unlike the likelihood evaluation, it occurs only once for a given $m$ and can subsequently be applied across all iterations of the AECM algorithm and the ternary search algorithm.
 
 
 \paragraph{Complexity}
 
-We note $n$ the number of observations, $m$ the number of possible values for $x$ and $\epsilon > 0$ the precision of the estimate of $\pi$.
+Let $n$ denote the number of observations, $m$ represent the number of possible values for $x$, and $\epsilon > 0$ indicate the precision of the estimate of $\pi$.
 
 We can first group the data by values and sum the weights of the observations. This can be done in $\Theta(n)$ operations.
 
-Then to estimate $\pi$ for a given $\mu$, we can use the ternary search algorithm. The number of iterations of the algorithm is $\Theta(\log \frac{b - a}{\epsilon})$. For each iteration, we need to compute the likelihood for two values of $\pi$. If we note $C_E(m)$ the complexity of computing the likelihood for a given value of $\pi$, we have a complexity of $\Theta(\log \frac{b - a}{\epsilon} C_E(m))$.
+Next, to estimate $\pi$ for a given $\mu$, we can employ the ternary search algorithm. The number of iterations for the algorithm is $\Theta(\log \frac{b - a}{\epsilon})$. In each iteration, computing the likelihood for two $\pi$ values incurs a complexity of $\Theta(\log \frac{b - a}{\epsilon} C_E(m))$, where $C_E(m)$ denotes the complexity of computing the likelihood for a given $\pi$ value.
 
-Finally, to estimate $\mu$, we need to compute the likelihood for every possible value of $\mu$. This gives a total complexity of $\Theta(m C_E(m) \log \frac{b - a}{\epsilon} )$.
+Finally, to estimate $\mu$, we must calculate the likelihood for every potential value of $\mu$. This results in a total complexity of $\Theta(m C_E(m) \log \frac{b - a}{\epsilon} )$.
 
-In our case we have $C_E(m) = \Theta(m^2)$ and $[a, b] \subset [0, 1]$ which gives a complexity of $\Theta(m^3 \log \frac{1}{\epsilon})$ (without taking into account the precomputations of the coefficients).
+In our specific scenario, where $C_E(m) = \Theta(m^2)$ and $[a, b] \subset [0, 1]$, this yields a complexity of $\Theta(m^3 \log \frac{1}{\epsilon})$ (excluding the precomputations of coefficients).
