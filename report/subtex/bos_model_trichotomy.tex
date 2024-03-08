@@ -56,9 +56,8 @@ As explained in section~\ref{sec:univariate_generic_estimation}, we directly hav
 
 \paragraph{Method efficiency}
 
-As presented in section~\ref{sec:univariate_generic_estimation}, we can estimate $\mu, \pi$ in $\mathcal O(m^3 \log \frac{1}{\epsilon})$ operations once the coefficients $u$ are computed. The coefficients $u$ can be computed in $\mathcal O(m^5)$ operations and stored in $\mathcal O(m^3)$ space. This is a major improvement compared to the EM algorithm proposed in~\cite{biernacki2016model}. Indeed we give a fully polynomial time algorithm with precision guarantees, while the EM algorithm has no guarantees on the precision and the proposed algorithm is exponential in the number of categories.
+As presented in section~\ref{sec:univariate_generic_estimation}, we can estimate $\mu, \pi$ in $\mathcal O(m^3 \log \frac{1}{\epsilon})$ operations once the coefficients $u$ are computed. The coefficients $u$ can be computed in $\mathcal O(m^5)$ operations and stored in $\mathcal O(m^3)$ space. This is a major improvement compared to the EM algorithm proposed in~\cite{biernacki2016model}. Indeed we give a fully polynomial time algorithm with precision guarantees, while the EM algorithm has no guarantees on the precision and the proposed algorithm is exponential in the number of categories (a benchmark is given in section~\ref{sec:runtime}).
 
-\tr{TODO: add a the run time comparisons}
 
 
 
