@@ -1,5 +1,7 @@
 \subsubsection{Algorithm}
 
+\label{sec:god_polynomial_computation}
+
 We present here our algorithm to compute the coefficients $u$ of the polynomial expansion of the likelihood of the GOD model. 
 
 
@@ -7,30 +9,33 @@ We present here our algorithm to compute the coefficients $u$ of the polynomial 
     \caption{GOD polynomial computation}
     \begin{algorithmic}[1]
     \Require $m \in \NN$
-    \Ensure $u[m -1, \mu - 1, x - 1] = \Pr(x | \mu, \pi)$ where we consider it as a polynomial equality  
+    \Ensure $u$ the coefficients of the polynomial expansion of the likelihood of the GOD model  
         
-    \State $u \leftarrow \text{array of size } m \times m \times m$ initialised to $0$
-    \State $u[0] \leftarrow 1$
-    \For{$h \in \bbrack{2, m}$}
-        \For{$\mu \in \bbrack{0, h - 1}$}
-            \For{$x \in \bbrack{0, h - 1}$}
-                \State $s = u[h - 1, \mu, x]$
-                \For{$y \in \bbrack{0, x - 1}$}
-                    \State $p \leftarrow u[h - y - 2, \max(0, \mu - y - 1), x - y - 1]$
-                    \State $a \leftarrow \frac{h - y - 1}{h}$
-                    \State $s \leftarrow s +_P p \times_P \left[ \left( \indickronecker{\mu > y} - a \right) \pi +_P a \right]$
+    \State $D : D[i, k] = \norm{bin(i) - E_k}, \forall i \in \bbrack{0, 2^{m - 1} - 1}, \forall k \in \bbrack{1, m}$
+    \State $is\_min : is\_min[i, k] = (\norm{bin(i) - E_k} = \min_{l \in \bbrack{1, m}} \norm{bin(i) - E_l}), \forall i \in \bbrack{0, 2^{m - 1} - 1}, \forall k \in \bbrack{1, m}$
+    \State $card\_min : card\_min[i] = \card{\set{k \in \bbrack{1, m} | is\_min[i, k] = 1}}, \forall i \in \bbrack{0, 2^{m - 1} - 1}$
+    \State $u : u[\mu, x, d] = 0, \forall \mu \in \bbrack{1, m}, \forall x \in \bbrack{1, m}, \forall d \in \bbrack{0, m - 1}$
+    \For{$i \in \bbrack{0, 2^{m-1} -1}$}
+        \For{$x \in \bbrack{1, m}$}
+            \If{$is\_min[i, x - 1]$}
+                \For{$\mu \in \bbrack{1, m}$}
+                    \State $d = D[i, \mu - 1]$
+                    \State $u[\mu - 1, x - 1, d] += \frac{1}{card\_min[i]}$  
                 \EndFor
-                \State $c \leftarrow \indickronecker{\mu = x \lor (x = 0 \land \mu \leq x) \lor (x = h - 1 \land \mu \geq x)}$
-                \State $a \leftarrow \frac{1}{h}$
-                \State $s \leftarrow s +_P (c - a) \pi +_P a$
-                \For{$y \in \bbrack{x + 1, h - 1}$}
-                    \State $p \leftarrow u[y - 1, \min(\mu, y - 1), x]$
-                    \State $a \leftarrow \frac{y}{h}$
-                    \State $s \leftarrow s +_P p \times_P \left[ \left( \indickronecker{\mu < y} - a \right) \pi +_P  a \right]$
-                \EndFor
-                \State $u[h, \mu, x] = s / h$
-            \EndFor
+            \EndIf    
         \EndFor
     \EndFor    
 \end{algorithmic}
 \end{algorithm}
+
+The algorithm quite simple. We first compute the distance between each possible binary vector in $D$. Then we use it to determine if an $E_k$ is the closest to a binary vector and we store this in $is\_min$. Finally, we use this information to compute the number of closest $E_k$ to a binary vector in $card\_min$. 
+
+The computation can be done in $\mathcal O(m 2^m)$ operations by noticing that it is possible to compute the distance between a binary vector and all the $E_k$ in $\mathcal O(m)$ operations using the fact that the change of distance between two $E_k$ is at most $1$. Then computing $is\_min$ and $card\_min$ can be done in $\mathcal O(m 2^m)$ operations.
+
+Then we just need to compute the sum. Note that naively this would require $\mathcal O(m^2 2^m)$ operations. However, we can notice that for a given $i$ and $x$, we only loop over $\mu$ if $E_{\mu}$ is the closest to $i$. On average, this seems to happen less than $2$ times. Hence the complexity of the algorithm is $\mathcal O(m^2 2^m)$ without assuming this property and $\mathcal O(m 2^m)$ if we assume it.
+
+Mathematically this property is translated by the following conjecture:
+
+\begin{conjecture}
+    \[ \sum_{c \in \set{0, 1}^{m - 1}} \card{\argmin_{k \in \bbrack{1, m}} \norm{c - E_k}_1} = 2^{m} - \binom{m}{\floor{\frac{m}{2}}} \]
+\end{conjecture}
