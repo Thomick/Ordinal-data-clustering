@@ -12,6 +12,8 @@ cd Ordinal-data-clustering
 pip install -r requirements.txt
 ```
 
+You can also use it online, see : https://ipolcore.ipol.im/demo/clientApp/demo.html?id=77777000487
+
 ## Usage
 
 The notebooks can be run using Jupyter Notebook or Jupyter Lab and are located in the `notebooks` folder. The source code is located in the `src` folder.
