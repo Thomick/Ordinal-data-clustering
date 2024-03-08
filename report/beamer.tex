@@ -22,6 +22,7 @@
 \usepackage{adjustbox}
 \usepackage{multirow, multicol}
 \usepackage{caption}
+\usepackage{hyperref}
 
 \usepackage{mwe}
 
@@ -80,6 +81,7 @@
 \newcommand{\len}{\textsc{Length}}
 \newcommand{\call}[1]{\textsc{#1}}
 \newcommand{\bbrack}[1]{\left\llbracket#1\right\rrbracket}
+\newcommand{\set}[1]{\ensuremath{\left\{ #1 \right\}}}
 
 \DeclareMathOperator{\ucb}{UCB}
 
@@ -89,6 +91,23 @@
 
 \frame{\titlepage}
 
+\begin{frame}{Ordinal Data Clustering}
+Found in :
+\begin{itemize}
+    \item Product review
+    \item Health diagnostic (Evaluation of a patient's pain level)
+    \item and others ... (Stage of growth of an organism in biology for instanceS)
+\end{itemize}\\~\\
+
+Why clustering:
+\begin{itemize}
+    \item Summarize large dataset
+    \item Understand data
+    \item Visualization
+\end{itemize}
+    
+\end{frame}
+
 \begin{frame}{Overview}
     \begin{itemize}
         \item Clustering multivariate ordinal data
@@ -97,19 +116,16 @@
                   \item Binary Ordinal Search (BOS)
                   \item Globally Ordered Data (GOD) $\star$
               \end{itemize}
-        \item New fast parameter estimation method and open source implementation (\hyperlink{https://github.com/Thomick/Ordinal-data-clustering}{link}) $\star$
+        \item New fast parameter estimation method and open source implementation (\hyperlink{https://github.com/Thomick/Ordinal-data-clustering}{link}), maybe an online demonstration $\star$
         \item New experiments $\star$
     \end{itemize}
 
     \hfill\small $\star$ Our contribution
 \end{frame}
 
-\begin{frame}{Univariate probabilistic models}
+\begin{frame}{Univariate probabilistic models: BOS}
     $n$ samples, $m$ categories
-    \begin{itemize}
-        \item BOS model: Result of a binary search with noisy comparisons.
-        \item GOD model: Most probable result of a linear search with noisy comparisons.
-    \end{itemize}
+    \structure{BOS model}: Result of a binary search with noisy comparisons.
 
     \begin{figure}[htbp]
         \centering
@@ -146,8 +162,88 @@
         \caption*{Graphical model of the stochastic Binary Ordinal Search.}
         \label{fig:graphical_model}
     \end{figure}
+\end{frame}
 
-    \begin{figure}[htbp]
+\begin{frame}{Univariate probabilistic models : BOS}
+    $n$ samples, $m$ categories
+    \structure{BOS model}: Result of a binary search with noisy comparisons.
+
+    \begin{example}
+        With $m = 5, \mu = 2$:
+        \begin{enumerate}
+            \item $e_1 = \set{1, 2, 3, 4, 5} = \bbrack{1, m}$, $y_1 = 4$, $z_1 = 1$
+            \item $e_2 = \set{1, 2, 3}, y_2 = 2, z_2 = 0$
+            \item $e_3 = \set{1}, y_3 = 1, z_3 = 0$
+            \item $e_4 = \set{1}, y_4 = 1, z_4 = 1$
+            \item $e_5 = \set{1}$
+        \end{enumerate}
+    \end{example}
+\end{frame}
+
+\begin{frame}{Parameter estimation}
+    \begin{block}{Maximum likelihood estimation}
+        We have a set of $n$ independent observations $X = (x_i)_{i \in [n]}$, where $x_i \in \bbrack{1, m}$ follow a distribution $P$ with parameters $\mu, \pi$ with $\mu \in \bbrack{1, m}$
+
+        The goal of MLE is:
+        $$(\mu, \pi) = \argmax_{(\mu, \pi) \in \bbrack{1, m} \times [0, 1]} \Pr(X | \mu, \pi)$$
+
+        (or equivalently 
+        $$(\mu, \pi) = \argmax_{(\mu, \pi) \in \bbrack{1, m} \times [0, 1]} \log \Pr(X | \mu, \pi)$$
+    \end{block}
+\end{frame}
+
+\begin{frame}{Likelihoods}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{Attachments/log_likelihoods_bos.png}
+    \caption{Log-likelihoods for each possible $\mu$ for $n = 100$ samples with the true parameters being $m = 5$, $\mu=2$ and $\pi = 0.4$ }
+    \label{fig:log_likelihoods}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Ternary search algorithm}
+    \begin{theorem}
+        $L_X(\mu, \bullet) : \pi \mapsto \log P(X | \mu, \pi)$ is strictly concave.
+    \end{theorem}
+
+    \pause
+    
+    \begin{block}{Ternary search}
+        $L_X(\mu, \bullet)$ can be maximized at precision $\epsilon$ with ternary search in $\Theta(\ln \frac{1}{\epsilon})$ evaluation.
+    \end{block}    
+\end{frame}
+
+
+\begin{frame}{Likelihood estimation}
+\begin{theorem}
+    We can efficiently compute $\Pr(x | \mu, \bullet)$ as it is a polynomial function of degree $m$.
+\end{theorem}
+\begin{proof}    
+    \begin{align}
+    \Pr(x | x \in e_j, \mu, \pi) 
+    &= \sum_{e_{j+1} \subset e_j} \Pr(x, e_{j+1} | x \in e_j, \mu, \pi) \\
+    &= \sum_{e_{j+1} \subset e_j} \Pr(x | e_{j+1}, x \in e_j, \mu, \pi) \Pr(e_{j+1} | e_j, \mu, \pi) \\
+    &= \sum_{e_{j+1} \subset e_j ; x\in e_{j+1}} \Pr(x | x \in e_{j+1}, \mu, \pi) \Pr(e_{j+1} | e_j, \mu, \pi)
+    \end{align}
+\end{proof}
+\end{frame}
+
+\begin{frame}{MLE complexity}
+
+\begin{block}{Complexity}
+    \begin{itemize}
+        \item Pre-compute the $m^3$ coefficients of the polynomials is done through dynamic programming in $\Theta(m^5)$
+        \item Group the data by value is done in $\Theta(n)$ (\textit{ie} $(1, 1, 2, 4)$ to $(1:2, 2:1, 3:0, 4:1)$
+        \item MLE optimization in $\Theta(m^3 \ln\frac{1}{\epsilon})$ : one optimization per $\mu$, each optimization is $\Theta(\ln{1}{\epsilon})$ evaluation, each evaluation is $\Theta(m^2)$ ($m$ evaluation of polynomial of degree $m$)
+    \end{itemize}
+\end{block}
+
+\end{frame}
+
+\begin{frame}{Univariate probabilistic models}
+        \structure{GOD model}: Most probable result of a linear search with noisy comparisons.
+        
+        \begin{figure}[htbp]
         \centering
         \begin{tikzpicture}
             \node[obs]                               (xj) {$x_i$};
@@ -162,73 +258,80 @@
             \edge {pi} {zj};
 
             \plate[inner sep=.55cm] {}{(xj)(cj)(zj)}{$i=1, \ldots, n$};
-            \plate[inner sep=.25cm] {}{(cj)(zj)}{$j=1, \ldots, m$};
+            \plate[inner sep=.25cm] {}{(cj)(zj)}{$j=1, \ldots, m-1$};
         \end{tikzpicture}
         \caption*{Graphical model of the GOD model.}
         \label{fig:god_graphical_model}
     \end{figure}
 \end{frame}
 
-\begin{frame}{Efficient parameter estimation}
-    \begin{itemize}
-        \item We show that \(\Pr(x | \mu, \pi)\) is polynomial of degree \(m - 1\) in $\pi$ with non-negative coefficients
-        \item $m^2$ polynomials to compute in total. The complexity of the computation is :
-              \begin{itemize}
-                  \item $O(m^6)$ for the BOS model (via Lagrange interpolation)
-                  \item $O(m 2^m)$ for the GOD model
-              \end{itemize}
-        \item Efficient computation of the log-likelihood once all the coefficients are known.
-        \item Log-likelihood is concave so we can maximize it using the trisection method
-        \item Final complexity for a precision of $\epsilon$:\begin{itemize}
-                  \item $O(m^6)$ pre-computation then $O(n + m^3 \ln \epsilon)$ for the BOS model
-                        \item$O(m2^m)$ pre-computation then $O(n + m^3 \ln \epsilon)$ for GOD model
-              \end{itemize}
-    \end{itemize}
+
+\begin{frame}{Univariate probabilistic models : GOD}
+
+    \begin{example}
+        With $m = 5, \mu = 2$:
+        \begin{itemize}
+            \item $Z = (\top, \top, \top, \bot)$
+
+            \item $C = (\mu \geq 1, \mu \geq 2, \mu < 3, \mu \geq 4)$
+
+            \item $E = (2, 1, 2, 1)$
+
+            \item $x = 2$
+        \end{itemize}
+    \end{example}
 \end{frame}
 
+
+\begin{frame}{Parameter estimation}
+    \begin{definition}
+    We define for $x \in \bbrack{1, m}$,:
+\[ \mathcal{C}_x := \set{c \in \set{0, 1}^{m-1} | x \in \argmin_{k \in \bbrack{1, m}} \norm{c - E_k}_1 }\]
+\end{definition}
+
+\begin{definition}
+    We define for $x \in \bbrack{1, m}, \mu \in \bbrack{1, m}, d \in \bbrack{0, m-1}$:
+    \[ u(\mu, x, d) := \sum_{c \in \mathcal{C}_x / \norm{c - E_{\mu}}_1 = d}  \card{\argmin_{k \in \bbrack{1, m}} \norm{c - E_k}_1}^{-1}\]
+\end{definition}
+
+\end{frame}
+
+\begin{frame}{Likelihood}
+    \begin{theorem}{Observation likelihood}
+    \label{thm:p_x_knowing_pi_mu}
+    \[\Pr(x | \pi, \mu) = \pi^{m-1} \sum_{d = 0}^{m-1} \left(\frac{1 - \pi}{\pi}\right)^d u(x, \mu, d)\]
+\end{theorem}
+
+
+\begin{block}{Complexity }
+    
+    $O(m2^m)$ precomputation
+    
+    $\Theta(m^3 \log \frac{1}{\epsilon} + n)$
+\end{block}
+
+\end{frame}
 \begin{frame}{AECM algorithm}
-    Alternating Expectation-Conditional Maximization (AECM) algorithm allows to find cluster in data where each cluster is created by the same univariate probabilistic model.
+    Alternating Expectation-Conditional Maximization (AECM) algorithm allows finding cluster in data where each cluster is created by the same univariate probabilistic model.
 
-    It uses the same principle as EM but adds an estimation step of each univariate probabilistic model parameters in the maximization.
-\end{frame}
-
-
-\begin{frame}
-    \begin{figure}[htbp]
-        \centering
-        \begin{adjustbox}{width=0.8\textwidth}
-            \begin{tikzpicture}
-                \node[obs]                               (xi) {$x_i$};
-                \node[latent, left=of xi]               (em) {$e_m$};
-                \node[latent, below=of em, yshift=0.5cm]               (zm1) {$z_{m-1}$};
-                \node[latent, left=of em]               (ym1) {$y_{m-1}$};
-                \node[const, left=of ym1]               (dots) {$\quad\ldots\quad$};
-                \node[latent, left=of dots]               (e2) {$e_2$};
-                \node[latent, below=of e2, yshift=0.5cm]               (z1) {$z_1$};
-                \node[latent, left=of e2]               (y1) {$y_1$};
-                \node[latent, left=of y1]               (e1) {$e_1$};
-                \node[const, above=of dots]    (mu) {$\mu$};
-                \node[const, below=of dots, yshift=-1.6cm]  (pi) {$\pi$};
-
-                \edge{e1}{y1};
-                \edge{y1}{e2};
-                \edge{z1}{e2};
-                \edge{e2}{dots};
-                \edge{dots}{ym1};
-                \edge{ym1}{em};
-                \edge{zm1}{em};
-                \edge{em}{xi};
-                \edge{mu}{e2};
-                \edge{mu}{em};
-                \edge{pi}{z1};
-                \edge{pi}{zm1};
-
-                \plate[inner sep=.25cm] {} {(xi)(e1)(zm1)(z1)} {$i=1, \ldots, n$};
-            \end{tikzpicture}
-        \end{adjustbox}
-        \caption*{Graphical model of the stochastic Binary Ordinal Search.}
-        \label{fig:graphical_model}
-    \end{figure}
+    \scalebox{0.8}{
+\begin{minipage}{1.2\textwidth}
+\begin{algorithm}[H]
+\caption{AECM}
+\label{alg:aecm}
+\begin{algorithmic}[1]
+\Require Number of clusters $K$
+\While {log-likelihood increase}
+    \State \textbf{E Step}: For each sample, compute the conditional probability of belonging to each cluster given the current estimation of the model parameters, ie.
+    $$\text{For $i\in\{1,...,n\}$ and $k\in\{1,...,K\}$, compute }p(i\in C_k | x_i, \boldsymbol{\alpha}, \boldsymbol{\mu}, \boldsymbol{\pi})$$
+    \State \textbf{M Step}: Update the estimation of the model parameters using the probabilities of the previous step.
+    \State \quad - Mixing proportion $\boldsymbol{\alpha}$
+    \State \quad - Component parameters $(\mu_k,\pi_k)_{i=k}^K$ using the parameter estimation algorithm of the BOS or GOD models
+\EndWhile
+\end{algorithmic}
+\end{algorithm}
+\end{minipage}
+}
 \end{frame}
 
 \begin{frame}{Experiments}
@@ -266,7 +369,7 @@
 \begin{frame}{Experiments}
     \begin{itemize}
         \item Test of the AECM estimation for both models on generated datasets from the corresponding distributions.
-        \item Different parameters are tested and the runtimes, the average of the $L_1$ distances between the true and estimated parameters after applying optimal transport to find the correct clusters are reported (10 runs). 
+        \item Different parameters are tested and the runtimes, the average of the $L_1$ distances between the true and estimated parameters after applying optimal transport to find the correct clusters, are reported (10 runs). 
     \end{itemize}
 
     \begin{table}[H]
@@ -514,7 +617,7 @@
 \end{frame}
 
 \begin{frame}{Demonstration}
-    \hyperlink{https://ipolcore.ipol.im/demo/clientApp/demo.html?id=77777000487}{Open Demo (private)}
+    \href{https://ipolcore.ipol.im/demo/clientApp/demo.html?id=77777000487}{Open Demo}
     \begin{figure}
         \includegraphics[width=0.8\textwidth]{Attachments/demo.png}
     \end{figure}

@@ -1,28 +1,28 @@
 \begin{thm}
     \label{thm:projection_appendix}
-    If we suppose that the prior distribution of $\mu$ is uniform over $\bbrack{1, m}$ and $\pi > \frac{1}{2}$, then \(\forall c \in \set{0, 1}^{m-1}\),
+    Assuming that the prior distribution of $\mu$ is uniform over $\bbrack{1, m}$ and $\pi > \frac{1}{2}$, then \(\forall c \in \set{0, 1}^{m-1}\),
     \[\argmax_{k \in \bbrack{1, m}} \Pr(\mu = k | C = c) = \argmin_{k \in \bbrack{1, m}} \norm{c - E_k}_1\]
 \end{thm}
+\tm {Rappeler ce que $c_i$ et $Z_i$ signifient}
 
 \begin{proof}
 \begin{lemma}
     \[ \Pr(C[i] = c[i] | \mu < i) = c[i] \pi + (1 - c[i]) (1 - \pi) \]
     \[ \Pr(C[i] = c[i] | \mu \not< i) = (1 - c[i]) \pi + c[i] (1 - \pi) \]
 \end{lemma}
+\tm {Pas besoin de numéro si tu ne fais pas référence à une équation plus tard}
 \begin{proof}
     \begin{align}
-        &\ \Pr(C[i] = c[i] | \mu < i)\\
-        &\begin{aligned}
+        \ \Pr(C[i] = c[i] | \mu < i)
         &= \Pr(C[i] = c[i] | Z[i] = 1, \mu < i) \Pr(Z[i] = 1) \\
-        &+ \Pr(C[i] = c[i] | Z[i] = 0, \mu < i) \Pr(Z[i] = 0)
-        \end{aligned}\\
+        &\qquad + \Pr(C[i] = c[i] | Z[i] = 0, \mu < i) \Pr(Z[i] = 0)\\
         &= c[i] \Pr(Z[i] = 1) + (1 - c[i]) \Pr(Z[i] = 0)\\
         &= c[i] \pi + (1 - c[i]) (1 - \pi)\\
-        &\ \Pr(C[i] = c[i] | \mu \not< i)\\
-        &\begin{aligned}
+    \end{align}
+    \begin{align}
+        \Pr(C[i] = c[i] | \mu \not< i)
         &= \Pr(C[i] = c[i] | Z[i] = 1, \mu \not< i) \Pr(Z[i] = 1) \\
-        &+ \Pr(C[i] = c[i] | Z[i] = 0, \mu \not< i) \Pr(Z[i] = 0)
-        \end{aligned}\\
+        & \qquad + \Pr(C[i] = c[i] | Z[i] = 0, \mu \not< i) \Pr(Z[i] = 0)\\
         &= (1 - c[i]) \Pr(Z[i] = 1) + c[i] \Pr(Z[i] = 0)\\
         &= (1 - c[i]) \pi + c[i] (1 - \pi)
     \end{align}
