@@ -92,6 +92,7 @@ As $\pi > \frac{1}{2}$, we conclude that:
     \label{lemma:p_x_c_knowing_pi_mu_appendix}
     \[\Pr(x, c | \pi, \mu) = \indic{}_{\mathcal{C}_x}(c) \pi^{m-1}  \frac{\left(\frac{1 - \pi}{\pi}\right)^{\norm{c - E_{\mu}}_1}}{\card{\argmin_{k \in \bbrack{1, m}} \norm{c - E_k}_1}} \]
 \end{lemma}
+\tm {dire c'est qui $C_x$}
 \begin{proof}
     Using Bayes' theorem, then Lemma~\ref{lemma:p_c_mu} and the fact that $\mu$ is uniformly distributed over the set defined by the $\argmin$, we have:
     \begin{align}
@@ -108,6 +109,7 @@ As $\pi > \frac{1}{2}$, we conclude that:
     \label{thm:p_x_knowing_pi_mu}
     \[\Pr(x | \pi, \mu) = \pi^{m-1} \sum_{d = 0}^{m-1} \left(\frac{1 - \pi}{\pi}\right)^d u(x, \mu, d)\]
 \end{thm}
+\tm {dire c'est quoi $u(x, \mu, d)$}
 \begin{proof}
     By marginalizing over $c$ and then using the previous lemma, we have:
 
@@ -148,20 +150,23 @@ As $\pi > \frac{1}{2}$, we conclude that:
     \end{align}
 
     Therefore, we have that:
-    For $d < 2$:
-    \begin{equation}
-        c_d'(x)^2 - c_d(x) c_d''(x) = c_d'(x)^2 \geq 0
-    \end{equation}
+    \begin{itemize}
+        \item For $d < 2$:
+        \begin{equation}
+            c_d'(x)^2 - c_d(x) c_d''(x) = c_d'(x)^2 \geq 0
+        \end{equation}
+        \item For $d \geq 2$:
+        \begin{align}
+            c_d'(x)^2 - c_d(x) c_d''(x) 
+            &= d^2 x^{-4} \left(\frac{1 - x}{x}\right)^{2d - 2} - d x^{-4} \left(\frac{1 - x}{x}\right)^{2d - 2} \left(1 - 2x + d\right)\\
+            &= d x^{-4} \left(\frac{1 - x}{x}\right)^{2d - 2} \left(d - 1 + 2x - d\right)\\
+            &= d x^{-4} \left(\frac{1 - x}{x}\right)^{2d - 2} \left(2x - 1\right)\\
+            &\geq 0 \qquad \text{since $2x - 1 \geq 0$ on $\left[\frac{1}{2}, 1\right]$}
+        \end{align}
+    \end{itemize}
+    
 
-    For $d \geq 2$:
-    \begin{align}
-        c_d'(x)^2 - c_d(x) c_d''(x) 
-        &= d^2 x^{-4} \left(\frac{1 - x}{x}\right)^{2d - 2} - d x^{-4} \left(\frac{1 - x}{x}\right)^{2d - 2} \left(1 - 2x + d\right)\\
-        &= d x^{-4} \left(\frac{1 - x}{x}\right)^{2d - 2} \left(d - 1 + 2x - d\right)\\
-        &= d x^{-4} \left(\frac{1 - x}{x}\right)^{2d - 2} \left(2x - 1\right)
-    \end{align}
-
-    We get the desired result as $2x - 1 \geq 0$ on $\left[\frac{1}{2}, 1\right]$.
+    
 \end{proof}
 
 
