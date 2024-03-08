@@ -182,6 +182,8 @@ We can now prove that $\forall x \in \bbrack{0, h - 1}, \forall \mu \in \bbrack{
 
 \subsection{Efficient computation of the likelihood}
 
+\subsubsection{Mathematical proofs}
+
 \begin{lemma}[Symetries the likelihood]
     \label{lemma:symetries_bos}
     $\forall m \in \NN^*, \forall x \in \bbrack{1, m}, \forall \mu \in \bbrack{1, m}, \pi \in [0, 1], \forall e = \bbrack{l, u} \subset \bbrack{1, m}$:
@@ -189,7 +191,7 @@ We can now prove that $\forall x \in \bbrack{0, h - 1}, \forall \mu \in \bbrack{
     \[ \Pr(x | x \in \bbrack{l, u}, e = \bbrack{l, u}, \mu, \pi) = \Pr(x - l | x - l \in \bbrack{0, u - l}, e= \bbrack{0, u - l}, \max(0, \mu - l), \pi)\]
 \end{lemma}
 \begin{proof}
-    \tr{To be done}
+    It is a simple translation of the categories. The only tricks is to notice that if $\mu$ is stricly less than the interval or equal to the lower bound, it will not affect the correctness of any sub-interval.
 \end{proof}
 
 \begin{definition}
@@ -251,16 +253,16 @@ We can apply the lemma~\ref{lemma:symetries_bos} to the third term:
 \begin{align}
     &
     \begin{aligned}
-        &=\sum_{y = 0}^{x - 1} \Pr(x | x \in \bbrack{0, y - 1}, f = \bbrack{0, y - 1} , \mu, \pi) \Pr(\bbrack{0, y- 1} | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi)\\
+        &=\sum_{y = x + 1}^{h - 1} \Pr(x | x \in \bbrack{0, y - 1}, f = \bbrack{0, y - 1} , \mu, \pi) \Pr(\bbrack{0, y- 1} | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi)\\
         &+\ \qquad \Pr(x | x \in \set{x}, f = \set{x}, \mu, \pi) \Pr(\set{x} | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi)\\
-        &+ \sum_{y = x + 1}^{h - 1} \Pr(x - y - 1 | x - y - 1\in \bbrack{0, h - 1 - y - 1}, f = \bbrack{0, h - 1 - y - 1}, \max(0, \mu - y - 1), \pi) \\
+        &+ \sum_{y =0}^{x - 1} \Pr(x - y - 1 | x - y - 1\in \bbrack{0, h - 1 - y - 1}, f = \bbrack{0, h - 1 - y - 1}, \max(0, \mu - y - 1), \pi) \\
         &\qquad \Pr(\bbrack{y + 1, h - 1} | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi)
     \end{aligned} \\
     &
     \begin{aligned}
-        &=\sum_{y = 0}^{x - 1} \bosl{x}{\mu}{y - 1} \Pr(\bbrack{0, y-1} | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi)\\
+        &=\sum_{y = x + 1}^{h - 1} \bosl{x}{\mu}{y - 1} \Pr(\bbrack{0, y-1} | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi)\\
         &+\ \qquad \bosl{x}{\mu}{1} \Pr(\set{x} | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi)\\
-        &+ \sum_{y = x + 1}^{h - 1}\bosl{x - y - 1}{\max(0, \mu - y - 1)}{h - y - 1} \Pr(\bbrack{y + 1, h - 1} | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi)
+        &+ \sum_{y = 0}^{x - 1}\bosl{x - y - 1}{\max(0, \mu - y - 1)}{h - y - 1} \Pr(\bbrack{y + 1, h - 1} | x \in \bbrack{0, h - 1}, e = \bbrack{0, h - 1}, \mu, \pi)
     \end{aligned} \\
 \end{align}
 
@@ -269,9 +271,9 @@ Moreover, we can now use the lemma~\ref{lemma:bos_transition} to get replace the
 
 \begin{align}
     \begin{aligned}
-        &=\sum_{y = 0}^{x - 1} \bosl{x}{\mu}{y - 1} \frac{1}{h} \left[ \left( \correct{\mu}{\bbrack{0, h - 1}}{y - 1}{\bbrack{0, y - 1}} - \frac{y}{h} \right) \pi + \frac{y}{h} \right] \\
+        &=\sum_{y = x + 1}^{h - 1} \bosl{x}{\mu}{y - 1} \frac{1}{h} \left[ \left( \correct{\mu}{\bbrack{0, h - 1}}{y - 1}{\bbrack{0, y - 1}} - \frac{y}{h} \right) \pi + \frac{y}{h} \right] \\
         &+\ \qquad \frac{1}{h} \left[ \left(\correct{\mu}{\bbrack{0, h - 1}}{x}{\set{x}} - \frac{1}{h} \right) \pi + \frac{1}{h} \right] \\
-        &+ \sum_{y = x + 1}^{h - 1}\bosl{x - y}{\max(0, \mu - y)}{h - y} \frac{1}{h}  \\
+        &+ \sum_{y = 0}^{x - 1}\bosl{x - y}{\max(0, \mu - y)}{h - y} \frac{1}{h}  \\
         &\qquad \left[ \left( \correct{\mu - y - 1}{\bbrack{0, h - 1 - y - 1}}{h - y - 1}{\bbrack{y, h - 1}} - \frac{h - y - 1}{h} \right) \pi + \frac{h - y - 1}{h} \right]
     \end{aligned} \\ 
 \end{align}
@@ -280,12 +282,51 @@ We can then replace $\correct{\mu}{\bbrack{0, h - 1}}{\bullet}{\bullet}$ by a lo
 
 \begin{align}
     \begin{aligned}
-        &=\frac{1}{h} \sum_{y = 0}^{x - 1} \bosl{x}{\mu}{y} \left[ \left( \indickronecker{\mu < y} - \frac{y}{h} \right) \pi + \frac{y}{h} \right] \\
+        &=\frac{1}{h} \sum_{y = x + 1}^{h - 1} \bosl{x}{\mu}{y} \left[ \left( \indickronecker{\mu < y} - \frac{y}{h} \right) \pi + \frac{y}{h} \right] \\
         &+\frac{1}{h} \ \qquad \left[ \left( \indickronecker{\mu = x \lor (x = 0 \land \mu \leq x) \lor (x = h - 1 \land \mu \geq x)} - 1 \right) \pi +  \frac{1}{h} \right] \\
-        &+\frac{1}{h} \sum_{y = x + 1}^{h - 1}\bosl{x - y}{\max(0, \mu - y)}{h - y}    \left[ \left( \indickronecker{\mu > y} - \frac{h - y - 1}{h} \right) \pi + \frac{h - y - 1}{h} \right]
+        &+\frac{1}{h} \sum_{y = 0}^{x - 1}\bosl{x - y}{\max(0, \mu - y)}{h - y}    \left[ \left( \indickronecker{\mu > y} - \frac{h - y - 1}{h} \right) \pi + \frac{h - y - 1}{h} \right]
     \end{aligned} \\
 \end{align}
 \end{proof}
+
+
+\subsubsection{Algorithm}
+
+In the algorithm we consider that $u$ contains polynomials and that $\times_P$ and $+_P$ are respectively the multiplication and addition of polynomials.
+
+on the line 16, we use the a $\min$ to avoid computing the polynomial for $\mu$ outside the considered range. As if $\mu$ is greater than the interval or equal to the upper bound, the correctness of any sub-interval is not different.
+
+\begin{algorithm}[H]
+    \caption{BOS polynomial computation}
+    \begin{algorithmic}[1]
+    \Require $m \in \NN$
+    \Ensure $u[m -1, \mu - 1, x - 1] = \Pr(x | \mu, \pi)$ where we consider it as a polynomial equality  
+        
+    \State $u \leftarrow \text{array of size } m \times m \times m$ initialised to $0$
+    \State $u[0] \leftarrow 1$
+    \For{$h \in \bbrack{2, m}$}
+        \For{$\mu \in \bbrack{0, h - 1}$}
+            \For{$x \in \bbrack{0, h - 1}$}
+                \State $s = u[h - 1, \mu, x]$
+                \For{$y \in \bbrack{0, x - 1}$}
+                    \State $p \leftarrow u[h - y - 2, \max(0, \mu - y - 1), x - y - 1]$
+                    \State $a \leftarrow \frac{h - y - 1}{h}$
+                    \State $s \leftarrow s +_P p \times_P \left[ \left( \indickronecker{\mu > y} - a \right) \pi +_P a \right]$
+                \EndFor
+                \State $c \leftarrow \indickronecker{\mu = x \lor (x = 0 \land \mu \leq x) \lor (x = h - 1 \land \mu \geq x)}$
+                \State $a \leftarrow \frac{1}{h}$
+                \State $s \leftarrow s +_P (c - a) \pi +_P a$
+                \For{$y \in \bbrack{x + 1, h - 1}$}
+                    \State $p \leftarrow u[y - 1, \min(\mu, y - 1), x]$
+                    \State $a \leftarrow \frac{y}{h}$
+                    \State $s \leftarrow s +_P p \times_P \left[ \left( \indickronecker{\mu < y} - a \right) \pi +_P  a \right]$
+                \EndFor
+                \State $u[h, \mu, x] = s / h$
+            \EndFor
+        \EndFor
+    \EndFor    
+\end{algorithmic}
+\end{algorithm}
 
 
 % \begin{align}

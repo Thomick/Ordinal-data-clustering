@@ -10,6 +10,11 @@ We want to estimate $\pi$ and $\mu$ from a sample $(1, \dots, m)$ with weights $
     is a polynomial function of degree at most $m - 1$.  
 \end{thm}
 
+\begin{definition}
+    We denote by $u[\mu, x, d]$ the coefficient of the polynomial of degree $d$ in the polynomial expansion of $\pi \mapsto \Pr(x | \mu, \pi)$ \textit{ie}:
+    \[ \Pr(x | \mu, \pi) = \sum_{d = 0}^{m - 1} u[\mu, x, d] \pi^d \]
+\end{definition}
+
 We show that the likelihood of a single observation is a polynomial function of degree at most $m - 1$ in $\pi$. This result is important because, once the coefficients are known, it implies that the likelihood of a single observation can be computed in $\Theta(m)$ and the $\log$-likelihood of a sample (which has at most $m$ distinct values) in $\Theta(m^2)$ operations. 
 For a fixed $m$, there is only $m^2$ polynomials to compute and store (one for each couple $(x, \mu)$), which leads to $m^3$ coefficients to store. We will show in the next paragraph~\ref{sec:bos_coefficients} that these coefficients can be computed in $\mathcal O(m^5)$ operations.
 
@@ -28,9 +33,9 @@ For a fixed $m$, there is only $m^2$ polynomials to compute and store (one for e
 \begin{equation}
     \begin{aligned}
         \bosl{x}{\mu}{h}
-        &=\frac{1}{h} \sum_{y = 0}^{x - 1} \bosl{x}{\mu}{y} \left[ \left( \indickronecker{\mu < y} - \frac{y}{h} \right) \pi + \frac{y}{h} \right] \\
-        &+\frac{1}{h} \ \qquad \left[ \left( \indickronecker{\mu = x \lor (x = 0 \land \mu \leq x) \lor (x = h - 1 \land \mu \geq x)} - 1 \right) \pi +  \frac{1}{h} \right] \\
-        &+\frac{1}{h} \sum_{y = x + 1}^{h - 1}\bosl{x - y}{\max(0, \mu - y)}{h - y}    \left[ \left( \indickronecker{\mu > y} - \frac{h - y - 1}{h} \right) \pi + \frac{h - y - 1}{h} \right]
+        &=\frac{1}{h} \sum_{y = x + 1}^{h - 1} \bosl{x}{\mu}{y} \left[ \left( \indickronecker{\mu < y} - \frac{y}{h} \right) \pi + \frac{y}{h} \right] \\
+            &+\frac{1}{h} \ \qquad \left[ \left( \indickronecker{\mu = x \lor (x = 0 \land \mu \leq x) \lor (x = h - 1 \land \mu \geq x)} - 1 \right) \pi +  \frac{1}{h} \right] \\
+            &+\frac{1}{h} \sum_{y = 0}^{x - 1}\bosl{x - y}{\max(0, \mu - y)}{h - y}    \left[ \left( \indickronecker{\mu > y} - \frac{h - y - 1}{h} \right) \pi + \frac{h - y - 1}{h} \right]
     \end{aligned} \\
 \end{equation}
 \end{thm}
@@ -38,8 +43,6 @@ For a fixed $m$, there is only $m^2$ polynomials to compute and store (one for e
 This theorem gives a recursive formula to compute the likelihood of a single observation. Using this formula, we can construct a dynamic programming algorithm to compute the coefficients of the polynomials. To do this we proceed by increasing $x$, $\mu$ and $h$. We do directly the multiplication of the polynomials.
 
 Each term of the sum require the multiplication of a polynomial of degree at most $m - 1$ by a polynomial of degree $2$ which gives a cost of $O(m)$. The sum has at most $m$ terms, which gives a cost of $O(m^2)$. We need to apply this formula for each $(x, \mu, h)$ which gives a cost of $O(m^5)$.
-
-\tr{Give more datails in appendix, including the algorithm}
 
 \paragraph{Log concavity}
 
