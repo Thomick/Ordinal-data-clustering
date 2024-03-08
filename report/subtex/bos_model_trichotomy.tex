@@ -46,11 +46,11 @@ Each term of the sum requires the multiplication of a polynomial of degree at mo
 
 \paragraph{Log concavity}
 
-\begin{thm}[Log concavity of the BOS model]
+\begin{conjecture}[Log concavity of the BOS model]
     $\forall m \in \NN^*, \forall x \in \bbrack{1, m}, \forall \mu \in \bbrack{1, m}$:
     \[\pi \mapsto \Pr(x | x, \mu, \pi) \] 
     is $\log$-concave on $[0, 1]$.
-\end{thm}
+\end{conjecture}
 
 As explained in section~\ref{sec:univariate_generic_estimation}, we directly have that $\forall \mu \in \bbrack{1, m}, \pi \mapsto L_W(\pi, \mu)$ is concave. Hence we can use a ternary search algorithm to estimate $\pi$ for a given $\mu$.
 
