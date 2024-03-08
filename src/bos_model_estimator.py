@@ -1,4 +1,3 @@
-from functools import cache
 from typing import Any, Optional
 import numpy as np
 try:
@@ -40,7 +39,8 @@ def univariate_em_pi(
         Precision parameter, by default None
     weights : list[float], optional
         Weights of the observations, by default None
-
+    u : np.ndarray, optional
+        Coefficients of the polynomials, by default None
 
     Returns
     -------
@@ -51,7 +51,7 @@ def univariate_em_pi(
     list[float]
         List of p(x_i | mu, pi_q)
     """
-    # print(f"univariate_em_pi, {data=}, {m=}, {mu=}, {n_iter=}, {eps=}, {pi=}, {weights=}")
+    # print(f"univariate_em_pi, {data=}, {m=}, {mu=}, {n_iter=}, {eps=}, {pi=}, {weights=}")
     assert m >= 1, "m must be >= 1"
     if m == 1:
         return [1], [0], [1]
@@ -66,7 +66,12 @@ def univariate_em_pi(
             weights = np.ones(len(data))
         weights = group_sum(m, data, weights=weights)
     pi_list: list[float] = [pi]
-    log_likelihood = compute_log_likelihood(m=m, weights=weights, mu=mu, pi=pi, u=u, probability_x_given_mu_pi=probability_x_given_mu_pi_using_u)
+    log_likelihood = compute_log_likelihood(m=m,
+                                            weights=weights,
+                                            mu=mu,
+                                            pi=pi,
+                                            u=u,
+                                            probability_x_given_mu_pi=probability_x_given_mu_pi_using_u)
     lls_list: list[float] = [log_likelihood]
 
     for iteration_index in range(n_iter):
@@ -76,9 +81,14 @@ def univariate_em_pi(
         pi = s / np.sum(weights) / (m - 1)
         pi_list.append(pi)
 
-        # print(f"Iteration {iteration_index + 1}: pi={pi:.6e}, ll={log_likelihood:.6e}")
+        # print(f"Iteration {iteration_index + 1}: pi={pi:.6e}, ll={log_likelihood:.6e}")
 
-        new_log_likelihood = compute_log_likelihood(m=m, weights=weights, mu=mu, pi=pi, u=u, probability_x_given_mu_pi=probability_x_given_mu_pi_using_u)
+        new_log_likelihood = compute_log_likelihood(m=m,
+                                                    weights=weights,
+                                                    mu=mu,
+                                                    pi=pi,
+                                                    u=u,
+                                                    probability_x_given_mu_pi=probability_x_given_mu_pi_using_u)
         lls_list.append(new_log_likelihood)
         if abs(new_log_likelihood - log_likelihood) < eps:
             break
@@ -112,11 +122,10 @@ def univariate_em(
         u = compute_polynomials(m)
 
     # sum of each group to reduce the complexity of the algorithm
-    # print(f"univariate_em, original: {data=}, {weights=}")
+    # print(f"univariate_em, original: {data=}, {weights=}")
     weights = group_sum(m, data, weights)
     data = np.arange(1, m + 1)
-    # print(f"univariate_em, grouped: {data=}, {weights=}")
-    
+    # print(f"univariate_em, grouped: {data=}, {weights=}")
 
     best_pi = None
     best_mu = None
@@ -131,8 +140,9 @@ def univariate_em(
             best_pi = pi_list[-1]
             best_mu = mu
             best_probs = probs
-    # we can compute the probabilities using the best mu and pi
+    # we can compute the probabilities using the best mu and pi
     return best_mu, best_pi, best_ll, np.array(best_probs)
+
 
 """
 Useful functions:

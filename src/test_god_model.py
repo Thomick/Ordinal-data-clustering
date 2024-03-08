@@ -1,7 +1,7 @@
 from unittest import TestCase, main
 import numpy as np
 from scipy.special import comb
-from compute_u import compute_u
+from compute_u import compute_u as compute_u
 from god_model_estimator import probability_x_given_mu_pi, probability_distribution_x_given_pi, estimate_mu_pi_god as estimate_mu_pi
 
 

@@ -1,7 +1,5 @@
 from unittest import TestCase, main
 import numpy as np
-from scipy.special import comb
-from compute_u import compute_u
 from data_generator import bos_model
 from bos_model_polynomials import  compute_polynomials
 from clustering import compute_p_list

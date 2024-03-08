@@ -4,16 +4,17 @@ In this section, we try to evaluate the performance of the two models on differe
 
 The goal of these experiments is to compare the two models but also to individually test their ability to cluster ordinal datasets and to check whether they are able to generalize to real-life datasets.
 
-All of the experiments and table are reproducible using the provided code and datasets using the fixed seeds.
+All of the experiments and table are reproducible using the provided code and datasets and the fixed seeds.
 
 \subsection{Synthetic data}
 \paragraph{Experimental setup.}
 In this section, we propose to test the AECM algorithm for the BOS and the GOD model on synthetic data in order to check the ability of our proposed estimation methods to correctly estimate the parameters of the dataand to cluster the datasets. 
 
 \paragraph{Runtimes.}
+\label{sec:runtime}
 The runtimes of the AECM algorithm implementation with exponential complexity from \citet{biernacki2016model} 
 are compared to our implementation of the AECM algorithm with polynomial complexity. Figure~\ref{fig:runtime_epsilon}  compare both complexities for multiple runtimes for both univariate and multivariate AECM runs. The runtimes are reported with different number of categories in the dataset $m$. While the original implementation struggles to go further than $m=6$, our implementation can easily reach higher number of categories. The implementation ordinalClust \cite{selosse2021ordinalclust} is used for fair comparison and it is allowed to converge with a predefined $\epsilon$ parameter (internal to the authors package that we cannot modify). 
-The worst case complexity of our implementation is plotted (with $300$ iterations without allowing it to terminate when converged) is plotted to highlight the time gains.The runtimes in the case where our implementation is stopped at convergence with an $\epsilon$ parameter, taken small enough for the comparison are also plotted.
+The worst case complexity of our implementation is plotted (with $300$ iterations without allowing it to terminate when converged) is plotted to highlight the time gains. The runtimes in the case where our implementation is stopped at convergence with an $\epsilon$ parameter, taken small enough for the comparison, are also plotted.
 \begin{figure}[H]
     \centering
     \begin{subfigure}[b]{0.49\textwidth}
@@ -43,6 +44,7 @@ The distributions used are the BOS model, the GOD model and discretized blobs.
 The following clustering algorithms are used for comparison: K-Means, Gaussian Mixture Models and the BOS and GOD models. The ARI score (section~\ref{sec:evaluation_method}) is used to measure the clustering performance. The results are presented in Table~\ref{tab:results_synth_clustering} of Appendix \ref{appendix:metrics_synth}.
 % \ar{Need to add ordinal clustering algorithms that are different?}
 % \ar{Discussion}
+We notice that the data genearated from ordinal focus models like BOS or GOD are better classified by the BOS and GOD models than by the other models. At the same time, the BOS and GOD models are worse than KMeans and GMM on the blobs dataset. This is not surprising since the BOS and GOD models are specifically designed for ordinal data and it highlights the importance of using the right model for the right data.
 
 \paragraph{Visualizing the clusters.}
 In order to get a better idea of the differences between the clustering methods, t-SNE visualizations \citep{van2008visualizing} are plotted for different disitributions and clustering methods. The visualizations project the categorical datapoints in a continuous space and allow to check whether the estimated clusters are coherent with the true clusters. Since categorical data is used, it is more difficult to separate the clusters with smaller dimensionnal data and when the number of categories is small. Multiple datasets are generated with different parameters in order to highlight these differences. Moreover, as seen in the previous paragraph, it is also easier to cluster the data when the number of categories or features are high.
@@ -67,7 +69,7 @@ Moreover, we are evaluating on the classification task, but the classes might no
 In order to correctly associate the predicted clusters with the true clusters, we need to define a strategy that matches each predicted clusters with a true cluster number which will minimize a given criterion.
 In order to do so, we propose two methods:
 \begin{itemize}
-    \item The first one and consists in sorting the histograms of the predicted clusters and the true clusters and then matching the two sorted lists by assigning the predicted clusters to the true cluster in the same sorted order.
+    \item The first one consists in sorting the histograms of the predicted clusters and the true clusters and then matching the two sorted lists by assigning the predicted clusters to the true cluster in the same sorted order.
     
     This method is naive because it does not take into account the distribution of the real clusters according to the true labels for the matching.
     
@@ -97,7 +99,7 @@ To do so, we also use simple clustering algorithms to compare the performance of
 The results are presented in Table~\ref{tab:results_real} in the appendix \ref{appendix:metrics_real}. One interesting observation is that our implementation of the clustering methods scale well with the number of samples when comparaed to a Gaussian Mixture Model for example. 
 During the experiments, the final results were very  sensitive to the initial parameters used, most notably the proportion of each clusters, and initializations are likely to get stuck on a local minimum because of the nature of AECM.
 % We notice that although K-Means allows to significantly reduce the runtime of both the BOS and the GOD models estimations, it does not necessarily increase the clustering score and the classification score. The BOS model, because of its complexity, is also the longest to run but seems to be competitive with the other models on most datasets.
-In order to get a better idea of the differences between the clustering methods, we also plot t-SNE visualizations \citep{van2008visualizing} for different datasets and the multiple models in Appendix~\ref{sec:appendix_assign}. The histogram and assignment matrix of the Zoo dataset are provided in Appendix~\ref{sec:appendix_hist} in order to get a better understanding of the different assignments obtained in these settings for different models.
+In order to get a better idea of the differences between the clustering methods, we also plot t-SNE visualizations \citep{van2008visualizing} for different datasets and the multiple models in Appendix~\ref{sec:appendix_assign}. The histogram and assignment matrix of the Zoo dataset are also provided in Appendix~\ref{sec:appendix_assign} in order to get a better understanding of the different assignments obtained in these settings for different models.
 
 % \subsection{"experiment with a modification of the method"}
 
