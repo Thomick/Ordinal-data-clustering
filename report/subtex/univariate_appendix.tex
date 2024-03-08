@@ -33,19 +33,7 @@
     Let $f$ be a concave function on $[A, B]$. The ternary search algorithm returns a value $y$ such that $\exists x \in \argmax_{[A, B]} f$, $|y - x| < \epsilon$.
 \end{thm}
 \begin{proof}
-    The algorithm stops when the length of the interval is less than $\epsilon$. At each iteration, the length of the interval is multiplied by $\frac{2}{3}$. Hence the algorithm terminates and require $\Theta(\log \frac{b - a}{\epsilon})$ iterations.
-
-    \tr{TODO: clean this} 
-    Indeed after iteration $k$, the length of the interval is $\left(\frac{2}{3}\right)^k(b - a)$~\footnote{$\lg=\log_2$}:
-    \begin{align}
-        \left(\frac{2}{3}\right)^k(b - a) < \epsilon &\Leftrightarrow \left(\frac{2}{3}\right)^k < \frac{\epsilon}{b - a} \\
-        &\Leftrightarrow k (\lg 2 - \lg 3) < \lg \frac{\epsilon}{b - a} \\
-        &\Leftrightarrow k > \frac{1}{\lg 3 - 1} \lg \frac{b - a}{\epsilon}
-        \end{align}
-    which for $\epsilon = 2^{-p}$ and $b - a \leq 1$ gives:
-    \begin{equation}
-        k > \frac{1}{\lg 3 - 1} p \approx 1.7095 p
-    \end{equation}
+    The algorithm stops when the length of the interval is less than $\epsilon$. At each iteration, the length of the interval is multiplied by $\frac{2}{3}$. Hence the algorithm terminates.
 
     We note $[a, b]$ the interval on which the algorithm is called and $[A, B]$ the initial interval.
     We prove the following invariant: at each iteration of the algorithm, the interval $[a, b]$ is such that $\exists x \in \argmax_{[a, b]} f, a \leq x \leq b$.
@@ -56,6 +44,21 @@
         We can do the same reasoning for the case $f(c) < f(d)$ and the interval $[c, b]$.
     \end{itemize}
 \end{proof}
+
+\paragraph{Complexity analysis}
+
+Indeed after iteration $k$, the length of the interval is $\left(\frac{2}{3}\right)^k(b - a)$~\footnote{$\lg=\log_2$}:
+\begin{align}
+    \left(\frac{2}{3}\right)^k(b - a) < \epsilon &\Leftrightarrow \left(\frac{2}{3}\right)^k < \frac{\epsilon}{b - a} \\
+    &\Leftrightarrow k (\lg 2 - \lg 3) < \lg \frac{\epsilon}{b - a} \\
+    &\Leftrightarrow k > \frac{1}{\lg 3 - 1} \lg \frac{b - a}{\epsilon}
+    \end{align}
+
+As each iteration of the algorithm require two evaluations of $f$, for $\epsilon = 2^{-p}$ and $b - a \leq 1$. if we note $k_e$ the number of evaluations of $f$ required by the algorithm, we have:
+\begin{equation}
+    k_e = \ceil{\frac{2}{\lg 3 - 1} p} \approx 2.4 p
+\end{equation}
+
 
 
 \subsection{Concavity}
