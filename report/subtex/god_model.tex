@@ -36,8 +36,8 @@ The GOD model for $m$ categories is characterized by two parameters $\mu \in \bb
 $(Z_j)_{j\in\bbrack{1,m-1}}$ is a vector of independent Bernoulli variables, with parameter $\pi$. For $j \in \bbrack{1, m-1}$, $Z_j$ indicates whether the comparison with the category $j$ is correct $(Z_j=1)$ or not $(Z_j=0)$. $C$ is the vector containing the $m-1$ results of the comparisons depending on both $Z$ and the parameter $\mu$. It is defined as follows:
 \[
 \forall j \in \bbrack{1, m-1}, C[j] = \begin{cases}
-    (\mu < j) & \text{if}\  Z_j = 1\\
-    (\mu \not< j) & \text{if}\  Z_j = 0
+    (j < \mu) & \text{if}\  Z_j = 1\\
+    (j \not< \mu ) & \text{if}\  Z_j = 0
 \end{cases} \]
 
 The GOD model will generate $x \in \bbrack{1, m}$ such that $x \sim \mathcal{U}(\argmin_{k \in \bbrack{1, m}} \norm{c - E_k}_1)$. We can interpret this as a probability maximization as stated in Theorem~\ref{thm:projection}. The graphical model associated with this probabilistic model is depicted on Figure \ref{fig:god_graphical_model}.
