@@ -7,20 +7,20 @@
 
 \begin{proof}
 \begin{lemma}
-    \[ \Pr(C[i] = c[i] | \mu < i) = c[i] \pi + (1 - c[i]) (1 - \pi) \]
-    \[ \Pr(C[i] = c[i] | \mu \not< i) = (1 - c[i]) \pi + c[i] (1 - \pi) \]
+    \[ \Pr(C[i] = c[i] | \mu < i) = (1 - c[i]) \pi + c[i] (1 - \pi) \]
+    \[ \Pr(C[i] = c[i] | \mu \not< i) = c[i] \pi + (1 - c[i]) (1 - \pi) \]
 \end{lemma}
 \tm {Pas besoin de numéro si tu ne fais pas référence à une équation plus tard}
 \begin{proof}
     \begin{align}
-        \ \Pr(C[i] = c[i] | \mu < i)
+        \Pr(C[i] = c[i] | \mu \not< i)
         &= \Pr(C[i] = c[i] | Z[i] = 1, \mu < i) \Pr(Z[i] = 1) \\
         &\qquad + \Pr(C[i] = c[i] | Z[i] = 0, \mu < i) \Pr(Z[i] = 0)\\
         &= c[i] \Pr(Z[i] = 1) + (1 - c[i]) \Pr(Z[i] = 0)\\
         &= c[i] \pi + (1 - c[i]) (1 - \pi)\\
     \end{align}
     \begin{align}
-        \Pr(C[i] = c[i] | \mu \not< i)
+        \ \Pr(C[i] = c[i] | \mu < i)
         &= \Pr(C[i] = c[i] | Z[i] = 1, \mu \not< i) \Pr(Z[i] = 1) \\
         & \qquad + \Pr(C[i] = c[i] | Z[i] = 0, \mu \not< i) \Pr(Z[i] = 0)\\
         &= (1 - c[i]) \Pr(Z[i] = 1) + c[i] \Pr(Z[i] = 0)\\
