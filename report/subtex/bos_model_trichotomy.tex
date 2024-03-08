@@ -42,7 +42,7 @@ For a fixed $m$, there is only $m^2$ polynomials to compute and store (one for e
 
 This theorem gives a recursive formula to compute the likelihood of a single observation. Using this formula, we can construct a dynamic programming algorithm to compute the coefficients of the polynomials. To do this we proceed by increasing $x$, $\mu$ and $h$. We do directly the multiplication of the polynomials.
 
-Each term of the sum require the multiplication of a polynomial of degree at most $m - 1$ by a polynomial of degree $2$ which gives a cost of $O(m)$. The sum has at most $m$ terms, which gives a cost of $O(m^2)$. We need to apply this formula for each $(x, \mu, h)$ which gives a cost of $O(m^5)$.
+Each term of the sum requires the multiplication of a polynomial of degree at most $m - 1$ by a polynomial of degree $2$ which gives a cost of $O(m)$. The sum has at most $m$ terms, which gives a cost of $O(m^2)$. We need to apply this formula for each $(x, \mu, h)$ which gives a cost of $O(m^5)$.
 
 \paragraph{Log concavity}
 
@@ -54,7 +54,7 @@ Each term of the sum require the multiplication of a polynomial of degree at mos
 
 As explained in section~\ref{sec:univariate_generic_estimation}, we directly have that $\forall \mu \in \bbrack{1, m}, \pi \mapsto L_W(\pi, \mu)$ is concave. Hence we can use a ternary search algorithm to estimate $\pi$ for a given $\mu$.
 
-\paragraph{title}
+\paragraph{Method efficiency}
 
 As presented in section~\ref{sec:univariate_generic_estimation}, we can estimate $\mu, \pi$ in $\mathcal O(m^3 \log \frac{1}{\epsilon})$ operations once the coefficients $u$ are computed. The coefficients $u$ can be computed in $\mathcal O(m^5)$ operations and stored in $\mathcal O(m^3)$ space. This is a major improvement compared to the EM algorithm proposed in~\cite{biernacki2016model}. Indeed we give a fully polynomial time algorithm with precision guarantees, while the EM algorithm has no guarantees on the precision and the proposed algorithm is exponential in the number of categories.
 
