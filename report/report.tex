@@ -77,15 +77,15 @@ Théo Rudkiewicz\ipolAuthorMark{3}}
 \tableofcontents
 
 \begin{ipolAbstract}
-    We present a new algorithm for clustering multivariate ordinal data. We study two process for generating univariate ordinal data and propose an algorithm for efficiently estimating the parameters of these processes. For the first and pre-existing process called Binary Ordinal Search, we propose a polynomial algorithm in contrast with the exponential algorithm proposed in the literature. For the second process, we propose a new model, called Globally Ordered Data. We also provide an estimation algorithm with polynomial complexity (after a pre-processing step). We then use the AECM algorithm to cluster multivariate ordinal data. We show the efficiency of our algorithm on synthetic and real data. 
+    We introduce a novel algorithm for clustering multivariate ordinal data, building upon the work of \cite{biernacki2016model}. We examine two processes for generating univariate ordinal data and present an algorithm for efficiently estimating the parameters of these processes. For the first and pre-existing process known as Binary Ordinal Search, we propose a polynomial algorithm for parameter estimation which improve the previously proposed exponential algorithm. For the second process, we propose an alternative model with similar properties, called Globally Ordered Data. Finally, we utilize the AECM algorithm to cluster multivariate ordinal data based on these models and showcase the efficiency of our algorithm on synthetic and real data.
 \end{ipolAbstract}
 
 \begin{ipolCode}
-    We provide a Python implementation of all the algorithms presented in this article. The source code is available from \href{https://github.com/Thomick/Ordinal-data-clustering}{the github repository of this article}. This include the estimation algorithm for the BOS and GOD models and the AECM algorithm for clustering multivariate ordinal data.
+    We provide a Python implementation of all the algorithms presented in this article. The source code is available from \href{https://github.com/Thomick/Ordinal-data-clustering}{the github repository of this article}. This includes the estimation algorithm for the BOS and GOD models and the AECM algorithm for clustering multivariate ordinal data.
     We also provide a Jupyter notebook to reproduce the experiments presented in this article. 
 \end{ipolCode}
 
-\ipolKeywords{ordinal data, clustering, AECM algorithm, parameter estimation}
+\ipolKeywords{Ordinal data, Clustering, AECM algorithm, Parameter estimation}
 
 \input{subtex/intro.tex}
 
