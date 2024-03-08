@@ -35,8 +35,8 @@ $$L_W(\mu, \pi) := \log P(W | \mu, \pi) = \sum_{i=1}^m w_i \log P(i | \mu, \pi)$
 To estimate $\mu$ and $\pi$, the idea proposed for the BOS-model in REF is to use the Expectaion-Maximization algorithm. However they note that it is easier to first estimate $\pi$ for every possible value of $\mu$ and then to estimate $\mu$ using the estimated $\pi$. In forulas, we have:
 
 
-$$\hat{\pi_{\mu}} = \argmax_{\pi \in [[a, b]]} P(W | \mu, \pi)$$
-$$\hat{\mu} = \argmax_{\mu \in [[1, m]]} \max_{\pi \in [[a, b]]} P(W | \mu, \pi) = \argmax_{\mu \in [[1, m]]} P(W | \mu, \hat{\pi_{\mu}})$$
+$$\hat{\pi_{\mu}} = \argmax_{\pi \in [a, b]} P(W | \mu, \pi)$$
+$$\hat{\mu} = \argmax_{\mu \in \bbrack{1, m}} \max_{\pi \in [a, b]} P(W | \mu, \pi) = \argmax_{\mu \in \bbrack{1, m}} P(W | \mu, \hat{\pi_{\mu}})$$
 
 Once we have the estimates $\hat{\pi_{\mu}}$ for every possible value of $\mu$, it is easy to estimate $\mu$ by choosing the value of $\mu$ that maximize the weighted likelihood as it requires only to compute the likelihood for every possible value of $\mu$ and to choose the maximum.
 
@@ -46,17 +46,14 @@ Estimating $\pi$ for a given $\mu$ is a one-dimensional optimization problem. We
 
 Suppose we have:
 
-$$\forall x \in [[1, m]], \pi \mapsto P(x | \mu, \pi) \text{ is strcictly $\log$-concave}$$
+$$\forall x \in \bbrack{1, m}, \pi \mapsto P(x | \mu, \pi) \text{ is strcictly $\log$-concave}$$
 
 Then we have, $\pi \mapsto L_W(\mu, \pi)$ is stricly concave as positive linear combination of concave functions are concave.
 
 \paragraph{Ternary search algorithm}
 
 
-\tr{TODO: ref} 
-%(see https://en.wikipedia.org/wiki/Ternary_search)
-
-The ternary search algorithm can be used to find the argmax of a unimodal  concave function on a given interval with a precision of $\epsilon$ in $\Theta(\log \frac{b - a}{\epsilon})$ evaluations of the function. More precisely in our case ($b - a \leq 1$) it will require approximately $100$ evaluations of the function for a precision of $10^{-10}$.
+The ternary search algorithm~\footnote{\url{https://en.wikipedia.org/wiki/Ternary_search}} can be used to find the argmax of a unimodal  concave function on a given interval with a precision of $\epsilon$ in $\Theta(\log \frac{b - a}{\epsilon})$ evaluations of the function. More precisely in our case ($b - a \leq 1$) it will require approximately $100$ evaluations of the function for a precision of $10^{-10}$.
 We will use this algorithm to estimate $\pi$ for a given $\mu$.
 
 
@@ -67,7 +64,7 @@ To run the ternary search algorithm, we need to be able to evaluate the log-like
 The log-likelihood is the sum of $m$ log of the likelihoods of individual values.
 Hence the complexity will be $\Theta(m C_E(m))$ where $C_E(m)$ is the complexity of computing the likelihood for a single value of $x$.
 
-In the case of the BOS model, we can notice that $\forall x \in [[1, m]], \pi \mapsto P(x | \mu, \pi)$ is polynomial of degree $\Theta(m)$ with coefficients that depend on $m$, $i$ and $\mu$. This is alsmost alos the case for the GOD mdoel in the sense that the following reasonning holds. As the function is polynomial, we can precompute these coefficients and then evaluate the likelihood of one value in $\Theta(m)$ operations. This gives a complexity of $\Theta(m^2)$ to evaluate the total likelihood of $W$ for a given $\mu$ and $\pi$. 
+In the case of the BOS model, we can notice that $\forall x \in \bbrack{1, m}, \pi \mapsto P(x | \mu, \pi)$ is polynomial of degree $\Theta(m)$ with coefficients that depend on $m$, $i$ and $\mu$. This is alsmost alos the case for the GOD mdoel in the sense that the following reasonning holds. As the function is polynomial, we can precompute these coefficients and then evaluate the likelihood of one value in $\Theta(m)$ operations. This gives a complexity of $\Theta(m^2)$ to evaluate the total likelihood of $W$ for a given $\mu$ and $\pi$. 
 
 An important point is we excluded the cost of the precomputations of the coefficients. This cost is not necessary negligible but countrary to the evaluation of the likelihood, it is only done once for one $m$ and can be then used for all iterations of the AECM algorithm and the ternary search algorithm.
 
