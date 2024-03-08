@@ -4,6 +4,7 @@
     \[\argmax_{k \in \bbrack{1, m}} \Pr(\mu = k | C = c) = \argmin_{k \in \bbrack{1, m}} \norm{c - E_k}_1\]
 \end{thm}
 \tm {Rappeler ce que $c_i$ et $Z_i$ signifient}
+\tm {Expliquer l'histoire du prior (de quel point de vue: hypothèse sur la distribution de $\mu$, ou assumption de l'estimateur, ou autre chose)}
 
 \begin{proof}
 \begin{lemma}
@@ -14,15 +15,21 @@
 \begin{proof}
     \begin{align}
         \Pr(C[i] = c[i] | \mu \not< i)
-        &= \Pr(C[i] = c[i] | Z[i] = 1, \mu < i) \Pr(Z[i] = 1) \\
-        &\qquad + \Pr(C[i] = c[i] | Z[i] = 0, \mu < i) \Pr(Z[i] = 0)\\
+        &= \Pr(C[i] = c[i] | Z[i] = 1, \mu \not< i) \Pr(Z[i] = 1) \\
+        &\qquad + \Pr(C[i] = c[i] | Z[i] = 0, \mu \not< i) \Pr(Z[i] = 0)\\
+                &= \II\{c[i]=1\} \Pr(Z[i] = 1) \\
+        &\qquad + \II\{c[i]=0\} \Pr(Z[i] = 0)
+    \end{align}
+    Indeed conditional on $\mu \not< i$ and $Z[i] = 1$, $C[i] = 1$. Similarly, conditional on $\mu \not< i$ and $Z[i] = 0$, $C[i] = 0$. Hence:
+    \begin{align}
+        \ \Pr(C[i] = c[i] | \mu \not< i)
         &= c[i] \Pr(Z[i] = 1) + (1 - c[i]) \Pr(Z[i] = 0)\\
         &= c[i] \pi + (1 - c[i]) (1 - \pi)\\
     \end{align}
     \begin{align}
         \ \Pr(C[i] = c[i] | \mu < i)
-        &= \Pr(C[i] = c[i] | Z[i] = 1, \mu \not< i) \Pr(Z[i] = 1) \\
-        & \qquad + \Pr(C[i] = c[i] | Z[i] = 0, \mu \not< i) \Pr(Z[i] = 0)\\
+        &= \Pr(C[i] = c[i] | Z[i] = 1, \mu < i) \Pr(Z[i] = 1) \\
+        & \qquad + \Pr(C[i] = c[i] | Z[i] = 0, \mu < i) \Pr(Z[i] = 0)\\
         &= (1 - c[i]) \Pr(Z[i] = 1) + c[i] \Pr(Z[i] = 0)\\
         &= (1 - c[i]) \pi + c[i] (1 - \pi)
     \end{align}
@@ -34,12 +41,19 @@
     \[\Pr(C = c | \mu = k) = \pi^{m - 1 - \norm{c - E_k}_1} (1 - \pi)^{\norm{c - E_k}_1}\]
 \end{lemma}
 \begin{proof}
-    Let us compute for $i \in \bbrack{1, m}$, $\Pr(C = c| \mu = i)$ as the $C[i] | \mu$ are independent and using the previous lemma:
+    Let us compute $\Pr(C = c| \mu = i)$ for $i \in \bbrack{1, m}$ by noticing that $C[i] | \mu$ are conditionally independent
+\tm {Eclaircir les égalités (par exemple en deux temps séparé par un peu de texte)}
+\tm {Preuve à corriger (inversion des inégalités entre mu et i)}
 
     \begin{align}
         \Pr(C = c| \mu = k)
         &= \prod_{i = 1}^{m -1} \Pr(C[i] = c[i] | \mu = k)\\
-        &= \prod_{i = 1}^{k-1} \Pr(C[i] = c[i] | \mu < i) \prod_{i = k}^{m-1} \Pr(C[i] = c[i] | \mu \not< i)\\
+        &= \prod_{i = 1}^{k} \Pr(C[i] = c[i] | \mu \not< i ) \prod_{i = k+1}^{m-1} \Pr(C[i] = c[i] | \mu < i)\\
+    \end{align}
+    The last line come from the fact that $\Pr(C[i] = c[i])$ only depends on whether $\mu < i$ or not. Hence, if $i \leq k$, then $\Pr(C[i] = c[i] | \mu = k) = \Pr(C[i] = c[i] | \mu \not< i)$ and if $i > k$, then $\Pr(C[i] = c[i] | \mu = k) = \Pr(C[i] = c[i] | \mu<i)$. We now apply the previous lemma to finish the proof.
+    \begin{align}
+        \Pr(C = c| \mu = k)
+        &= \prod_{i = 1}^{k-1} \Pr(C[i] = c[i] | \mu \not< i) \prod_{i = k}^{m-1} \Pr(C[i] = c[i] | \mu < i)\\
         &= \prod_{i = 1}^{k-1} [c[i] \pi + (1 - c[i]) (1 - \pi)] \prod_{i = k}^{m-1} [(1 - c[i]) \pi + c[i] (1 - \pi)]\\
         &= \pi^{\sum_{i = 1}^{k-1} c[i]} (1 - \pi)^{\sum_{i = 1}^{k-1} (1 - c[i])} \pi^{\sum_{i = k}^{m-1} (1 - c[i])} (1 - \pi)^{\sum_{i = k}^{m-1} c[i]}\\
         &= \pi^{\sum_{i = 1}^{k-1} c[i] + \sum_{i = k}^{m-1} (1 - c[i])} (1 - \pi)^{\sum_{i = 1}^{k-1} (1 - c[i]) + \sum_{i = k}^{m-1} c[i]} \\

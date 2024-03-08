@@ -32,7 +32,7 @@ We still consider a search for the parameter $\mu$ among the ordered categories.
 \end{figure}
     
 The GOD model for $m$ categories is characterized by two parameters $\mu \in \bbrack{1, m}, \pi \in ]\frac{1}{2}, 1]$. The observed data is only the selected category $x$. The latent variables are the vector $Z = (Z_1,...,Z_{m-1}) \in \set{0, 1}^{m - 1}$ and $C \in \set{0, 1}^{m-1}$.
-$(Z_j)_{j\in\bbrack{1,m-1}}$ is a vector of independent Bernoulli variables, with parameter $\pi$. For $j \in \bbrack{1, m-1}$, $Z_j$ indicates whether the comparison with the category $j$ is correct $(Z_j=1)$ or not $(Z_j=0)$. $C$ is the vector containing the $m$ results of the comparisons depending on both $Z$ and the parameter $\mu$. It is defined as follows:
+$(Z_j)_{j\in\bbrack{1,m-1}}$ is a vector of independent Bernoulli variables, with parameter $\pi$. For $j \in \bbrack{1, m-1}$, $Z_j$ indicates whether the comparison with the category $j$ is correct $(Z_j=1)$ or not $(Z_j=0)$. $C$ is the vector containing the $m-1$ results of the comparisons depending on both $Z$ and the parameter $\mu$. It is defined as follows:
 \[
 \forall j \in \bbrack{1, m-1}, C[j] = \begin{cases}
     (\mu < j) & \text{if}\  Z_j = 1\\
