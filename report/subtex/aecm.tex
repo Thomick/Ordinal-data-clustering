@@ -14,20 +14,22 @@ Similarly to the EM algorithm, Alternating Expectation-Conditional Maximization 
     \end{equation}
     And then the parameters $(\theta_k^{(t + 1)})$ are updated after using the internal parameters estimation for each cluster unsing the observations weighted by the probability of belonging to the cluster.
 
-\tm {Modify algorithm below to be more specific (use the model of ternary search algorithm) or remove it (it's a repetition of the previous paragraph)}
-\begin{algorithm}
-\caption{AECM}
-\label{alg:aecm}
-\begin{algorithmic}[1]
-\Require Number of clusters $K$
-\While {log-likelihood increase}
-    \State \textbf{E Step}: For each sample, compute the conditional probability of belonging to each cluster given the current estimation of the model parameters, ie.
-    $$\text{For $i\in\{1,...,n\}$ and $k\in\{1,...,K\}$, compute }p(i\in C_k | x_i, \boldsymbol{\alpha}, \boldsymbol{\mu}, \boldsymbol{\pi})$$
-    \State \textbf{M Step}: Update the estimation of the model parameters using the probabilities of the previous step.
-    \State \quad - Mixing proportion $\boldsymbol{\alpha}$
-    \State \quad - Component parameters $(\mu_k,\pi_k)_{i=k}^K$ using the parameter estimation algorithm of the BOS or GOD models
-\EndWhile
-\end{algorithmic}
-\end{algorithm}
+
 \end{enumerate}
+
+%\tm {Modify algorithm below to be more specific (use the model of ternary search algorithm) or remove it (it's a repetition of the previous paragraph)}
+%\begin{algorithm}
+%\caption{AECM}
+%\label{alg:aecm}
+%\begin{algorithmic}[1]
+%\Require Number of clusters $K$
+%\While {log-likelihood increase}
+%    \State \textbf{E Step}: For each sample, compute the conditional probability of belonging to each cluster given the current estimation of the model parameters, ie.
+%    $$\text{For $i\in\{1,...,n\}$ and $k\in\{1,...,K\}$, compute }p(i\in C_k | x_i, \boldsymbol{\alpha}, \boldsymbol{\mu}, \boldsymbol{\pi})$$
+%    \State \textbf{M Step}: Update the estimation of the model parameters using the probabilities of the previous step.
+%    \State \quad - Mixing proportion $\boldsymbol{\alpha}$
+%    \State \quad - Component parameters $(\mu_k,\pi_k)_{i=k}^K$ using the parameter estimation algorithm of the BOS or GOD models
+%\%EndWhile
+%\end{algorithmic}
+%\end{algorithm}
 
