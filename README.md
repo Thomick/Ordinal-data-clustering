@@ -61,14 +61,16 @@ The repo is structured as follows:
 - `data`: Contains the datasets used for the experiments.
 - `report`: Contains the report for the project.
 
-## Data
-The datasets used in the notebooks are located in the `data` folder. Here the datasets used for the expeeriments (references for the datasets can be found in the report):
-- `data/car_evaluation.csv`: Car Evaluation Database.
-- `data/hayes-roth.csv`: Hayes-Roth Database.
-- `data/zoo.csv`: Zoo Database.
+## Data and experiments
+The datasets used in the notebooks are located in the `data` folder. Here the datasets used for the experiments (licenses for the real-life datasets can be found below in the corresponding sections) can be separated in different categories. We detail the generation process and the way they were used for the experiments for Reproducibility purposes.
 
-Moreover, the estimation algorithms are tested on synthetic datasets generated specifically for the respective distributions (BOS distribution and GOD distribution).
+### Synthetic datasets
+For the runtime comparisons of our implementation of the AECM algorithm and the original implementation (ordinalClust), the datasets in `data/comparison_curves`. These datasets were generated using the notebook `notebooks/experiments_synthetic.ipynb` and the plots for the report are made on the same notebook. The seeds are specified in the dataset file (and are exactly the same that are in the notebook currently for both the algorithms estimation and the datasets). The R package ordinalClust is used in the scripts on the folder `R/` and uses the exact same datasets for the comparison. Moreover, we save the results of the runtimes on the datasets for every value of the number of categories ($m$) and every different curve
 
+The other experiments on synthetic datasets are also available on the notebook `notebooks/experiments_synthetic.ipynb` and `notebooks/estimation.ipynb`. They use data that is generated on the fly for the experiments but since the seeds are fixed the experimences are also reproducible by just running the notebooks. We also save the table of the results of the experiments in the `data/synthetic/` folder.
+
+### Real-life datasets
+The real-life datasets are detailed in the report but can be found in the locations specified in the license. We also put the processed datasets in the `data/processed/` folder that can directly be used for clustering. The experiments on these datasets can be found in the notebook `notebooks/clustering_datasets.ipynb` and they are all reproducible thanks to the fixed seed. The plots and the tables found in the report are all available on the same notebook.
 
 ## License
 
