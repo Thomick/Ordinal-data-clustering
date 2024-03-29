@@ -97,10 +97,9 @@ The computation of the coefficients $u$ can be done in $\mathcal O(m^2 2^m)$ tim
     \[ \pi \mapsto \Pr(x|\pi, \mu) \]
     is $\log$-concave on $[\frac{1}{2}, 1]$.
 \end{conjecture}
-\begin{proof}
-    See appendix~\ref{thm:log_likelihood_concave_appendix}.
-\end{proof}
 
+
+Like for the BOS model, we did not manage to prove this conjecture for all $m$. Moreoever, for numerical reasons, we did not manage to apply the same method as for the BOS model to verify it. 
 As explained in section~\ref{sec:univariate_generic_estimation}, we directly have that $\forall \mu \in \bbrack{1, m}, \pi \mapsto L_W(\pi, \mu)$ is concave. Hence we can use a ternary search algorithm to estimate $\pi$ for a given $\mu$.
 
 \paragraph{Conclusion}
