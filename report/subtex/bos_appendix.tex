@@ -172,14 +172,65 @@ For the whole section we will consider that $e$ is a subset of $\bbrack{1, m}$ a
 
 \begin{conjecture}[Log concavity of the BOS model]
     $\forall m \in \NN^*, \forall x \in \bbrack{1, m}, \forall \mu \in \bbrack{1, m}$:
-    \[\pi \mapsto \Pr(x | x, \mu, \pi) \] 
+    \[\pi \mapsto \Pr(x | \mu, \pi) \] 
     is $\log$-concave on $[0, 1]$.
 \end{conjecture}
 % \begin{proof}
 %     We just have to apply the lemma~\ref{lemma:log_concavity_bos_model} to the case where $e = \bbrack{1, m}$.
 % \end{proof}
 
-Unfornately, we were not able to prove this theorem yet. However we were able to test it numerically for every polynomial up to $m = 100$ we did not find any counter example. To do this we formally computed the second derivative of the log-derivative and checked that it was always negative on $10\ 000$ points of the interval $[0, 1]$.
+Unfortunately, we have not yet been able to prove this theorem. However, we have successfully verified with high confidence that this property holds for $m \leq 94$. Our methodological approach for this empirical result involves checking the negativity of the second derivative of the log-likelihood. To do so we compute the second derivative and consider only the numerator since the denominator is always positive. Since the numerator is a polynomial, we can apply the following tests to verify its negativity on $[0,1]$:
+\begin{itemize}
+    \item If all the coefficients of the polynomial are negative, then the polynomial is negative on $[0,1]$. 
+    \item Otherwise, we check if Lemma \ref{lemma:polynomial_negativity} applies.
+    \item If it does not, we perform an efficient verification of the negativity of the polynomial by evaluating it on multiple points in $[0,1]$ as described below.
+\end{itemize}
+If any of these tests is successful, we can conclude that the second derivative is negative on $[0,1]$ and therefore the log-likelihood is concave on $[0,1]$.
+
+\begin{lemma}
+    \label{lemma:polynomial_negativity}
+    Let $P$ be a polynomial function of degree $n$ on $[0, 1]$. Let $(a_i)_{i=0}^{n}$ be the coefficients of $P$ such that $P(x) = \sum_{i=0}^{n} a_i x^i$. Let $(p_i)_{i=0}^n$ be the positive part of $(a_i)_{i=0}^n$, i.e. $\forall i, p_i = \max(0,a_i)$. In that case, if $\sum_{i=1}^{n} p_i \leq -a_0$, then $P$ is negative on $[0, 1]$.
+\end{lemma}
+
+
+\begin{proof}
+    Let $x \in [0, 1]$, $P(x) = \sum_{i=0}^{n} a_i x^i$. Define for all $i$, $p_i = \max(0, a_i)$ and $n_i = \min(0, a_i)$.
+
+    We have that:
+    \begin{align}
+        \sum_{i=1}^{n} p_i \leq -a_0 &\implies \sum_{i=1}^{n} p_i x_i \leq -a_0 \qquad \text{since $x\in [0, 1]$} \\
+        &\implies \sum_{i=1}^{n} p_i x_i + \sum_{i=1}^{n} n_i x_i \leq -a_0 \\
+        &\iff \sum_{i=1}^{n} a_i x_i \leq -a_0 \\
+        &\iff P(x) \leq 0
+    \end{align}
+\end{proof}
+
+\paragraph*{Efficient verification of the negativity on $[0,1]$ of a polynomial} One straightforward approach is to evaluate the polynomial at a large number of points in the interval \([0,1]\) and check if it is always negative. However, this method lacks firm guarantees on the negativity of the polynomial and requires increasing computational resources as the number of points increases.
+
+To address this, we propose a more efficient method for verifying the negativity of a polynomial on \([0,1]\) with confidence limited only by numerical errors of the machine.
+
+Suppose we know an upper bound \(M\) on the derivative of the function on \([0,1]\). Then, for any \(x \in [0,1]\) and \(h \in \mathbb{R}_+\) such that \(x+h\leq 1\), we have \(P(x+h) \leq P(x) + hM\). Therefore, if \(P(x) \leq 0\) and \(h \leq -\frac{P(x)}{M}\), then \(P(x+h) \leq 0\).
+
+This result allows us to devise an adaptive algorithm for verifying the negativity of a polynomial on \([0,1]\) by sampling the polynomial at intervals of varying lengths. The upper bound \(M\) can be estimated by computing the sum of the positive coefficients of degree \(i \geq 1\) of the derivative of the polynomial and the coefficient of degree \(0\) (regardless of sign). The algorithm is outlined in Algorithm~\ref{algo:check_polynomial_negativity}.
+
+\begin{algorithm}[H]
+    \caption{Check polynomial negativity}
+    \begin{algorithmic}[1]
+    \Require $P$ a polynomial function represented by its coefficients $(a_i)_{i=0}^n$ 
+        
+    \State Let $M=\text{ComputeDerivativeUpperBound}(P)$
+    \State Let $x=0$
+    \State Let $y=P(x)$
+    \While{$x<1$ and $y\leq 0$}
+        \State $y=P(x)$
+        \State $x = x + \frac{-y}{M}$
+    \EndWhile
+    \State \Return $y\leq 0$
+\end{algorithmic}
+
+\label{algo:check_polynomial_negativity}
+\end{algorithm}
+
 
 \subsection{Efficient computation of the likelihood}
 
