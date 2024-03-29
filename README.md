@@ -1,6 +1,6 @@
 # Clustering Multivariate Ordinal Data
 
-This repository contains the code associated to the report Clustering Multivariate Ordinal Data submited to [IPOL](https://www.ipol.im/). 
+This repository contains the code associated to the report Clustering Multivariate Ordinal Data submited to [IPOL](https://www.ipol.im/).
 
 The authors of this project are Théo Rudkiewicz, Ali Ramlaoui and Thomas Michel.
 
@@ -18,15 +18,15 @@ pip install -r requirements.txt
 
 You can also use it online, see : https://ipolcore.ipol.im/demo/clientApp/demo.html?id=77777000487
 
-
 ## Structure
 
 The repo is structured as follows:
+
 - `notebooks`: Contains the notebooks used for the experiments and analysis that are available in the report.
 - `src`: Contains the source code for the estimation algorithms and the clustering algorithms.
-    - `src/data_generator.py`: Contains the code for generating synthetic datasets.
-    - `src/clustering.py`: Contains the code for the estimation EM and AECM algorithms (in the univariate and the multivariate case) for both the BOS and the GOD distribution models.
-    - `src/dataset.py`: Contains the code for loading the datasets and analyzing the different methods on them for generating the results on the report.
+  - `src/data_generator.py`: Contains the code for generating synthetic datasets.
+  - `src/clustering.py`: Contains the code for the estimation EM and AECM algorithms (in the univariate and the multivariate case) for both the BOS and the GOD distribution models.
+  - `src/dataset.py`: Contains the code for loading the datasets and analyzing the different methods on them for generating the results on the report.
 - `data`: Contains the datasets used for the experiments.
 - `report`: Contains the report for the project.
 
@@ -46,7 +46,7 @@ The notebooks can be run using Jupyter Notebook or Jupyter Lab and are located i
 In order to use to cluster datasets using the clustering algorithms implemented in this repo (BOS distribution and GOD model), you can use the following code:
 
 ```python
-from src.clustering import OrdinalClustering
+from src.aecm import AECM_BOS, AECM_GOD
 import numpy as np
 
 # Load the dataset
@@ -54,11 +54,19 @@ data = ...
 m = [np.unique(data[:, i]).shape[0] for i in range(data.shape[1])]
 
 # Create the clustering object
-oc = OrdinalClustering(n_clusters=3, method='bos', init="random") 
-# or method='god', init="random" or init="kmeans"
+oc_bos = AECM_BOS(nb_clusters=3, nb_features=data.shape[1], ms=m, data=data, verbose=True))
+oc_god = AECM_GOD(nb_clusters=3, nb_features=data.shape[1], ms=m, data=data, verbose=True))
 
 # Fit the clustering object to the data
 clusters = oc.fit_transform(data)
+oc_bos.fit(epsilon_aecm=1e-3, max_iter=100, initialization="kmeans")
+oc_god.fit(epsilon_aecm=1e-3, max_iter=100, initialization="kmeans")
+# initialization="random" or initialization="kmeans"
+
+labels_bos = oc_bos.labels
+labels_god = oc_god.labels
+print(oc_bos.alphas, oc_bos.mus, oc_bos.pis)
+print(oc_god.alphas, oc_god.mus, oc_god.pis)
 ```
 
 It is also possible to extend the BaseDataset class in order to create a custom dataset and plot or analyze it using predefined methods. For example, for the Zoo dataset, we can do the following:
@@ -76,14 +84,17 @@ dataset.plot_histograms()
 ```
 
 ## Data and experiments
+
 The datasets used in the notebooks are located in the `data` folder. Here the datasets used for the experiments (licenses for the real-life datasets can be found below in the corresponding sections) can be separated in different categories. We detail the generation process and the way they were used for the experiments for Reproducibility purposes.
 
 ### Synthetic datasets
+
 For the runtime comparisons of our implementation of the AECM algorithm and the original implementation (ordinalClust), the datasets in `data/comparison_curves`. These datasets were generated using the notebook `notebooks/experiments_synthetic.ipynb` and the plots for the report are made on the same notebook. The seeds are specified in the dataset file (and are exactly the same that are in the notebook currently for both the algorithms estimation and the datasets). The R package ordinalClust is used in the scripts on the folder `R/` and uses the exact same datasets for the comparison. Moreover, we save the results of the runtimes on the datasets for every value of the number of categories ($m$) and every different curve
 
 The other experiments on synthetic datasets are also available on the notebook `notebooks/experiments_synthetic.ipynb` and `notebooks/estimation.ipynb`. They use data that is generated on the fly for the experiments but since the seeds are fixed the experimences are also reproducible by just running the notebooks. We also save the table of the results of the experiments in the `data/synthetic/` folder.
 
 ### Real-life datasets
+
 The real-life datasets are detailed in the report but can be found in the locations specified in the license. We also put the processed datasets in the `data/processed/` folder that can directly be used for clustering. The experiments on these datasets can be found in the notebook `notebooks/clustering_datasets.ipynb` and they are all reproducible thanks to the fixed seed. The plots and the tables found in the report are all available on the same notebook.
 
 ## License
