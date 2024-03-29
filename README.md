@@ -29,6 +29,7 @@ The repo is structured as follows:
     - `src/dataset.py`: Contains the code for loading the datasets and analyzing the different methods on them for generating the results on the report.
 - `data`: Contains the datasets used for the experiments.
 - `report`: Contains the report for the project.
+- `R`: Contains the R scripts used for the comparison of the runtime of our algorithm and the ordinalClust package.
 
 ### Where to find the code implementing the algorithms of the paper
 
