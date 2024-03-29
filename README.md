@@ -30,6 +30,15 @@ The repo is structured as follows:
 - `data`: Contains the datasets used for the experiments.
 - `report`: Contains the report for the project.
 
+### Where to find the code implementing the algorithms of the paper
+
+- Algorithm 1 Ternary search: The function `trichotomy_maximization` in the file `src/model_tools.py`.
+- Algorithm 2 Check polynomial negativity: The function `check_fomralcaly_negativity` in the file `src/check_log_concavity_bos.py`.
+- Algorithm 3 BOS polynomial computation: The function `compute_polynomials` in the file `src/bos_model_polynomials.py`.
+- Algorithm 4 GOD polynomial computation: The function `compute_u` in the file `src/compute_u.py`.
+
+A last notable algorithm is the AECM algorithm that is implemented in the file `src/aecm.py`. It is implemented as a class but the main part of the algorithm is located in the `fit` method.
+
 ## Usage
 
 The notebooks can be run using Jupyter Notebook or Jupyter Lab and are located in the `notebooks` folder. The source code is located in the `src` folder.
