@@ -91,7 +91,7 @@ The real-life datasets are detailed in the report but can be found in the locati
 The authors of this project are Théo Rudkiewicz, Ali Ramlaoui and Thomas Michel.
 
 This project is licensed under the GPL-3.0 License - see the LICENSE file for details.
-This includes all the code and the report but not the datasets used for the experiments.
+This includes all the code and the report but not the datasets used for the experiments that are under CC BY 4.0 License (see below).
 
 - `data/car_evaluation.csv`: Car Evaluation Database created by Marko Bohanec (https://archive.ics.uci.edu/dataset/19/car+evaluation)
 - `data/hayes-roth.csv`: Hayes-Roth Database created by Barbara Hayes-Roth and Frederick Hayes-Roth (https://archive.ics.uci.edu/dataset/44/hayes+roth)
