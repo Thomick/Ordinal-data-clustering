@@ -1,6 +1,10 @@
-# Ordinal-data-clustering
+# Clustering Multivariate Ordinal Data
 
-This repo contains experiments and analysis of ordinal data clustering methods based on the paper by Biernacki et al. (2015). The paper can be found [here](https://inria.hal.science/hal-01052447v2/document).
+This repository contains the code associated to the report Clustering Multivariate Ordinal Data submited to [IPOL](https://www.ipol.im/). 
+
+The authors of this project are Théo Rudkiewicz, Ali Ramlaoui and Thomas Michel.
+
+The present work reviews and largely extends the approach proposed in the paper : Christophe Biernacki and Julien Jacques. Model-based clustering of multivariate ordinal data relying on a stochastic binary search algorithm. Statistics and Computing, 26:929–943, 2016. Link to the paper [here](https://inria.hal.science/hal-01052447v2/document).
 
 ## Installation
 
@@ -13,6 +17,27 @@ pip install -r requirements.txt
 ```
 
 You can also use it online, see : https://ipolcore.ipol.im/demo/clientApp/demo.html?id=77777000487
+
+
+## Structure
+
+The repo is structured as follows:
+- `notebooks`: Contains the notebooks used for the experiments and analysis that are available in the report.
+- `src`: Contains the source code for the estimation algorithms and the clustering algorithms.
+    - `src/data_generator.py`: Contains the code for generating synthetic datasets.
+    - `src/clustering.py`: Contains the code for the estimation EM and AECM algorithms (in the univariate and the multivariate case) for both the BOS and the GOD distribution models.
+    - `src/dataset.py`: Contains the code for loading the datasets and analyzing the different methods on them for generating the results on the report.
+- `data`: Contains the datasets used for the experiments.
+- `report`: Contains the report for the project.
+
+### Where to find the code implementing the algorithms of the paper
+
+- Algorithm 1 Ternary search: The function `trichotomy_maximization` in the file `src/model_tools.py`.
+- Algorithm 2 Check polynomial negativity: The function `check_fomralcaly_negativity` in the file `src/check_log_concavity_bos.py`.
+- Algorithm 3 BOS polynomial computation: The function `compute_polynomials` in the file `src/bos_model_polynomials.py`.
+- Algorithm 4 GOD polynomial computation: The function `compute_u` in the file `src/compute_u.py`.
+
+A last notable algorithm is the AECM algorithm that is implemented in the file `src/aecm.py`. It is implemented as a class but the main part of the algorithm is located in the `fit` method.
 
 ## Usage
 
@@ -50,17 +75,6 @@ dataset.plot_assignment_matrix()
 dataset.plot_histograms()
 ```
 
-## Structure
-
-The repo is structured as follows:
-- `notebooks`: Contains the notebooks used for the experiments and analysis that are available in the report.
-- `src`: Contains the source code for the estimation algorithms and the clustering algorithms.
-    - `src/data_generator.py`: Contains the code for generating synthetic datasets.
-    - `src/clustering.py`: Contains the code for the estimation EM and AECM algorithms (in the univariate and the multivariate case) for both the BOS and the GOD distribution models.
-    - `src/dataset.py`: Contains the code for loading the datasets and analyzing the different methods on them for generating the results on the report.
-- `data`: Contains the datasets used for the experiments.
-- `report`: Contains the report for the project.
-
 ## Data and experiments
 The datasets used in the notebooks are located in the `data` folder. Here the datasets used for the experiments (licenses for the real-life datasets can be found below in the corresponding sections) can be separated in different categories. We detail the generation process and the way they were used for the experiments for Reproducibility purposes.
 
@@ -77,7 +91,7 @@ The real-life datasets are detailed in the report but can be found in the locati
 The authors of this project are Théo Rudkiewicz, Ali Ramlaoui and Thomas Michel.
 
 This project is licensed under the GPL-3.0 License - see the LICENSE file for details.
-This include all the code and the report but not the datasets used for the experiments.
+This includes all the code and the report but not the datasets used for the experiments.
 
 - `data/car_evaluation.csv`: Car Evaluation Database created by Marko Bohanec (https://archive.ics.uci.edu/dataset/19/car+evaluation)
 - `data/hayes-roth.csv`: Hayes-Roth Database created by Barbara Hayes-Roth and Frederick Hayes-Roth (https://archive.ics.uci.edu/dataset/44/hayes+roth)

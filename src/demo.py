@@ -1,4 +1,4 @@
-# Code to demonstrate the code
+# Code to demonstrate the code on IPOL
 
 import os
 import sys

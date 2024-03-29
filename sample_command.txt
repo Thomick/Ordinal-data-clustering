@@ -1,1 +1,0 @@
-python src/demo.py --data_path data/synthetic.csv --n_clusters 2
