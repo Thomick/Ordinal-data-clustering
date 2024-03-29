@@ -94,6 +94,18 @@ if __name__ == "__main__":
         sys.exit(1)
 
     data, n_cat, df = process_data(args.data_path)
+    max_col = np.max(data, axis=0)
+    arg_max_all = np.argmax(max_col)
+    if max_col[arg_max_all] > 150 and args.method == "bos":
+        print(f"Two many categories for feature {arg_max_all}. The maximum number of categories is 150 for this demo. Feature {arg_max_all} has {max_col[arg_max_all]} categories.")
+        with open("demo_failure.txt", "w") as f:
+            f.write(f"Two many categories for feature {arg_max_all}. The maximum number of categories is 150 for this demo. Feature {arg_max_all} has {max_col[arg_max_all]} categories.")
+        sys.exit(0)
+    if max_col[arg_max_all] > 23 and args.method == "god":
+        print(f"Two many categories for feature {arg_max_all}. The maximum number of categories is 23 for this demo. Feature {arg_max_all} has {max_col[arg_max_all]} categories.")
+        with open("demo_failure.txt", "w") as f:
+            f.write(f"Two many categories for feature {arg_max_all}. The maximum number of categories is 23 for this demo. Feature {arg_max_all} has {max_col[arg_max_all]} categories.")
+        sys.exit(0)
     d = data.shape[1]
     m = n_cat
 
