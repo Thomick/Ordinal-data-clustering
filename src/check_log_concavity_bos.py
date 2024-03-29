@@ -1,5 +1,8 @@
 import numpy as np
-from bos_model_polynomials import compute_polynomials
+try:
+    from bos_model_polynomials import compute_polynomials
+except ImportError:
+    from src.bos_model_polynomials import compute_polynomials
 
 
 def check_formal_negativity(p: np.polynomial.Polynomial) -> bool:
@@ -162,7 +165,7 @@ def check_all_polynomials(m: int, log_file: str) -> bool:
 
     """
     u = compute_polynomials(m)
-    for x in range(m):
+    for x in tqdm(range(m)):
         for mu in range(m):
             try:
                 ok = full_check_log_concavity(u[x, mu])
@@ -178,5 +181,20 @@ def check_all_polynomials(m: int, log_file: str) -> bool:
 
 if __name__ == "__main__":
     from tqdm import tqdm
-    for m in tqdm(range(1, 50)):
-        check_all_polynomials(m, "log_concavity_check.log")
+    from time import time
+    m_min = 70
+    m_max = 150
+    time_name = time()
+    # done upt to 58
+    for m in tqdm(range(m_min, m_max + 1)):
+        with open(f"log_concavity_check_{m_min}_to_{m_max}_{time_name}.log", "a") as f:
+            try:
+                print(f"Processing m={m}")
+                t = time()
+                check_all_polynomials(m, "log_concavity_check.log")
+                print(f"Done in {time() - t: .3e} seconds")
+                f.write(f"Computed m={m} in {time() - t:.3e} seconds\n")
+            except AssertionError as e:
+                f.write(f"Error for m={m}: {e}\n")
+                print(f"Error for m={m}: {e}")
+                break

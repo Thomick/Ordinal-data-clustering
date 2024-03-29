@@ -58,7 +58,7 @@ def compute_u(m: int) -> np.ndarray:
     Return:
     -------
         u: u(., ., .) coefficients of the polynomials (m, m, m)
-        u[mu, x] = u(., mu, x)
+        u[mu, x] = u(mu, x, .)
     """
     distance = get_all_errors(m)
     is_minimal: np.ndarray = np.min(distance, axis=1)[:, None] == distance
@@ -71,3 +71,34 @@ def compute_u(m: int) -> np.ndarray:
                     d = distance[i, mu - 1]
                     u[mu - 1, x - 1, d] += 1 / card_min[i]
     return u
+
+
+if __name__ == "__main__":
+    from pickle import dump, load
+    from time import time
+    from datetime import datetime
+
+    m_min = 1
+    m_max = 30
+    for m in range(m_min, m_max + 1):
+        try:
+            with open(f"GOD_coefficients.pkl", "rb") as f:
+                coefficients = load(f)
+        except FileNotFoundError:
+            coefficients = dict()
+        if m in coefficients:
+            print(f"u_{m}.pkl already computed")
+        else:
+            del coefficients
+            print(f"Computing u_{m} started at {datetime.now()}")
+            t = time()
+            u = compute_u(m)
+            print(f"Time for m={m}: {time() - t:.3e}")
+            try:
+                with open(f"GOD_coefficients.pkl", "rb") as f:
+                    coefficients = load(f)
+            except FileNotFoundError:
+                coefficients = dict()
+            coefficients[m] = u
+            with open(f"GOD_coefficients.pkl", "wb") as f:
+                dump(coefficients, f)

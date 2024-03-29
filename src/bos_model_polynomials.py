@@ -220,5 +220,31 @@ def sum_probability_zi(m: int, x: int, mu: int, pi: float) -> float:
 
 
 if __name__ == "__main__":
-    print("Version Iterative")
-    print(compute_polynomials(3))
+    from pickle import dump, load
+    from time import time
+    from datetime import datetime
+
+    m_min = 1
+    m_max = 100
+    for m in range(m_min, m_max + 1):
+        try:
+            with open(f"BOS_coefficients.pkl", "rb") as f:
+                coefficients = load(f)
+        except FileNotFoundError:
+            coefficients = dict()
+        if m in coefficients:
+            print(f"u_{m}.pkl already computed")
+        else:
+            del coefficients
+            print(f"Computing u_{m} started at {datetime.now()}")
+            t = time()
+            u = compute_polynomials(m)
+            print(f"Time for m={m}: {time() - t:.3e}")
+            try:
+                with open(f"BOS_coefficients.pkl", "rb") as f:
+                    coefficients = load(f)
+            except FileNotFoundError:
+                coefficients = dict()
+            coefficients[m] = u
+            with open(f"BOS_coefficients.pkl", "wb") as f:
+                dump(coefficients, f)
